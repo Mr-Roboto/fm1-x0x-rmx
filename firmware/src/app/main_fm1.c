@@ -183,6 +183,8 @@ static void fm1_fault(const fm1_crash_t *c)
 {
     char b[12];
     uint32_t t0;
+    if (fm1_c1_on)
+        fm1_cpu1_bar();                             /* a crash beside the second core: one core until power-off */
     fm1_audio_stop();
     lcd_fill(0, 0, 240, 240, C_CRASH_BG);
     draw_text_box(0, 8, 240, &FONT_S, "X0X CRASH", C_WHITE, 1);

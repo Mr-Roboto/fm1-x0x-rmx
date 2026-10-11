@@ -3616,6 +3616,8 @@ static void draw_perf(int band)
                 put_i(put_s(q, ": BAD READS "), (int)plat_cpu2_bad());
             else if (plat_cpu2_gave_up() == 2)
                 put_s(q, ": 2ND TIMED OUT");
+            else if (plat_cpu2_gave_up() == 3)
+                put_s(q, " TILL POWER-OFF");
             text_r(236, 6, &FONT_XS, t, plat_cpu2_gave_up() ? C_WARNING : C_GRAY);
         }
         if (perf.test >= 0) {

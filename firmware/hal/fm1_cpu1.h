@@ -48,7 +48,12 @@ static fm1_c1_mb_t fm1_c1_mb __attribute__((aligned(64)));
 volatile uint32_t fm1_c1_trace;                 /* breadcrumbs (fm1_cpu1.S, fm1_c1_main) */
 static uint8_t fm1_c1_on;                       /* started and answering: core 0 may hand it work */
 #define FM1_C1_CHECK(fn, arg, job) ((uint32_t)(uintptr_t)(fn) ^ (arg) ^ (job) * 0x9E3779B1u)
-static uint8_t fm1_c1_gave_up;                  /* 1 = it read a wrong job, 2 = it did not finish one */
+static uint8_t fm1_c1_gave_up;                  /* 1 = it read a wrong job, 2 = it did not finish one, 3 = barred */
+/* one core until power-off (after Melodee 1.0.2): set when core 1 is given up or core 0 crashes beside it;
+ * .noinit survives a warm reset, power-off clears it. Not static: see fm1_crash (fm1_irq.h) */
+#define FM1_C1_BAR_MAGIC 0x43314241u            /* "C1BA" */
+struct { uint32_t magic, barred; } fm1_c1_bar __attribute__((section(".noinit")));
+static void fm1_cpu1_bar(void) { fm1_c1_bar.magic = FM1_C1_BAR_MAGIC; fm1_c1_bar.barred = 1; }
 
 void fm1_c1_main(void);
 void __attribute__((section(".c1_text"), noreturn, used)) fm1_c1_main(void)
@@ -119,6 +124,10 @@ static int fm1_cpu1_start(void)
     if (fm1_c1_on)
         return 0;
     fm1_cpu1_hold();
+    if (fm1_c1_bar.magic == FM1_C1_BAR_MAGIC && fm1_c1_bar.barred == 1u) {
+        fm1_c1_gave_up = 3;
+        return -1;
+    }
     for (i = 0; i < FM1_C1_STACK_WORDS; i++)
         _c1_ustack[i] = FM1_C1_MARK;
     fm1_c1_mb.alive = 0;
@@ -171,6 +180,7 @@ static inline int fm1_cpu1_wait(void)
         FM1_C1_SYNC();
         if (fm1_c1_mb.bad) {                    /* a unit that cannot run it: one core */
             fm1_cpu1_hold();
+            fm1_cpu1_bar();
             fm1_c1_gave_up = 1;
             return -1;
         }
@@ -178,6 +188,7 @@ static inline int fm1_cpu1_wait(void)
             return 0;
         if (FM1_C1_T4 - t0 > 24000u * 8u) {     /* 8 ms: far past any stretch (or it faulted) */
             fm1_cpu1_hold();
+            fm1_cpu1_bar();
             fm1_c1_gave_up = 2;
             return -1;
         }

@@ -48,8 +48,10 @@ static void position(void *ctx, int part, int step)
     positions[part] = step;
     eng_step[part] = step;
     if (test_motion_on)
-        motion_step(&test_motion, part, seq.ppat[part], step,
-                    seq_next_step(&seq, part, step), seq_part_len(&seq, part));
+        motion_step_source(&test_motion, part, seq.ppat[part], step,
+                    seq_source_step(&seq, part, step),
+                    seq_source_step(&seq, part, seq_next_step(&seq, part, step)),
+                    seq_part_len(&seq, part));
 }
 static const seq_sink_t sink = {.drum = drum_hit, .bass_on = bass_hit,
     .bass_off = bass_end, .step = position};
@@ -280,7 +282,7 @@ static void playhead(void)
     drum_key(10, 1);
     assert(sm_get(proj.pat[0].drum[0].hit[10], slot));
     assert(!sm_get(proj.pat[0].drum[0].hit[10], src));
-    /* Motion receives and applies the chronological lane through the step callback. */
+    /* Motion reads the audible source; recording still writes chronological slots. */
     int k = motion_alloc(proj.arr.lane, 0, 0, T_PROB, 0, 0);
     assert(k >= 0);
     for (int n = 0; n < 16; n++) proj.arr.lane[k].val[n] = n + 30;
@@ -289,9 +291,9 @@ static void playhead(void)
     test_motion.apply = motion_apply;
     test_motion_on = 1;
     next_step();
-    assert(motion_value(&test_motion, k) == positions[0] + 30);
+    assert(motion_value(&test_motion, k) == seq_playback_source_step(&seq, 0) + 30);
     assert(test_motion.last[0] == positions[0]);
-    assert(motion_applied == positions[0] + 30);
+    assert(motion_applied == seq_playback_source_step(&seq, 0) + 30);
     motion_req_rec(&test_motion, k);
     next_step();
     assert(proj.arr.lane[k].val[positions[0]] == 77);
@@ -409,6 +411,6 @@ int main(void)
     preferences();
     timing();
     playhead();
-    puts("Remix UI: pages, labels, ranges, non-motion refs, undo, global storage, audible boundaries, mapped playheads and chronological recording/Motion passed");
+    puts("Remix UI: pages, labels, ranges, non-motion refs, undo, global storage, audible boundaries, mapped playheads, source Motion and chronological recording passed");
     return 0;
 }

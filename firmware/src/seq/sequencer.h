@@ -151,6 +151,10 @@ void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled);
 /* Read-only current source for graphics; positions and callbacks stay chronological.
  * During playback this uses the active audible snapshot, never pending settings. */
 int seq_playback_source_step(const seq_t *s, int track);
+/* Source lookup for any chronological slot, including Motion/TIE lookahead.
+ * Uses the same audible snapshot and direction bypass as event playback.
+ * Invalid track or slot returns -1. */
+int seq_source_step(const seq_t *s, int track, int chronological_slot);
 uint32_t seq_until_event(seq_t *s, uint32_t n);
 void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o);
 

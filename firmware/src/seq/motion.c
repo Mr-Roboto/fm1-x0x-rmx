@@ -31,15 +31,22 @@ static void to_base(motion_t *m, const lane_t *l, lane_rt_t *r)
 
 void motion_step(motion_t *m, int part, int pat, int step, int next, int pass)
 {
+    motion_step_source(m, part, pat, step, step, next, pass);
+}
+
+void motion_step_source(motion_t *m, int part, int pat, int step,
+                        int source, int source_next, int pass)
+{
     int k;
-    if (part < 0 || part >= MOT_PARTS || step < 0 || step >= NSTEPS)
+    if (part < 0 || part >= MOT_PARTS || step < 0 || step >= NSTEPS ||
+        source < 0 || source >= NSTEPS)
         return;
     if (m->age[part])
         m->len[part][m->last[part] & 1u] = m->age[part];
     m->age[part] = 0;
     m->last[part] = (uint8_t)step;
-    if (next < 0 || next >= NSTEPS)
-        next = 0;
+    if (source_next < 0 || source_next >= NSTEPS)
+        source_next = 0;
     for (k = 0; k < NLANE; k++) {
         lane_t *l = &m->lane[k];
         lane_rt_t *r = &m->rt[k];
@@ -92,9 +99,9 @@ void motion_step(motion_t *m, int part, int pat, int step, int next, int pass)
             r->ramp = 0;
             continue;
         }
-        v = l->val[step];
+        v = l->val[source];
         put(m, l, r, v == MOT_NONE ? m->base(m->ctx, l->t, l->v, l->i) : v);
-        nv = l->val[next];
+        nv = l->val[source_next];
         r->ramp = (uint8_t)(v != MOT_NONE && nv != MOT_NONE && nv != v);
         r->from = (uint8_t)v;
         r->to = (uint8_t)nv;

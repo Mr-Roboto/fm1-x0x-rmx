@@ -212,17 +212,48 @@ does not reset stored Remix state. Transport preserves it; pattern changes use
 the new pattern's stored state. The Remix UI is described above; Orb musical
 reverse is not implemented.
 
-Motion, automation and p-locks are not mapped: the existing step callback receives
-the chronological slot and its existing directional lookahead. With Remix active,
-the mapped source event therefore hears the chronological slot's parameter and
-probability lane values, not those of its original stored source slot. Conditional
-probability cycles still use chronological pattern wraps. Drum chance is still
-checked per triggered voice; repeated source hits get the existing chance checks
-on each visit. Bass chance remains checked by the existing note-on sink: a TIE
-that continues a sounding note does not add a new chance check, while a TIE after
-release still triggers the existing note-on path. The sequencer's sounding/slide
-state and MIDI behavior when the bass sink rejects a note are unchanged. Future
-decisions about source-following automation or probability are unresolved here.
+Motion, parameter locks and Probability follow the same mapped source step as
+notes and drum columns during Forward Remix playback. Motion interpolates from
+the current mapped source value toward the next chronological slot's mapped
+source value, including repeated and nonadjacent sources and the established
+16-step block mapping through 64 steps. Both endpoints use the active audible
+Remix snapshot; a pending APPLY edit cannot affect a ramp before activation.
+When a new snapshot activates, that incoming slot starts its ramp using the new
+snapshot. A preceding ramp does not anticipate the pending selection.
+
+Chronological slots still determine ramp duration, Swing parity, recording
+positions, recording-gap interpolation and hold/gesture counters. The engine
+step callback passes separate timing and source coordinates to Motion; the
+sequencer's source accessor owns audible-state mapping and direction bypass.
+Remix OFF, Reverse, Ping-Pong, Random and BREAK retain their existing behavior.
+MOT_NONE/base fallback and interpolation rules are unchanged, including existing
+interpolation of Probability lanes between set values.
+
+Conditional probability cycles still use chronological pattern wraps. Drum
+chance is checked per triggered voice; repeated source hits get the existing
+chance checks on each visit. Bass chance remains checked by the existing note-on
+sink: a TIE that continues a sounding note does not add a new chance check,
+while a TIE after release still triggers the existing note-on path. The
+sequencer's sounding/slide state and MIDI behavior when the bass sink rejects
+a note are unchanged.
+
+### Motion recording with active Remix
+
+Recording continues to write the chronological slot on which the knob moved.
+Short recording gaps are filled between chronological destinations using the
+existing pass/wrap calculation; neither destinations nor gap logic are mapped.
+The knob wins during a recording gesture and during the existing manual hold.
+Once that override ends, playback reads the active mapped source lane again.
+
+This creates a deliberate unresolved recording question: a value recorded while
+hearing a remixed source event is stored at the chronological slot, so it may
+later be heard with a different event or on a different chronological visit.
+A repeated source can play several times without receiving those chronological
+recording writes; an unvisited source can also be updated by a chronological
+write. Deciding whether recording should follow the audible source, and how
+repeated or nonadjacent source visits should write values and fill gaps,
+requires a later explicit design decision. This playback change does not alter
+recording behavior.
 
 Before implementation, inspect the current sequencer, pattern persistence, UI,
 motion, and tests. Verify the relevant execution paths and structures before
@@ -275,8 +306,8 @@ validation before implementation:
 - Persistent layout and legacy handling are finalized above. Preserve these sizes
   and marker semantics in later changes.
 - Remix UI and APPLY are finalized above; A1 does not imply ON.
-- Remix controls are not motion-automatable. Future source-following motion behavior
-  requires an explicit decision.
+- Remix controls are not motion-automatable. Source-following Motion playback is
+  specified above; Motion recording under Remix remains an explicit open decision.
 - Choose the readable table source and generation/packing approach; verify that
   the resulting lookup data resides in const/flash rather than writable static
   RAM.

@@ -402,8 +402,11 @@ static void s_step(void *x, int t, int p)
 {
     (void)x;
     eng_step[t] = (uint8_t)p;
-    if (mot_on)
-        motion_step(&mot, t, seq.ppat[t], p, seq_next_step(&seq, t, p), seq_part_len(&seq, t));
+    if (mot_on) {
+        int next = seq_next_step(&seq, t, p);
+        motion_step_source(&mot, t, seq.ppat[t], p, seq_source_step(&seq, t, p),
+                           seq_source_step(&seq, t, next), seq_part_len(&seq, t));
+    }
 }
 
 /* --------------------------------------------------------------- motion --- */

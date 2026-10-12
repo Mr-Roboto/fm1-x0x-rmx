@@ -86,8 +86,10 @@ void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled)
 
 /* Only source reads use this mapping. All traversal, timing and callbacks use
  * chronological slots. Other directions retain their existing source order. */
-static int source_step(const seq_t *s, int t, int chronological_slot)
+int seq_source_step(const seq_t *s, int t, int chronological_slot)
 {
+    if ((unsigned)t >= NTRACKS || (unsigned)chronological_slot >= NSTEPS)
+        return -1;
     const pattern_t *p = &s->pat[s->ppat[t]];
     uint16_t state;
     if (t == TRK_BRK || (is_bass(t) && (bpart(s, t - TRK_BASS0)->dir & 3) != DIR_FWD))
@@ -102,7 +104,7 @@ int seq_playback_source_step(const seq_t *s, int t)
 {
     if ((unsigned)t >= NTRACKS)
         return -1;
-    return source_step(s, t, s->t[t].pos);
+    return seq_source_step(s, t, s->t[t].pos);
 }
 
 int seq_part_len(const seq_t *s, int t)
@@ -208,7 +210,7 @@ static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, 
 {
     seq_track_t *tr = &s->t[TRK_BASS0 + b];
     bpart_t *bp = bpart(s, b);
-    const bstep_t *st = &bp->step[source_step(s, TRK_BASS0 + b, p)];
+    const bstep_t *st = &bp->step[seq_source_step(s, TRK_BASS0 + b, p)];
     int gate = bstep_gate(st), note, hold, nx;
     uint8_t prev_slide = tr->held_note & 0x80u;     /* bit 7: the step that sounded slides on */
     if (s->mute & (1u << (MUTE_BASS0 + b)))
@@ -233,7 +235,7 @@ static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, 
         tr->sounding = 1;
     }
     nx = next_pos(s, TRK_BASS0 + b, p, 0);
-    nx = source_step(s, TRK_BASS0 + b, nx);
+    nx = seq_source_step(s, TRK_BASS0 + b, nx);
     hold = (st->flags & BS_SLIDE) || bstep_gate(&bp->step[nx]) == G_TIE;
     tr->held_note = (uint8_t)((note & 0x7F) | ((st->flags & BS_SLIDE) ? 0x80 : 0));
     tr->to_off = hold ? 0 : carry + step_q8 / 2u;
@@ -383,7 +385,7 @@ static uint32_t fire_step(seq_t *s, int t, const seq_sink_t *o)
     if (o->step)                                     /* first: the step's motion and p-locks, which the hit */
         o->step(o->ctx, t, p);                       /* below must hear (a drum takes its tune as it fires) */
     if (is_drum(t))
-        fire_drum(s, t, source_step(s, t, p), o);
+        fire_drum(s, t, seq_source_step(s, t, p), o);
     else if (t == TRK_BRK) {
         if (o->brk)
             o->brk(o->ctx, p, tr->bars, (float)L / 256.0f,

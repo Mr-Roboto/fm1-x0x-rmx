@@ -1,0 +1,33 @@
+# Forward Remix A3 maps chronological slot 2 to stored source step 6.
+# Its parameter lock and Probability must travel with the source hit.
+wait 300
+tapkey w0
+tapkey w5
+key w5 down
+spin K1 20
+key w5 up
+expect laneval0.0.0.5 54
+key w5 down
+turn SELECT -10
+key w5 up
+expect laneval7.0.0.5 50
+expect sound0.0.0 34
+tap SEQ
+turn SELECT 1
+turn K2 2
+spin K3 1
+wav remix_motion.wav
+tap PLAY
+wait 100
+expect playhead0 2
+expect motion0.0.0 54
+expect motion7.0.0 50
+wait 120
+expect playhead0 3
+expect motion0.0.0 34
+expect motion7.0.0 100
+wait 2000
+tap PLAY
+wavstop
+expect laneval0.0.0.5 54
+expect laneval7.0.0.5 50

@@ -17,5 +17,5 @@ emcc -O2 -ffp-contract=off -std=gnu99 -Wall -Wno-unused-function -Wno-unused-par
     -DX0X_HOST -DX0X_WEB "-DX0X_VERSION=\"$(printf %s "${X0X_VERSION:-DEV}" | tr a-z A-Z)\"" -Ifirmware/src -Ifirmware/src/dsp -Ibuild/gen \
     --no-entry -sSTANDALONE_WASM -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=33554432 -sFILESYSTEM=0 \
     -o build/emu/x0x.wasm web/emu/x0x_web.c $U
-cp web/emu/index.html web/emu/worklet.js build/emu/
+cp web/emu/index.html web/emu/worklet.js web/emu/favicon.svg build/emu/
 echo "emu: build/emu ($(wc -c < build/emu/x0x.wasm) B wasm)"

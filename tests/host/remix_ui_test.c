@@ -282,7 +282,7 @@ static void playhead(void)
     drum_key(10, 1);
     assert(sm_get(proj.pat[0].drum[0].hit[10], slot));
     assert(!sm_get(proj.pat[0].drum[0].hit[10], src));
-    /* Motion reads the audible source; recording still writes chronological slots. */
+    /* Motion reads and records the audible source; note recording stays chronological. */
     int k = motion_alloc(proj.arr.lane, 0, 0, T_PROB, 0, 0);
     assert(k >= 0);
     for (int n = 0; n < 16; n++) proj.arr.lane[k].val[n] = n + 30;
@@ -296,8 +296,8 @@ static void playhead(void)
     assert(motion_applied == seq_playback_source_step(&seq, 0) + 30);
     motion_req_rec(&test_motion, k);
     next_step();
-    assert(proj.arr.lane[k].val[positions[0]] == 77);
-    assert(proj.arr.lane[k].val[seq_playback_source_step(&seq, 0)] != 77);
+    assert(proj.arr.lane[k].val[seq_playback_source_step(&seq, 0)] == 77);
+    assert(proj.arr.lane[k].val[positions[0]] != 77);
     test_motion_on = 0;
     setup(24, REMIX_BEAT);
     ui_init();
@@ -411,6 +411,6 @@ int main(void)
     preferences();
     timing();
     playhead();
-    puts("Remix UI: pages, labels, ranges, non-motion refs, undo, global storage, audible boundaries, mapped playheads, source Motion and chronological recording passed");
+    puts("Remix UI: pages, labels, ranges, non-motion refs, undo, global storage, audible boundaries, mapped playheads and source Motion recording passed");
     return 0;
 }

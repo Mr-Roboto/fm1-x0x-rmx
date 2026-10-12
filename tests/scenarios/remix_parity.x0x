@@ -26,6 +26,21 @@ turn K4 1
 turn K2 1
 turn K3 1
 wait 2080
+# Record a sweep into the active Remix, then listen after the gesture ends.
+tap EDIT
+tap REC
+turn K1 1
+turn K1 1
+wait 240
+turn K1 1
+wait 240
+turn K1 1
+tap REC
+wait 2080
+# Disable Remix and hear the modified original source Motion.
+tap SEQ
+turn K3 -1
+wait 2080
 tap PLAY
 turn K1 1
 wait 480

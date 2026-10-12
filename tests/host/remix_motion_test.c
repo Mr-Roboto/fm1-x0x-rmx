@@ -179,22 +179,24 @@ static void test_recording(void)
     setup_playback(16, DIR_FWD, 1, 1);
     int k = value_lane[0];
     lane_t before = proj.arr.lane[k];
-    /* Use the actual engine callback; chronological 2..5 gap fill stays unchanged. */
+    /* The existing chronological gap formula writes mapped destinations in order. */
     seq.t[0].pos = 2;
     proj.sound.v[T_909][0][0] = 30;
     engine_motion_rec(k);
     s_step(0, 0, 2);
     s_step(0, 0, 3);
     s_step(0, 0, 4);
-    proj.sound.v[T_909][0][0] = 60;
-    engine_motion_rec(k);
     s_step(0, 0, 5);
-    for (int s = 0; s < NSTEPS; s++)
-        assert(proj.arr.lane[k].val[s] == (s >= 2 && s <= 5 ? 30 + (s - 2) * 10 : before.val[s]));
-    assert(mot.rt[k].rec_last == 5 && !mot.rt[k].ramp);
-    for (int s = 6; s < 11; s++) s_step(0, 0, s);
+    proj.sound.v[T_909][0][0] = 70;
+    engine_motion_rec(k);
+    s_step(0, 0, 6);
+    for (int slot = 2; slot <= 6; slot++)
+        before.val[expected_source(0, slot)] = 30 + (slot - 2) * 10;
+    assert(!memcmp(proj.arr.lane[k].val, before.val, NSTEPS));
+    assert(mot.rt[k].rec_last == 6 && !mot.rt[k].ramp);
+    for (int s = 7; s < 12; s++) s_step(0, 0, s);
     assert(mot.rt[k].rec_last == MOT_NONE);
-    assert(engine_motion_value(k) == proj.arr.lane[k].val[expected_source(0, 10)]);
+    assert(engine_motion_value(k) == proj.arr.lane[k].val[expected_source(0, 11)]);
     engine_motion_hold(k);
     for (int s = 0; s < 16; s++) {
         s_step(0, 0, s);
@@ -207,6 +209,120 @@ static void test_recording(void)
     seq.t[0].bars = 0; assert(!prob_skip(0, 0));
     seq.t[0].bars = 1; assert(prob_skip(0, 0));
     seq.t[0].bars = 2; assert(!prob_skip(0, 0));
+}
+
+/* Endpoints, gaps, wraps and collisions across every supported length and part.
+ * Expected writes are applied chronologically, so repeated sources are last-wins. */
+static void test_recording_lengths(void)
+{
+    unsigned repeats = 0, beyond_length = 0;
+    for (int on = 0; on <= 1; on++)
+        for (int dir = DIR_FWD; dir <= DIR_RANDOM; dir++)
+            for (int len = 1; len <= NSTEPS; len++) {
+                setup_playback(len, dir, on, 1);
+                for (int t = 0; t < NTRACKS; t++) {
+                    int pass = seq_part_len(&seq, t);
+                    int k = value_lane[t];
+                    uint8_t expected[NSTEPS];
+                    memcpy(expected, proj.arr.lane[k].val, sizeof expected);
+                    int previous = -1, previous_source = -1;
+                    int target = proj.arr.lane[k].t, voice = proj.arr.lane[k].v;
+                    for (int n = 0; n < pass * 2 + 8; n++) {
+                        int slot = n % pass;
+                        if (n % 4 == 0) {
+                            int now = (n % 8 == 0) ? 30 : 70;
+                            proj.sound.v[target][voice][0] = now;
+                            engine_motion_rec(k);
+                            if (previous >= 0) {
+                                int d = (slot - previous + pass) % pass;
+                                int from = expected[previous_source];
+                                if (d >= 2 && d <= MOT_GAP)
+                                    for (int j = 1; j < d; j++) {
+                                        int dest = expected_source(t, (previous + j) % pass);
+                                        expected[dest] = from + (now - from) * j / d;
+                                        if (dest == previous_source) repeats++;
+                                    }
+                            }
+                            previous = slot;
+                            previous_source = expected_source(t, slot);
+                            if (previous_source >= len) beyond_length++;
+                            expected[previous_source] = now;
+                        }
+                        s_step(0, t, slot);
+                        assert(!memcmp(expected, proj.arr.lane[k].val, sizeof expected));
+                    }
+                }
+            }
+    assert(repeats && beyond_length);
+}
+
+static void test_recording_apply(void)
+{
+    /* Gap writes use the snapshot active at the second endpoint, even when it
+     * differs from the first endpoint. Its starting value remains at the old source. */
+    for (int mode = REMIX_STEP; mode <= REMIX_LOOP; mode++)
+        for (int enable = 0; enable <= 1; enable++) {
+            setup_playback(24, DIR_FWD, 1, 1);
+            seq.remix_apply = mode;
+            int boundary = mode == REMIX_STEP ? 3 : mode == REMIX_BEAT ? 4 :
+                           mode == REMIX_BAR ? 16 : 24;
+            for (int slot = 1; slot < boundary - 2; slot++) next_external(&SINK);
+            int first = seq.t[0].pos;
+            uint8_t expected[NTRACKS][NSTEPS];
+            int old_source[NTRACKS];
+            for (int t = 0; t < TRK_BRK; t++) {
+                int k = value_lane[t];
+                memcpy(expected[t], proj.arr.lane[k].val, NSTEPS);
+                old_source[t] = seq_source_step(&seq, t, (first + 1) % 24);
+                proj.sound.v[proj.arr.lane[k].t][proj.arr.lane[k].v][0] = 30;
+                engine_motion_rec(k);
+            }
+            next_external(&SINK);
+            first = seq.t[0].pos;
+            for (int t = 0; t < TRK_BRK; t++) {
+                expected[t][old_source[t]] = 30;
+                assert(!memcmp(expected[t], proj.arr.lane[value_lane[t]].val, NSTEPS));
+                if (t < TRK_BRK) seq_set_remix(&seq, t, 0, 2, enable);
+            }
+            /* STEP activates on the next slot. Other modes have a pre-boundary
+             * endpoint, which must still record using B12 despite the pending edit. */
+            if (mode != REMIX_STEP) {
+                for (int t = 0; t < TRK_BRK; t++) {
+                    int k = value_lane[t];
+                    proj.sound.v[proj.arr.lane[k].t][proj.arr.lane[k].v][0] = 40;
+                    engine_motion_rec(k);
+                }
+                next_external(&SINK);
+                for (int t = 0; t < TRK_BRK; t++) {
+                    old_source[t] = expected_source(t, seq.t[t].pos);
+                    expected[t][old_source[t]] = 40;
+                    assert(!memcmp(expected[t], proj.arr.lane[value_lane[t]].val, NSTEPS));
+                }
+                first = seq.t[0].pos;
+            }
+            /* Record again three slots later: includes the activation boundary. */
+            next_external(&SINK);
+            next_external(&SINK);
+            for (int t = 0; t < TRK_BRK; t++) {
+                int k = value_lane[t];
+                proj.sound.v[proj.arr.lane[k].t][proj.arr.lane[k].v][0] = 70;
+                engine_motion_rec(k);
+            }
+            next_external(&SINK);
+            for (int t = 0; t < TRK_BRK; t++) {
+                int from = expected[t][old_source[t]];
+                for (int j = 1; j < 3; j++) {
+                    int slot = (first + j) % 24;
+                    int dest = (t == TRK_BRK || !enable) ? slot : remix_source_step(0, 2, slot);
+                    expected[t][dest] = from + (70 - from) * j / 3;
+                }
+                int slot = (first + 3) % 24;
+                int dest = (t == TRK_BRK || !enable) ? slot : remix_source_step(0, 2, slot);
+                expected[t][dest] = 70;
+                assert(seq.t[t].pos == slot);
+                assert(!memcmp(expected[t], proj.arr.lane[value_lane[t]].val, NSTEPS));
+            }
+        }
 }
 
 static void test_empty_values(void)
@@ -236,6 +352,8 @@ int main(void)
     test_ramps_and_swing();
     test_pending();
     test_recording();
+    test_recording_lengths();
+    test_recording_apply();
     test_empty_values();
     puts("Remix Motion: source locks/chance, ramps/repeats, blocks, Swing, APPLY, directions and recording passed");
     return 0;

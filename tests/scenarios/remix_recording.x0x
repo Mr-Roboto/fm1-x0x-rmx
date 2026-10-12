@@ -1,0 +1,18 @@
+# Forward A3 recording: chronological slot 2 writes source step 6 (zero-based 5).
+wait 300
+tapkey w0
+tap SEQ
+turn SELECT 1
+turn K2 2
+turn K3 1
+tap EDIT
+tap REC
+tap PLAY
+turn K1 1 80
+expect sound0.0.0 35
+wait 20
+expect laneval0.0.0.5 35
+expect laneval0.0.0.1 255
+wait 2000
+tap PLAY
+expect laneval0.0.0.5 35

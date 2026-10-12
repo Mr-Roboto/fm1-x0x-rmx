@@ -76,13 +76,18 @@ void motion_step_source(motion_t *m, int part, int pat, int step,
             if (pass < 1)
                 pass = 1;
             if (r->rec_last != MOT_NONE) {             /* a short pause in the gesture: a straight line */
-                int from = l->val[r->rec_last];
+                int from = l->val[r->to];              /* previous endpoint's audible source */
                 d = (step - r->rec_last + pass) % pass;
                 if (d >= 2 && d <= MOT_GAP && from != MOT_NONE)
-                    for (j = 1; j < d; j++)
-                        l->val[(r->rec_last + j) % pass] = (uint8_t)(from + (now - from) * j / d);
+                    for (j = 1; j < d; j++) {
+                        int dest = (r->rec_last + j) % pass;
+                        if (m->record_source)
+                            dest = m->record_source(m->ctx, part, dest);
+                        l->val[dest] = (uint8_t)(from + (now - from) * j / d);
+                    }
             }
-            l->val[step] = (uint8_t)now;
+            l->val[source] = (uint8_t)now;
+            r->to = (uint8_t)source;                   /* ramp is idle during a gesture */
             r->rec_last = (uint8_t)step;
             r->rec_quiet = 0;
             r->hold_left = 0;

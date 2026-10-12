@@ -239,21 +239,26 @@ a note are unchanged.
 
 ### Motion recording with active Remix
 
-Recording continues to write the chronological slot on which the knob moved.
-Short recording gaps are filled between chronological destinations using the
-existing pass/wrap calculation; neither destinations nor gap logic are mapped.
-The knob wins during a recording gesture and during the existing manual hold.
-Once that override ends, playback reads the active mapped source lane again.
+Forward Remix Motion recording writes endpoints to the actually audible mapped
+source step. Recording gaps still use chronological positions and the existing
+pass/wrap calculation and straight-line interpolation. Each intermediate value
+is written in chronological order to its source step resolved through the active
+audible mapping at the time of the write. The previous recorded endpoint supplies
+the starting value from its original source destination, even if APPLY has since
+switched the mapping. Repeated destinations may overwrite earlier values; later
+writes win, including the final endpoint. Pending APPLY edits do not affect any
+write until their audible snapshot activates.
 
-This creates a deliberate unresolved recording question: a value recorded while
-hearing a remixed source event is stored at the chronological slot, so it may
-later be heard with a different event or on a different chronological visit.
-A repeated source can play several times without receiving those chronological
-recording writes; an unvisited source can also be updated by a chronological
-write. Deciding whether recording should follow the audible source, and how
-repeated or nonadjacent source visits should write values and fill gaps,
-requires a later explicit design decision. This playback change does not alter
-recording behavior.
+For example, recording at chronological positions 3 and 7 fills the three values
+for positions 4, 5 and 6 as before, but writes all five values to their mapped
+source steps. No separate Remix Motion storage exists: **recording with Remix ON
+changes the original source-step Motion data, so playback with Remix OFF may
+sound different afterward.**
+
+Remix OFF, Reverse, Ping-Pong, Random and BREAK retain their existing recording
+behavior. Timing, playback interpolation, Swing, gesture and manual hold behavior
+are unchanged. The knob wins during the existing recording gesture and manual
+hold; afterward playback reads the active source lane again.
 
 Before implementation, inspect the current sequencer, pattern persistence, UI,
 motion, and tests. Verify the relevant execution paths and structures before
@@ -307,7 +312,7 @@ validation before implementation:
   and marker semantics in later changes.
 - Remix UI and APPLY are finalized above; A1 does not imply ON.
 - Remix controls are not motion-automatable. Source-following Motion playback is
-  specified above; Motion recording under Remix remains an explicit open decision.
+  specified above; source-following recording is finalized in the recording section.
 - Choose the readable table source and generation/packing approach; verify that
   the resulting lookup data resides in const/flash rather than writable static
   RAM.

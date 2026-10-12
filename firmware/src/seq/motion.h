@@ -38,10 +38,10 @@ typedef struct {
 typedef struct {
     uint8_t gen;                      /* lane gen this runtime belongs to */
     uint8_t applied;                  /* value playback set, MOT_NONE = the engine has the base / knob */
-    uint8_t from, to, ramp;           /* the ramp across the current step */
+    uint8_t from, to, ramp;           /* ramp; while recording, to = previous endpoint source */
     uint8_t part_parity;              /* parity of the step the ramp started on */
     volatile uint8_t rec_req, hold_req;
-    uint8_t rec_last;                 /* the step a gesture last wrote, MOT_NONE = no gesture */
+    uint8_t rec_last;                 /* chronological recording slot, MOT_NONE = no gesture */
     uint8_t rec_quiet;                /* steps since */
     uint8_t hold_left;                /* steps the knob still wins */
 } lane_rt_t;
@@ -54,13 +54,15 @@ typedef struct {
     uint8_t last[MOT_PARTS];          /* its last step */
     int (*base)(void *ctx, int t, int v, int i);
     void (*apply)(void *ctx, int t, int v, int i, int val);
+    int (*record_source)(void *ctx, int part, int step); /* active mapping for gap writes; NULL = identity */
     void *ctx;
 } motion_t;
 
 void motion_init(motion_t *m, lane_t *lanes);
 void motion_step(motion_t *m, int part, int pat, int step, int next, int pass);   /* ISR */
-/* Playback values may follow Remix; step still owns timing, parity and recording.
- * source_next is the source of the next chronological slot (active mapping). */
+/* Playback and recording endpoints follow source; step owns timing, parity and
+ * recording gaps. record_source maps intermediate writes through the active
+ * mapping. source_next is the next chronological slot's source for playback. */
 void motion_step_source(motion_t *m, int part, int pat, int step,
                         int source, int source_next, int pass);                 /* ISR */
 void motion_tick(motion_t *m, uint32_t n);                                       /* ISR */

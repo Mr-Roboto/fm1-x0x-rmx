@@ -463,6 +463,13 @@ it, fills in short pauses so a slow sweep has no gaps, and on playback glides fr
   and master into the 909's. Copying or clearing a pattern copies or clears its motion too.
 - When you stop, every knob goes back to its own setting.
 
+With Forward Remix ON, Motion recording changes the original source-step Motion
+data for the events you hear. Short gaps still interpolate across chronological
+positions, with each value written to its active mapped source step. Repeated
+sources receive the latest write. Pending APPLY edits take effect for recording
+only when the audible mapping switches. Playback with Remix OFF may therefore
+sound different afterward. Other directions and BREAK record as before.
+
 ### P-locks
 
 A step can have a sound of its own: a higher tune on one kick, an open filter on one 303 note,

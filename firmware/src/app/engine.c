@@ -410,6 +410,11 @@ static void s_step(void *x, int t, int p)
 }
 
 /* --------------------------------------------------------------- motion --- */
+static int mot_record_source(void *x, int part, int step)
+{
+    (void)x;
+    return seq_source_step(&seq, part, step);
+}
 static int mot_base(void *x, int t, int v, int i)
 {
     (void)x;
@@ -955,6 +960,7 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     motion_init(&mot, lanes);
     mot.base = mot_base;
     mot.apply = mot_apply;
+    mot.record_source = mot_record_source;
     mot_base_snd = base;
     for (p = 0; p < NPARTS; p++) {
         mix_level[p] = 1.0f;

@@ -6,6 +6,8 @@
 
 #define NEVER 0xFFFFFFFFu
 
+static void remix_sync(seq_t *s, int t);
+
 static const uint8_t TICKS_PER_STEP[NRATES] = {6, 4, 3, 8};     /* 24 ppqn: 1/16, 1/16T, 1/32, 1/8T */
 static const uint8_t GM_DRUM[NKIT][NDRUM] = {
     {36, 38, 41, 45, 50, 37, 39, 42, 46, 49, 51},   /* 909: BD SD LT MT HT RS CP CH OH CR RD */
@@ -19,6 +21,7 @@ void seq_init(seq_t *s, pattern_t *patterns)
     for (i = 0; i < sizeof *s; i++)
         p[i] = 0;
     s->pat = patterns;
+    s->remix_apply = REMIX_BEAT;
     for (i = 0; i < NTRACKS; i++)
         s->pcue[i] = 0xFF;
     s->bpm = 125.0f;
@@ -36,6 +39,8 @@ void seq_init(seq_t *s, pattern_t *patterns)
         s->t[i].rng = 0x1234567u * (i + 1);
     }
     s->clk_to_next = NEVER;
+    for (i = 0; i < NKIT + NBASS; i++)
+        remix_sync(s, (int)i);
 }
 
 float seq_tempo(const seq_t *s) { return s->ext ? s->ext_bpm : s->bpm; }
@@ -56,12 +61,27 @@ static int is_drum(int t) { return t < NKIT; }
 static int is_bass(int t) { return t >= TRK_BASS0 && t < TRK_BASS0 + NBASS; }
 static bpart_t *bpart(const seq_t *s, int b) { return &s->pat[s->ppat[TRK_BASS0 + b]].bass[b]; }
 
+/* Persistent state is the latest requested selection. Keep an audible snapshot
+ * until a chronological boundary; edits, undo and copy all enter this same path.
+ * A pattern switch adopts that pattern's state, discarding the old pending edit. */
+static void remix_sync(seq_t *s, int t)
+{
+    seq_remix_t *r = &s->remix[t];
+    const pattern_t *p = &s->pat[s->ppat[t]];
+    r->pending = pattern_remix_selection(p, t) | (pattern_remix_enabled(p, t) << 8);
+    if (!s->playing || r->pattern != s->ppat[t]) {
+        r->active = r->pending;
+        r->pattern = s->ppat[t];
+    }
+}
+
 void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled)
 {
     if ((unsigned)track >= NKIT + NBASS || (unsigned)bank >= 16u || (unsigned)pattern >= 16u)
         return;
     pattern_set_remix_selection(&s->pat[s->ppat[track]], track, bank, pattern);
     pattern_set_remix_enabled(&s->pat[s->ppat[track]], track, enabled);
+    remix_sync(s, track);
 }
 
 /* Only source reads use this mapping. All traversal, timing and callbacks use
@@ -69,12 +89,20 @@ void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled)
 static int source_step(const seq_t *s, int t, int chronological_slot)
 {
     const pattern_t *p = &s->pat[s->ppat[t]];
-    uint8_t selection;
+    uint16_t state;
     if (t == TRK_BRK || (is_bass(t) && (bpart(s, t - TRK_BASS0)->dir & 3) != DIR_FWD))
         return chronological_slot;
-    selection = pattern_remix_selection(p, t);
-    return pattern_remix_enabled(p, t) ? remix_source_step((selection >> 4) & 15u, selection & 15u,
+    state = s->playing ? s->remix[t].active
+                       : pattern_remix_selection(p, t) | (pattern_remix_enabled(p, t) << 8);
+    return (state & 256u) ? remix_source_step((state >> 4) & 15u, state & 15u,
                                                 (uint8_t)chronological_slot) : chronological_slot;
+}
+
+int seq_playback_source_step(const seq_t *s, int t)
+{
+    if ((unsigned)t >= NTRACKS)
+        return -1;
+    return source_step(s, t, s->t[t].pos);
 }
 
 int seq_part_len(const seq_t *s, int t)
@@ -342,6 +370,15 @@ static uint32_t fire_step(seq_t *s, int t, const seq_sink_t *o)
         tr->bars++;
     if (changed & 1u)                                /* the 909's new pattern: its passes from 1 again, as */
         tr->bars = 0;                                /* restart() does for the others (probability cycles) */
+    if (t < NKIT + NBASS) {
+        seq_remix_t *r = &s->remix[t];
+        remix_sync(s, t);
+        if (s->remix_apply == REMIX_STEP ||
+            (s->remix_apply == REMIX_BEAT && (p & 3) == 0) ||
+            (s->remix_apply == REMIX_BAR && (p & 15) == 0) ||
+            (s->remix_apply == REMIX_LOOP && wrapped))
+            r->active = r->pending;                  /* selection + ON/OFF activate together */
+    }
     tr->pos = (uint8_t)p;
     if (o->step)                                     /* first: the step's motion and p-locks, which the hit */
         o->step(o->ctx, t, p);                       /* below must hear (a drum takes its tune as it fires) */
@@ -397,6 +434,8 @@ static void do_start(seq_t *s, int from_top, const seq_sink_t *o)
         tr->ext_ticks = (uint8_t)(TICKS_PER_STEP[part_rate(s, t)] - 1);   /* the first clock is the downbeat */
     }
     s->clk_to_next = 0;
+    for (t = 0; t < NKIT + NBASS; t++)
+        remix_sync(s, t);
     s->playing = 1;
     if (!s->ext && s->send_clock)
         midi(o, from_top ? 0xFA : 0xFB, 0, 0);
@@ -500,8 +539,12 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
                 s->ppat[t] = s->pcue[t];
                 s->pcue[t] = 0xFF;
             }
+        for (t = 0; t < NKIT + NBASS; t++)
+            remix_sync(s, t);
         return;
     }
+    for (t = 0; t < NKIT + NBASS; t++)
+        remix_sync(s, t);
     for (t = 0; t < NTRACKS; t++) {                 /* move time */
         seq_track_t *tr = &s->t[t];
         if (tr->to_next != NEVER)

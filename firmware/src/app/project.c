@@ -35,6 +35,7 @@ static uint32_t packed_len;             /* the last save's (or load's) packed st
 void project_defaults(void)
 {
     int i;
+    proj.set.rsv[0] = 0;                /* legacy/default APPLY = BEAT */
     proj.set.magic = PROJ_MAGIC;
     proj.set.format = PROJ_FORMAT;
     proj.set.palette = 1;                /* amber */
@@ -481,6 +482,7 @@ void project_apply_io(void)
 {
     static const uint8_t DEF[5] = {9, 10, 1, 2, 3};   /* 909 10, 808 11, 303s 2 / 3, break 4 */
     int p;
+    seq.remix_apply = (uint8_t)settings_remix_apply(&proj.set);
     seq.send_clock = proj.set.clk_out;
     seq.send_notes = proj.set.notes_out;
     for (p = 0; p < 5; p++) {

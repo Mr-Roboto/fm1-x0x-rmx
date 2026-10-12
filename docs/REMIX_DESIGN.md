@@ -162,9 +162,36 @@ Remix, just as it preserves length/rate/direction. BREAK uses no Remix bytes.
 The UI must expose Bank **A–P** and Pattern **1–16** separately for each applicable
 track.
 
-An explicit Remix ON/OFF control is desired. Its exact UI
-is **unresolved**; the persistence encoding is specified above. A1 remains
-a valid neutral mapping regardless of that design.
+The dedicated V_SEQ REMIX page has four knobs, left to right: BANK (A–P),
+PATTERN (1–16), REMIX (OFF/ON), APPLY (STEP/BEAT/BAR/LOOP). It follows
+SEQUENCE on drums and KEYS on the 303s. BREAK has no Remix controls. A1
+remains the neutral mapping. These references cannot record motion or p-locks.
+
+Bank, pattern and enable edits use the existing persistent setters immediately,
+so the UI, save and undo operate on the latest requested state. Playback holds
+an independent audible snapshot for each of the four parts. The latest stored
+state replaces that part's pending snapshot; equality with the active snapshot
+means there is no pending change. At the chosen boundary selection and enable
+activate together. Undo/copy edits enter the same path. A playing pattern switch
+adopts the new pattern's state and discards the previous pattern's pending state.
+Stopped changes apply immediately; stopping also resolves outstanding changes.
+
+STEP activates on the next chronological step, BEAT (default) when the incoming
+chronological position is divisible by four, BAR when divisible by sixteen,
+and LOOP on the track's actual pattern wrap. Source mapping never determines
+boundaries. The graphical step playhead shows the active mapped source for
+Forward Remix playback, while page visibility follows the chronological 16-step
+block. It is hidden on other visible pages and never switches the visible page.
+OFF, BREAK and other directions retain their chronological playhead. Changing APPLY affects outstanding changes too;
+it does not reset or enqueue selections.
+
+APPLY occupies only `settings_t.rsv[0]`: `(byte & 0xFC) == 0xB4` is valid,
+with bits 0–1 encoding STEP=0, BEAT=1, BAR=2, LOOP=3. Invalid bytes (including
+zero and erased 0xFF) and absent bytes in shorter settings objects read as BEAT.
+An exact historical signature match is indistinguishable from a valid setting.
+Settings size (28 bytes), project size, formats and all pattern bytes are unchanged.
+The existing settings object saves this global preference, outside pattern undo;
+it is shared across parts and patterns. Defaults explicitly clear its byte.
 
 ## Implementation Discipline and Validation
 
@@ -182,7 +209,8 @@ direction setting. BREAK is unchanged.
 using zero-based bank/pattern and an enable flag. Call it while stopped or between
 audio blocks. Playback reads each part's current `ppat` independently. `seq_init()`
 does not reset stored Remix state. Transport preserves it; pattern changes use
-the new pattern's stored state. No Remix UI or Orb musical reverse is implemented.
+the new pattern's stored state. The Remix UI is described above; Orb musical
+reverse is not implemented.
 
 Motion, automation and p-locks are not mapped: the existing step callback receives
 the chronological slot and its existing directional lookahead. With Remix active,
@@ -246,10 +274,8 @@ validation before implementation:
   patterns.
 - Persistent layout and legacy handling are finalized above. Preserve these sizes
   and marker semantics in later changes.
-- Finalize the desired explicit Remix ON/OFF control's UI. Persistence is specified
-  above; A1 does not imply ON.
-- Inspect current UI and motion paths and determine their integration with the
-  agreed per-track Bank/Pattern selection. Any unspecified motion behavior
+- Remix UI and APPLY are finalized above; A1 does not imply ON.
+- Remix controls are not motion-automatable. Future source-following motion behavior
   requires an explicit decision.
 - Choose the readable table source and generation/packing approach; verify that
   the resulting lookup data resides in const/flash rather than writable static

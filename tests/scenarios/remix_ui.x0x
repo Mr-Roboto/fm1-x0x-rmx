@@ -1,0 +1,34 @@
+# Four populated Remix controls, per-track SEQ navigation, and save/reload screenshots.
+wait 300
+tap SEQ
+turn SELECT 1
+turn K1 2
+turn K2 5
+turn K3 1
+# BEAT is the default global APPLY.
+wait 1000
+shot remix_909.png
+turn ALGO 2
+turn SELECT 2
+turn K1 15
+turn K2 15
+turn K3 1
+# Global APPLY was BEAT on 909: advance once to BAR here.
+turn K4 1
+wait 1000
+shot remix_303a.png
+tap SAVE
+wait 300
+reboot
+wait 300
+tap SEQ
+turn SELECT 1
+wait 1000
+shot remix_909_reloaded.png
+turn ALGO 2
+turn SELECT 2
+wait 1000
+shot remix_303a_reloaded.png
+turn ALGO 2
+wait 1000
+shot break_sequence.png

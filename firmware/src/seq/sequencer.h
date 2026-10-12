@@ -87,6 +87,13 @@ typedef struct {
     void *ctx;
 } seq_sink_t;
 
+enum { REMIX_STEP, REMIX_BEAT, REMIX_BAR, REMIX_LOOP };
+
+typedef struct {
+    uint16_t active, pending;         /* selection bits 0-7, ON bit 8; equal = no pending change */
+    uint8_t pattern;                  /* cache belongs to this playing pattern */
+} seq_remix_t;
+
 typedef struct {                      /* one part's runtime */
     uint8_t pos;                      /* chronological playback slot, never a Remix source step */
     int8_t pp_dir;                    /* ping-pong direction */
@@ -122,6 +129,8 @@ typedef struct {
     volatile uint8_t accent_q7;       /* drum velocity of a non-accented hit, of 127 */
     float bpm;                        /* internal tempo (UI writes; read per step) */
     float ext_bpm;                    /* tempo measured from the external clock */
+    uint8_t remix_apply;              /* global preference, never a pattern property */
+    seq_remix_t remix[NKIT + NBASS];
     seq_track_t t[NTRACKS];           /* TRK_DRUM, TRK_BASS0.., TRK_BRK */
     uint32_t clk_to_next;             /* internal: samples to the next MIDI clock, Q8 */
     uint32_t ext_since;               /* samples since the last external clock (tempo estimate) */
@@ -135,8 +144,13 @@ typedef struct {
 void seq_init(seq_t *s, pattern_t *patterns);
 /* Set persistent Remix on the track's currently playing pattern; call while
  * stopped or between audio blocks. Zero-based bank/pattern 0..15. Invalid
- * selections and BREAK are ignored. seq_init() preserves pattern state. */
+ * selections and BREAK are ignored. While playing, the latest state activates
+ * at remix_apply's chronological boundary; stopped edits activate immediately.
+ * seq_init() preserves pattern state. */
 void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled);
+/* Read-only current source for graphics; positions and callbacks stay chronological.
+ * During playback this uses the active audible snapshot, never pending settings. */
+int seq_playback_source_step(const seq_t *s, int track);
 uint32_t seq_until_event(seq_t *s, uint32_t n);
 void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o);
 

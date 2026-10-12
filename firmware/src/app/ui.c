@@ -179,7 +179,7 @@ static void say(const char *a, const char *b)
 /* =============================================================== param refs === */
 enum { R_NONE, R_ENG, R_SWING, R_DLEN, R_DRATE, R_BLEN, R_BRATE, R_BDIR, R_BTRANS, R_GEN, R_BRKSET,
        R_BRKSLOT, R_TEMPO, R_ACCENT, R_CLKOUT, R_NOTEOUT, R_PALETTE, R_KEYLED, R_KEYSOUND, R_AUTOSAVE, R_ACT, R_SBAR, R_SPAT,
-       R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
+       R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY, R_RBANK, R_RPAT, R_RENABLE, R_RAPPLY };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
 typedef struct { uint8_t kind, a, b, c; } pref_t;
 #define PR(k, a, b, c) ((pref_t){(k), (a), (b), (c)})
 #define NONE PR(R_NONE, 0, 0, 0)
@@ -187,6 +187,12 @@ typedef struct { uint8_t kind, a, b, c; } pref_t;
 static const char *const RATE_N[] = {"1/16", "1/16T", "1/32", "1/8T"};
 static const char *const DIR_N[] = {"FWD", "REV", "PING", "RND"};
 static const char *const ONOFF_N[] = {"OFF", "ON"};
+static const char *const BANK_N[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"};
+static const char *const APPLY_N[] = {"STEP", "BEAT", "BAR", "LOOP"};
+static const x0x_param_t REMIX_P[] = {
+    {"BANK", 15, 0, BANK_N}, {"PATTERN", 15, 0, 0},
+    {"REMIX", 1, 0, ONOFF_N}, {"APPLY", 3, REMIX_BEAT, APPLY_N},
+};
 static const char *const ROOT_N[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 static const char *const THEME_N[] = {"GREEN", "AMBER", "CYAN", "RED", "MONO"};
 enum { G_DENS, G_ACC, G_SLIDE, G_OCTS, G_ROOT, G_SCALE, G_BASE, G_MUT, NGEN };
@@ -250,6 +256,8 @@ static void song_fill(int k)
 static const x0x_param_t *pref_desc(pref_t r)
 {
     switch (r.kind) {
+    case R_RBANK: case R_RPAT: case R_RENABLE: case R_RAPPLY:
+        return &REMIX_P[r.kind - R_RBANK];
     case R_ENG: return engine_param(r.a, r.b, r.c);
     case R_GEN: return &GEN_P[r.c % NGEN];
     case R_BRKSET: return breaks_param(r.c);
@@ -301,6 +309,10 @@ static int pref_get(pref_t r)
 {
     pattern_t *p = cur_pat();
     switch (r.kind) {
+    case R_RBANK: return pattern_remix_selection(pat_of(r.a), r.a) >> 4;
+    case R_RPAT: return pattern_remix_selection(pat_of(r.a), r.a) & 15u;
+    case R_RENABLE: return pattern_remix_enabled(pat_of(r.a), r.a);
+    case R_RAPPLY: return settings_remix_apply(&proj.set);
     case R_ENG: return proj.sound.v[r.a][r.b][r.c];
     case R_SWING: return pat_of(PART_909)->swing;
     case R_DLEN: return pat_of(r.a)->drum[r.a].len - 1;
@@ -360,6 +372,18 @@ static void pref_set(pref_t r, int v)
     v = v < 0 ? 0 : v > d->max ? d->max : v;
     mark_dirty();
     switch (r.kind) {
+    case R_RBANK: case R_RPAT: case R_RENABLE: {
+        pattern_t *rp = pat_of(r.a);
+        int sel = pattern_remix_selection(rp, r.a);
+        seq_set_remix(&seq, r.a, r.kind == R_RBANK ? v : sel >> 4,
+                      r.kind == R_RPAT ? v : sel & 15,
+                      r.kind == R_RENABLE ? v : pattern_remix_enabled(rp, r.a));
+        break;
+    }
+    case R_RAPPLY:
+        settings_set_remix_apply(&proj.set, v);
+        seq.remix_apply = (uint8_t)v;
+        break;
     case R_ENG:
         proj.sound.v[r.a][r.b][r.c] = (uint8_t)v;
         engine_set(r.a, r.b, r.c, v);
@@ -476,7 +500,7 @@ static int in_pattern(pref_t r)
 {
     switch (r.kind) {
     case R_SWING: case R_DLEN: case R_DRATE: case R_BLEN: case R_BRATE: case R_BDIR: case R_BTRANS: case R_GEN:
-    case R_BRKSET: case R_BRKSLOT:
+    case R_BRKSET: case R_BRKSLOT: case R_RBANK: case R_RPAT: case R_RENABLE:
         return 1;
     default:
         return 0;
@@ -611,6 +635,7 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
         }
         put_i(num, v);
         return;
+    case R_RPAT: put_i(num, v + 1); return;
     case R_DLEN:
     case R_BLEN: put_i(num, v + 1); put_s(unit, "st"); return;
     case R_BTRANS: {
@@ -781,6 +806,11 @@ static void build_pages(void)
             more(PR(R_BRKSET, 0, 0, BRK_PHRASE));
             more(PR(R_BRKSET, 0, 0, BRK_ALEN));
             more(PR(R_BRKSET, 0, 0, BRK_BLEN));
+        }
+        if (is_drum() || is_303()) {
+            pg_grp = GR_PAT;
+            add_page("REMIX", PR(R_RBANK, p, 0, 0), PR(R_RPAT, p, 0, 0),
+                     PR(R_RENABLE, p, 0, 0), PR(R_RAPPLY, 0, 0, 0));
         }
         break;
     case V_PART:                                       /* the part's sound */
@@ -1260,7 +1290,13 @@ static void undo_name(uint32_t lo, uint32_t hi, char *t)
         int pb = (int)(y < __builtin_offsetof(pattern_t, bass) ? y / sizeof(dpart_t)
                        : y < __builtin_offsetof(pattern_t, brk) ? NKIT + (y - __builtin_offsetof(pattern_t, bass)) / sizeof(bpart_t)
                        : PART_BRK);
-        char *q = put_s(t, pa == pb ? PART_N[pa] : "PATTERN");
+        uint32_t r0 = __builtin_offsetof(pattern_t, rsv);
+        if (x >= r0 && y <= r0 + 2) {
+            /* The shared ON byte, or a span covering both selections, names both. */
+            pa = pb = x == y && x == r0 ? PART_303A
+                      : x == r0 + 1 ? PART_303B : -1;
+        }
+        char *q = put_s(t, pa < 0 ? "303" : pa == pb ? PART_N[pa] : "PATTERN");
         put_i(put_s(q, " P"), (int)pi + 1);
     } else if (a >= p0 && b < a0) {
         put_s(t, "PATTERNS");
@@ -2968,12 +3004,20 @@ static int step_of(int col) { return ui.spage * 16 + col; }
 #define GX 27
 static int32_t col_x(int c) { return GX + c * 13 + (c >> 2); }   /* a pixel between beats */
 
+/* Keep page visibility chronological, then show the audible source column. */
+static int playback_head(int track)
+{
+    if (!seq.playing || (eng_step[track] >> 4) != ui.spage)
+        return -1;
+    return seq_playback_source_step(&seq, track);
+}
+
 #define DROW 11                                    /* drum rows: 12 of them over both bands, a gap under */
 static void draw_drum(int band)
 {
     int k = ui.part, v, c, len = cur_pat()->drum[k].len;
     const dpart_t *d = &cur_pat()->drum[k];
-    int ph = seq.playing ? eng_step[TRK_DRUM + k] : -1;
+    int ph = playback_head(TRK_DRUM + k);
     uint16_t col = part_col(), on_dim = dim(col, 8);
     uint32_t lmarks = lock_marks(k == PART_909 ? T_909 : T_808, ui.sel[k], ui.spage * 16) |
                       lock_marks(T_PROB, k << 4 | ui.sel[k], ui.spage * 16);
@@ -2989,7 +3033,7 @@ static void draw_drum(int band)
         cv_text(5, vc(&FONT_XS, y - 1, DROW - 1), &FONT_XS, nm, sel ? C_BLACK : muted ? C_LINE : v < NDRUM ? C_GRAY : C_WHITE);
         for (c = 0; c < 16; c++) {
             int s = step_of(c), x = col_x(c), hit = s < NSTEPS && sm_get(bits, s);
-            if (s >= len) {
+            if (s >= len && s != ph) {
                 cv_rect(x + 5, y + 3, 2, 2, C_LINE);
                 continue;
             }
@@ -3026,7 +3070,7 @@ static void draw_303(int band, int gen)
 {
     int b = bidx(), c, o = band * BAND_H, n;       /* o: drawn in the screen's rows, minus the band's */
     const bpart_t *bp = &cur_pat()->bass[b];
-    int ph = seq.playing ? eng_step[TRK_BASS0 + b] : -1, lo = 127, hi = 0;
+    int ph = playback_head(TRK_BASS0 + b), lo = 127, hi = 0;
     uint16_t col = part_col();
     uint32_t lmarks = gen ? 0 : lock_marks(-1, -1, ui.spage * 16);
     char t[40], *q = t;
@@ -3054,7 +3098,7 @@ static void draw_303(int band, int gen)
     for (c = 0; c < 16; c++) {
         int s = step_of(c), x = col_x(c), g;
         const bstep_t *st = &bp->step[s < NSTEPS ? s : 0];
-        if (s >= bp->len) {
+        if (s >= bp->len && s != ph) {
             cv_rect(x + 5, ROLL_BOT + 4 - o, 2, 2, C_LINE);
             continue;
         }

@@ -37,8 +37,19 @@ typedef struct {
                                           * project), 1-16, 17 = OFF */
     uint8_t out_loud;                    /* 1: the output 6 dB hotter (the codec's full scale) */
     uint8_t usb_full;                    /* 1: USB audio at full level, the MASTER knob for the FM-1's own outputs */
-    uint8_t rsv[1];                      /* room to grow: an older, shorter object loads (zeros here) */
+    uint8_t rsv[1];                      /* Remix APPLY: 0xB4..0xB7, invalid = BEAT */
 } settings_t;
+
+/* Six signature bits distinguish legacy reserved bytes from APPLY. */
+static inline int settings_remix_apply(const settings_t *s)
+{
+    return (s->rsv[0] & 0xFCu) == 0xB4u ? s->rsv[0] & 3u : REMIX_BEAT;
+}
+static inline void settings_set_remix_apply(settings_t *s, int mode)
+{
+    if ((unsigned)mode <= REMIX_LOOP)
+        s->rsv[0] = (uint8_t)(0xB4u | mode);
+}
 
 /* the song and the motion lanes: one blob, split across OBJ_SONG and OBJ_MOTION */
 typedef struct {

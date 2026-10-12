@@ -49,19 +49,30 @@ For example, a length-8 pattern plays eight chronological slots. Those eight slo
 may select any stored source steps `1–16`, including source steps beyond the
 pattern's chronological length.
 
-## 32-Step Extension
+## 16-Step Block Rule
 
-For pattern lengths above 16, repeat the same 16-slot Remix mapping independently
-in each 16-step block:
+For normal forward Remix playback, repeat the same 16-slot Remix mapping
+independently in every 16-step block:
 
-- Block 0 maps to source steps `0–15` internally.
-- Block 1 maps to source steps `16–31` internally, using the same mapping plus 16.
+- Chronological slots `0–15` map to source steps `0–15` using the selected Remix
+  mapping.
+- Chronological slots `16–31` use the same mapping plus 16.
+- Chronological slots `32–47` use the same mapping plus 32.
+- Chronological slots `48–63` use the same mapping plus 48.
 
-For a length-24 pattern, play all 16 mapped chronological slots of block 0, then
-the first eight chronological mapping slots of block 1.
+Pattern length determines only the number of chronological playback slots.
+Partial final blocks use only the required number of chronological mapping slots.
 
-This block mapping does not resolve musical-reverse behavior for partial lengths
-or 32-step patterns; those cases remain unresolved.
+Examples:
+
+- Length 24: block 0 has all 16 slots; block 1 has its first eight chronological
+  slots.
+- Length 40: blocks 0 and 1 have all 16 slots; block 2 has its first eight
+  chronological slots.
+- Length 64: four complete 16-step Remix blocks.
+
+This rule does not resolve musical-reverse or ping-pong behavior for partial or
+multi-block patterns; those cases remain unresolved.
 
 ## 303 Note, Tie, and Slide Behavior
 
@@ -101,7 +112,7 @@ The following are **unresolved** and must not be invented:
 - Naming and UI treatment for conventional X0X reverse versus Orb-style musical
   reverse.
 - Exact musical ping-pong behavior.
-- Exact musical-reverse behavior for partial lengths and 32-step patterns.
+- Exact musical-reverse behavior for partial lengths and multi-block patterns.
 
 The integration of Remix with existing X0X directions requires inspection and an
 explicit decision wherever the requirements above do not determine behavior.
@@ -147,7 +158,7 @@ Add focused tests for:
 - Swing based on chronological parity.
 - 303 chronological TIE/slide lookahead.
 - Complete drum columns, including voice hit bits and accent.
-- The 32-step block mapping and partial second blocks.
+- The 16-step block mapping through length 64, including partial final blocks.
 - Reverse interaction, once the relevant unresolved behavior is decided.
 
 Import and validate the historical table separately; generated or packed data must
@@ -177,7 +188,8 @@ validation before implementation:
 - Decide the naming and UI treatment for conventional X0X reverse and Orb-style
   musical reverse.
 - Decide exact musical ping-pong behavior.
-- Decide exact musical-reverse behavior for partial lengths and 32-step patterns.
+- Decide exact musical-reverse behavior for partial lengths and multi-block
+  patterns.
 - Inspect persistent pattern/project structures, reserved bytes, and persistence
   semantics. Finalize the exact per-track selection/state layout while avoiding
   structure-size increases where possible.

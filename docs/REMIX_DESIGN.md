@@ -1,8 +1,8 @@
 # Orb-style Remix Design Specification
 
 This document is the authoritative musical and sequencing specification for the
-Remix feature in `fm1-x0x-rmx`. It records agreed requirements, not an implemented
-feature. Items explicitly marked unresolved require a decision or repository
+Remix feature in `fm1-x0x-rmx`. It records agreed requirements; the runtime-only
+sequencer integration status is described below. Items explicitly marked unresolved require a decision or repository
 inspection before implementation; they must not be inferred from this document.
 
 ## Scope
@@ -141,6 +141,34 @@ are **unresolved** and must be finalized during implementation design. A1 remain
 a valid neutral mapping regardless of that design.
 
 ## Implementation Discipline and Validation
+
+### First sequencer integration (runtime only)
+
+The sequencer now maps source reads for Forward playback only. `seq_track_t.pos`,
+step callbacks, length/wrap/bar handling, transport, cueing, mutation cadence and
+swing remain chronological. Drums read hit bits and accent from one mapped
+column. Bass reads the mapped current event and maps the next chronological slot
+separately for TIE lookahead; previous-slide state still belongs to the previously
+played event. Reverse, Ping-Pong and Random bypass Remix for bass; drums have no
+direction setting. BREAK is unchanged.
+
+`seq_set_remix()` is a temporary internal control for each eligible track, using
+zero-based bank/pattern and an enable flag. Call it while stopped or between audio
+blocks. All selections default OFF in `seq_init()`. They survive transport and
+pattern switches, but are not stored in projects. No UI or persistent layout is
+implemented in this step.
+
+Motion, automation and p-locks are not mapped: the existing step callback receives
+the chronological slot and its existing directional lookahead. With Remix active,
+the mapped source event therefore hears the chronological slot's parameter and
+probability lane values, not those of its original stored source slot. Conditional
+probability cycles still use chronological pattern wraps. Drum chance is still
+checked per triggered voice; repeated source hits get the existing chance checks
+on each visit. Bass chance remains checked by the existing note-on sink: a TIE
+that continues a sounding note does not add a new chance check, while a TIE after
+release still triggers the existing note-on path. The sequencer's sounding/slide
+state and MIDI behavior when the bass sink rejects a note are unchanged. Future
+decisions about source-following automation or probability are unresolved here.
 
 Before implementation, inspect the current sequencer, pattern persistence, UI,
 motion, and tests. Verify the relevant execution paths and structures before

@@ -88,7 +88,7 @@ typedef struct {
 } seq_sink_t;
 
 typedef struct {                      /* one part's runtime */
-    uint8_t pos;                      /* current step */
+    uint8_t pos;                      /* chronological playback slot, never a Remix source step */
     int8_t pp_dir;                    /* ping-pong direction */
     uint8_t started;                  /* the first step has fired since start */
     uint8_t sounding;                 /* 303: a note is held */
@@ -130,9 +130,14 @@ typedef struct {
     volatile uint8_t req_start, req_stop, req_cont; /* transport requests from the UI / MIDI */
     uint32_t mut_rng[NBASS];          /* auto-mutate random streams */
     uint8_t bass_notes_out[NBASS];    /* note echoed on MIDI, for the note off */
+    uint16_t remix[NKIT + NBASS];     /* runtime only: bit 8 ON, bits 4-7 bank, bits 0-3 pattern */
 } seq_t;
 
 void seq_init(seq_t *s, pattern_t *patterns);
+/* Temporary internal control; call while stopped or between audio blocks.
+ * Zero-based bank/pattern 0..15. Invalid selections and BREAK are ignored.
+ * Defaults OFF; independent of pattern storage and transport resets. */
+void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled);
 uint32_t seq_until_event(seq_t *s, uint32_t n);
 void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o);
 

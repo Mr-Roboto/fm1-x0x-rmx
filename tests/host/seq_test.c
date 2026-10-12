@@ -412,6 +412,169 @@ static void test_tb3po_matches_reference(void)
 }
 #endif
 
+/* Remix oracle: materialize the expected chronological pattern from explicit
+ * historical A3/A5/A7/A8 rows, then compare every callback and gate time with
+ * unmodified forward playback. This also checks wraps and partial blocks. */
+static const uint8_t RM_ROWS[4][16] = {
+    {0, 5, 2, 7, 0, 5, 2, 7, 8, 13, 10, 15, 8, 13, 10, 15}, /* 909 A3 */
+    {0, 9, 2, 11, 4, 13, 6, 15, 0, 9, 2, 11, 4, 13, 6, 15}, /* 808 A5 */
+    {0, 13, 2, 15, 0, 13, 2, 15, 0, 13, 2, 15, 0, 13, 2, 15}, /* 303A A7 */
+    {0, 9, 6, 15, 0, 9, 6, 15, 0, 9, 6, 15, 0, 9, 6, 15}, /* 303B A8 */
+};
+static const int RM_PAT[4] = {2, 4, 6, 7};
+static ev_t reference[100000];
+static int nreference;
+static seq_track_t reference_tracks[NTRACKS];
+static void rm_step(void *ctx, int part, int slot)
+{
+    (void)ctx;
+    CHECK(S.t[part].pos == slot, "callback and track position agree");
+    log_ev(E_MIDI + 1, part, slot, S.t[part].bars, 0);
+}
+static const seq_sink_t RM_SINK = {s_drum, s_on, s_off, s_brk, s_brkstop, s_midi, rm_step, 0};
+static void rm_run(uint32_t samples)
+{
+    seq_start(&S);
+    seq_advance(&S, 0, &RM_SINK);
+    while (samples) {
+        uint32_t k = seq_until_event(&S, samples < 256 ? samples : 256);
+        now += k;
+        seq_advance(&S, k, &RM_SINK);
+        samples -= k;
+    }
+}
+static void rm_fixture(int len, int dir)
+{
+    int t, p, v;
+    reset();
+    S.bpm = 120.0f;
+    S.send_notes = S.send_clock = 1;
+    P[0].swing = 100;
+    P[0].brk.steps = 0x5A31;
+    for (t = 0; t < 4; t++) {
+        CHECK(S.remix[t] == 0, "Remix defaults OFF for track %d", t);
+        if (t < NKIT) {
+            dpart_t *d = &P[0].drum[t];
+            d->len = len;
+            for (p = 0; p < NSTEPS; p++) {
+                uint32_t bit = 1u << (p & 31);
+                for (v = 0; v < NDRUM; v++)
+                    if (v == p % NDRUM || v == (p + 3) % NDRUM || v == 0)
+                        d->hit[v][p >> 5] |= bit;
+                if (p % 3 == 1)
+                    d->accent[p >> 5] |= bit;
+            }
+        } else {
+            bpart_t *b = &P[0].bass[t - NKIT];
+            b->len = len;
+            b->dir = dir;
+            for (p = 0; p < NSTEPS; p++)
+                b->step[p] = (bstep_t){30 + p, G_NOTE | (p % 3 == 1 ? BS_ACCENT : 0)};
+            /* A7: note -> non-adjacent TIE with slide -> accented note ->
+             * REST. The original adjacent step 1 is a REST: only mapped
+             * chronological lookahead can hold the first note. A8 also
+             * exercises TIE after REST and repeated selected steps. */
+            for (p = 0; p < NSTEPS; p += 16) {
+                b->step[p + 1].flags = G_REST;
+                b->step[p + 13].flags = G_TIE | BS_SLIDE;
+                b->step[p + 2].flags = G_NOTE | BS_ACCENT;
+                b->step[p + 15].flags = G_REST;
+                b->step[p + 9].flags = G_TIE | BS_ACCENT;
+                b->step[p + 6].flags = G_NOTE | BS_SLIDE;
+            }
+        }
+    }
+}
+static void rm_materialize(void)
+{
+    pattern_t original = P[0];
+    int t, p, v;
+    for (t = 0; t < 4; t++) {
+        if (t < NKIT) {
+            memset(P[0].drum[t].hit, 0, sizeof P[0].drum[t].hit);
+            memset(P[0].drum[t].accent, 0, sizeof P[0].drum[t].accent);
+        }
+        for (p = 0; p < NSTEPS; p++) {
+            int src = (p / 16) * 16 + RM_ROWS[t][p % 16];
+            if (t < NKIT) {
+                const dpart_t *d = &original.drum[t];
+                uint32_t bit = 1u << (src & 31), dst = 1u << (p & 31);
+                for (v = 0; v < NDRUM; v++)
+                    if (d->hit[v][src >> 5] & bit)
+                        P[0].drum[t].hit[v][p >> 5] |= dst;
+                if (d->accent[src >> 5] & bit)
+                    P[0].drum[t].accent[p >> 5] |= dst;
+            } else
+                P[0].bass[t - NKIT].step[p] = original.bass[t - NKIT].step[src];
+        }
+    }
+}
+static void rm_save_reference(void)
+{
+    nreference = nev;
+    memcpy(reference, evs, nev * sizeof *evs);
+    memcpy(reference_tracks, S.t, sizeof S.t);
+}
+static void rm_compare(int len, int dir)
+{
+    int i;
+    CHECK(nev == nreference, "len %d dir %d: event count %d vs %d", len, dir, nev, nreference);
+    for (i = 0; i < nev && i < nreference; i++) {
+        if (memcmp(&evs[i], &reference[i], sizeof *evs)) {
+            CHECK(0, "len %d dir %d event %d: got %u/%d/%d/%d/%d/%d expected %u/%d/%d/%d/%d/%d",
+                  len, dir, i, evs[i].t, evs[i].kind, evs[i].a, evs[i].b, evs[i].c, evs[i].d,
+                  reference[i].t, reference[i].kind, reference[i].a, reference[i].b, reference[i].c, reference[i].d);
+            break;
+        }
+    }
+    CHECK(!memcmp(reference_tracks, S.t, sizeof S.t), "len %d dir %d: chronological runtime unchanged", len, dir);
+}
+static void test_remix_sequencer(void)
+{
+    static const int lengths[] = {8, 16, 24, 32, 40, 48, 64};
+    int l, dir, t;
+    for (l = 0; l < (int)(sizeof lengths / sizeof lengths[0]); l++) {
+        int len = lengths[l];
+        uint32_t samples = (uint32_t)(5512.5 * (len * 2 + 1));
+        for (dir = DIR_FWD; dir <= DIR_RANDOM; dir++) {
+            rm_fixture(len, dir);
+            /* Non-forward bass stays original; drums are always forward. */
+            if (dir == DIR_FWD)
+                rm_materialize();
+            else {
+                seq_set_remix(&S, 0, 0, RM_PAT[0], 1);
+                seq_set_remix(&S, 1, 0, RM_PAT[1], 1);
+            }
+            rm_run(samples);
+            rm_save_reference();
+            rm_fixture(len, dir);
+            for (t = 0; t < 4; t++)
+                seq_set_remix(&S, t, 0, RM_PAT[t], 1);
+            seq_set_remix(&S, TRK_BRK, 0, 6, 1); /* must be ignored */
+            rm_run(samples);
+            rm_compare(len, dir);
+        }
+        /* OFF with non-neutral selections and enabled A1 are byte-exact. */
+        rm_fixture(len, DIR_FWD);
+        for (t = 0; t < 4; t++)
+            seq_set_remix(&S, t, 0, RM_PAT[t], 0);
+        rm_run(samples);
+        rm_save_reference();
+        rm_fixture(len, DIR_FWD);
+        for (t = 0; t < 4; t++)
+            seq_set_remix(&S, t, 0, 0, 1);
+        rm_run(samples);
+        rm_compare(len, DIR_FWD);
+    }
+    reset();
+    seq_set_remix(&S, -1, 0, 0, 1);
+    seq_set_remix(&S, NTRACKS, 0, 0, 1);
+    seq_set_remix(&S, 0, 16, 0, 1);
+    seq_set_remix(&S, 0, 0, -1, 1);
+    CHECK(S.remix[0] == 0, "invalid internal controls ignored");
+    printf("  Remix: independent source columns, TIE/slide, repeats, partial blocks, chronological swing/callbacks, BREAK, OFF/A1 and directions checked\n");
+}
+
 int main(void)
 {
     test_drum_timing();
@@ -422,6 +585,7 @@ int main(void)
     test_song();
     test_ext_clock_and_midi_out();
     test_break_clock();
+    test_remix_sequencer();
 #ifdef REF_TB3PO
     test_tb3po_matches_reference();
 #endif

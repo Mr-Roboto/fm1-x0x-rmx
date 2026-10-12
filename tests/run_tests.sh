@@ -29,11 +29,11 @@ seq_test() {
     if [ -f "$TB3PO_REF" ]; then
         ref="$(cd "$(dirname "$TB3PO_REF")" && pwd)/$(basename "$TB3PO_REF")"
         $CC -O2 -ffp-contract=off -Wall -Wextra "-DREF_TB3PO=\"$ref\"" -o $OUT/seq_test tests/host/seq_test.c \
-            firmware/src/seq/sequencer.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
+            -Ibuild/gen firmware/src/seq/sequencer.c firmware/src/seq/remix.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
     else
         echo "(no schwung-tb3po checkout at $TB3PO_REF: the TB-3PO comparison is skipped)"
         $CC -O2 -ffp-contract=off -Wall -Wextra -o $OUT/seq_test tests/host/seq_test.c \
-            firmware/src/seq/sequencer.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
+            -Ibuild/gen firmware/src/seq/sequencer.c firmware/src/seq/remix.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
     fi
     $OUT/seq_test
 }

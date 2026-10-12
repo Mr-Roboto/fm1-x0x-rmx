@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* X0X sequencer; see sequencer.h for the model. */
 #include "sequencer.h"
+#include "remix.h"
 #include "tb3po.h"
 
 #define NEVER 0xFFFFFFFFu
@@ -54,6 +55,25 @@ static const dpart_t *dpart(const seq_t *s, int k) { return &s->pat[s->ppat[k]].
 static int is_drum(int t) { return t < NKIT; }
 static int is_bass(int t) { return t >= TRK_BASS0 && t < TRK_BASS0 + NBASS; }
 static bpart_t *bpart(const seq_t *s, int b) { return &s->pat[s->ppat[TRK_BASS0 + b]].bass[b]; }
+
+void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled)
+{
+    if ((unsigned)track >= NKIT + NBASS || (unsigned)bank >= 16u || (unsigned)pattern >= 16u)
+        return;
+    s->remix[track] = (uint16_t)((enabled ? 0x100u : 0u) | (unsigned)bank << 4 | (unsigned)pattern);
+}
+
+/* Only source reads use this mapping. All traversal, timing and callbacks use
+ * chronological slots. Other directions retain their existing source order. */
+static int source_step(const seq_t *s, int t, int chronological_slot)
+{
+    uint16_t selection;
+    if (t == TRK_BRK || (is_bass(t) && (bpart(s, t - TRK_BASS0)->dir & 3) != DIR_FWD))
+        return chronological_slot;
+    selection = s->remix[t];
+    return selection & 0x100u ? remix_source_step((selection >> 4) & 15u, selection & 15u,
+                                                (uint8_t)chronological_slot) : chronological_slot;
+}
 
 int seq_part_len(const seq_t *s, int t)
 {
@@ -158,7 +178,7 @@ static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, 
 {
     seq_track_t *tr = &s->t[TRK_BASS0 + b];
     bpart_t *bp = bpart(s, b);
-    const bstep_t *st = &bp->step[p];
+    const bstep_t *st = &bp->step[source_step(s, TRK_BASS0 + b, p)];
     int gate = bstep_gate(st), note, hold, nx;
     uint8_t prev_slide = tr->held_note & 0x80u;     /* bit 7: the step that sounded slides on */
     if (s->mute & (1u << (MUTE_BASS0 + b)))
@@ -183,6 +203,7 @@ static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, 
         tr->sounding = 1;
     }
     nx = next_pos(s, TRK_BASS0 + b, p, 0);
+    nx = source_step(s, TRK_BASS0 + b, nx);
     hold = (st->flags & BS_SLIDE) || bstep_gate(&bp->step[nx]) == G_TIE;
     tr->held_note = (uint8_t)((note & 0x7F) | ((st->flags & BS_SLIDE) ? 0x80 : 0));
     tr->to_off = hold ? 0 : carry + step_q8 / 2u;
@@ -323,7 +344,7 @@ static uint32_t fire_step(seq_t *s, int t, const seq_sink_t *o)
     if (o->step)                                     /* first: the step's motion and p-locks, which the hit */
         o->step(o->ctx, t, p);                       /* below must hear (a drum takes its tune as it fires) */
     if (is_drum(t))
-        fire_drum(s, t, p, o);
+        fire_drum(s, t, source_step(s, t, p), o);
     else if (t == TRK_BRK) {
         if (o->brk)
             o->brk(o->ctx, p, tr->bars, (float)L / 256.0f,

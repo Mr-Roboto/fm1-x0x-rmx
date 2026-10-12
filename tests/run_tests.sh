@@ -22,6 +22,7 @@ run() {
     fi
 }
 W="-O2 -ffp-contract=off -Wall -Wextra -Wdouble-promotion -Werror"
+run remix sh tests/host/run_remix.sh
 run fastmath sh -c "$CC -O2 -ffp-contract=off -Wall -Wextra -Werror -o $OUT/fastmath_test tests/host/fastmath_test.c -lm && $OUT/fastmath_test"   # its reference is double on purpose
 TB3PO_REF="${TB3PO_REF:-../schwung-tb3po/src/dsp/tb3po.c}"
 seq_test() {

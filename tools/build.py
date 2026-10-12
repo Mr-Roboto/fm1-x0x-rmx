@@ -42,7 +42,7 @@ CFLAGS = ["-Os", "-ffunction-sections", "-fno-builtin", "-Wall", "-Wno-unused-fu
 FPU = ["-mcpu=r3", "-mfprev1", "-ffp-contract=off"]
 # the DSP, the sequencer and the audio engine: separate units at -O2
 O2_UNITS = ["dsp/drum909.c", "dsp/drum808.c", "dsp/bass303.c", "dsp/breaks.c", "dsp/fxbus.c", "dsp/master.c",
-            "seq/sequencer.c", "seq/tb3po.c", "seq/pattern.c", "seq/motion.c", "app/engine.c"]
+            "seq/sequencer.c", "seq/tb3po.c", "seq/pattern.c", "seq/motion.c", "seq/remix.c", "app/engine.c"]
 LINE = re.compile(r"^\s*([0-9a-f]+):\s+((?:[0-9a-f]{2} )+)\s*\t(.*)$")
 
 # SDK files of AC79NN_SDK_V1.2.1_2023-12-13 (the tested version)
@@ -130,7 +130,8 @@ def generate():
     GEN.mkdir(parents=True, exist_ok=True)
     tools = SRC / "tools"
     cmds = [[tools / "gen_font.py", GEN / "felucca_font.h"],
-            [tools / "gen_drum_samples.py", GEN / "x0x_drum_samples.h"]]
+            [tools / "gen_drum_samples.py", GEN / "x0x_drum_samples.h"],
+            [tools / "gen_remix.py", GEN / "x0x_remix_table.h"]]
     procs = [subprocess.Popen([sys.executable, *map(str, c)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True) for c in cmds]
     failed = []

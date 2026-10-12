@@ -310,13 +310,22 @@ TB-3PO has two pages (press ARP again, or turn SELECT):
 
 - GENERATE: DENS, ACCENT and SLIDE set how many steps play, are accented and slide. OCTS sets
   the range, from 1 to 3 octaves.
-- SCALE: ROOT, SCALE (minor, Phrygian, harmonic minor, minor pentatonic, Dorian or major),
+- SCALE: ROOT, SCALE (22 scales; new generator configurations default to Minor Pentatonic / MPEN),
   OCTAVE, and MUTATE, which mutates the line by itself every 1–16 bars (or never).
 
 These knobs don't change the line you're hearing. They set up the next OCT+ or OCT-, so your
 line stays exactly as it is, hand edits included, until you press one. When the knobs no longer
 match the line, the screen shows NEW LINE with a star. The same settings and seed always give
-the same line, the same one Schwung's TB-3PO module writes.
+the same line. The six original scales also match Schwung's TB-3PO module when selected
+by the same scale name.
+
+Scale selection follows this order: MPEN, PMAJ, EGYP, HIRA, MIN, MAJ, DOR, PHRY,
+LYD, MIXO, LOCR, HARM, MELM, HMAJ, ALTR, GYPS, ROMN, BHAI, MARV, PURV, TODI, ARAB.
+The [German scale reference](TB3PO_SCALES.md) lists all intervals and musical usage ideas.
+The numeric indices deliberately changed: older saved scale selections may now resolve to
+different scales. Projects and their written notes are retained, without automatic index migration.
+The MPEN initialization default does not change existing saved scale selections.
+Reselect the desired scale before generating or mutating, including automatic mutation.
 
 To edit the line by hand, press SEQ; to shape its sound, EDIT.
 

@@ -13,6 +13,7 @@ The factory sound is set up for big beat, so it should make noise the moment you
 - **Try it in your browser** (no FM-1 needed): <https://charlesvestal.github.io/fm1-x0x/emu/>
 - **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-x0x/install/>
 - **Read the manual**: <https://charlesvestal.github.io/fm1-x0x/manual/>
+- **TB-3PO scale reference (German)**: [22 scales, intervals and usage](docs/TB3PO_SCALES.md)
 - **Download the firmware file**: [releases](https://github.com/charlesvestal/fm1-x0x/releases)
 
 > **X0X is in beta.** It's solid for everyday playing, but a very busy pattern can push the FM-1

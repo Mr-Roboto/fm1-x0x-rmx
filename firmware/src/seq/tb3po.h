@@ -3,11 +3,12 @@
  * of the Phazerville Hemisphere Suite TB_3PO applet, (c) djphazer and contributors,
  * GPL-3.0). The random draws happen in the same order as schwung-tb3po's
  * generate_pattern / mutate_pattern, so a seed and settings give the same line on
- * both. */
+ * both when selecting the same original scale by name. */
 #pragma once
 #include "pattern.h"
 
-#define TB3PO_NSCALES 6
+#define TB3PO_NSCALES 22
+#define TB3PO_DEFAULT_SCALE 0 /* Minor Pentatonic (MPEN), new configurations only */
 extern const char *const TB3PO_SCALE_NAMES[TB3PO_NSCALES];
 
 void tb3po_defaults(tb3po_cfg_t *g, uint32_t seed);

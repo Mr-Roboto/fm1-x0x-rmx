@@ -360,6 +360,14 @@ static void test_break_clock(void)
     printf("  break clock: %d 16ths, bars counted, step mask honoured\n", k);
 }
 
+static void test_tb3po_default_scale(void)
+{
+    tb3po_cfg_t g;
+    tb3po_defaults(&g, 123);
+    CHECK(g.scale == 0 && !strcmp(TB3PO_SCALE_NAMES[g.scale], "MPEN"),
+          "new TB-3PO configurations default to Minor Pentatonic at index 0");
+}
+
 /* ---- TB-3PO against schwung-tb3po: include its plugin source and call its generator */
 #ifdef REF_TB3PO
 #define move_plugin_init_v2 ref_move_plugin_init_v2
@@ -369,7 +377,20 @@ static void test_break_clock(void)
 #include REF_TB3PO
 static void test_tb3po_matches_reference(void)
 {
+    /* Reference indices describe its own ordering, not persistent IDs in this fork. */
+    static const char *const ref_names[] = {"MIN", "PHRY", "HARM", "MPEN", "DOR", "MAJ"};
+    uint8_t scale_map[6];
     int seed, len, i, same = 0, total = 0;
+    for (i = 0; i < 6; i++) {
+        int j;
+        for (j = 0; j < TB3PO_NSCALES; j++)
+            if (!strcmp(ref_names[i], TB3PO_SCALE_NAMES[j]))
+                break;
+        CHECK(j < TB3PO_NSCALES, "original scale %s is available", ref_names[i]);
+        if (j == TB3PO_NSCALES)
+            return;
+        scale_map[i] = (uint8_t)j;
+    }
     for (seed = 1; seed < 400; seed++) {
         for (len = 8; len <= 32; len += 8) {
             tb3po_slot_t ref;
@@ -390,7 +411,7 @@ static void test_tb3po_matches_reference(void)
             b.gen.accent = (uint8_t)(seed % 90);
             b.gen.slide = (uint8_t)(seed % 60);
             b.gen.oct_range = (uint8_t)(1 + seed % 3);
-            b.gen.scale = (uint8_t)(seed % 6);
+            b.gen.scale = scale_map[seed % 6];
             b.gen.root = (uint8_t)(seed % 12);
             tb3po_generate(&b);
             for (i = 0; i < len; i++) {
@@ -643,6 +664,7 @@ int main(void)
     test_ext_clock_and_midi_out();
     test_break_clock();
     test_remix_sequencer();
+    test_tb3po_default_scale();
 #ifdef REF_TB3PO
     test_tb3po_matches_reference();
 #endif

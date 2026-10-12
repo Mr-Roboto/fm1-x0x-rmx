@@ -198,7 +198,7 @@ static const char *const THEME_N[] = {"GREEN", "AMBER", "CYAN", "RED", "MONO"};
 enum { G_DENS, G_ACC, G_SLIDE, G_OCTS, G_ROOT, G_SCALE, G_BASE, G_MUT, NGEN };
 static const x0x_param_t GEN_P[NGEN] = {
     {"DENS", 100, 70, 0}, {"ACCENT", 100, 40, 0}, {"SLIDE", 100, 25, 0}, {"OCTS", 2, 1, 0},
-    {"ROOT", 11, 9, ROOT_N}, {"SCALE", TB3PO_NSCALES - 1, 0, TB3PO_SCALE_NAMES}, {"OCTAVE", 4, 1, 0},
+    {"ROOT", 11, 9, ROOT_N}, {"SCALE", TB3PO_NSCALES - 1, TB3PO_DEFAULT_SCALE, TB3PO_SCALE_NAMES}, {"OCTAVE", 4, 1, 0},
     {"MUTATE", 16, 0, 0},
 };
 enum { SQ_SWING, SQ_DLEN, SQ_DRATE, SQ_BLEN, SQ_BRATE, SQ_BDIR, SQ_BTRANS, SQ_TEMPO, SQ_ACCENT, SQ_CLK, SQ_NOTES,

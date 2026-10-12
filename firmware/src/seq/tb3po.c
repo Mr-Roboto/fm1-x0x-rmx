@@ -4,15 +4,40 @@
 
 typedef struct { int8_t deg[7]; uint8_t len; } scale_t;
 
-static const scale_t SCALES[TB3PO_NSCALES] = {     /* schwung-tb3po's SCALES, same order */
-    {{0, 2, 3, 5, 7, 8, 10}, 7},                     /* Minor */
-    {{0, 1, 3, 5, 7, 8, 10}, 7},                     /* Phrygian */
-    {{0, 2, 3, 5, 7, 8, 11}, 7},                     /* HarmMinor */
-    {{0, 3, 5, 7, 10, 0, 0}, 5},                     /* MinPent */
-    {{0, 2, 3, 5, 7, 9, 10}, 7},                     /* Dorian */
-    {{0, 2, 4, 5, 7, 9, 11}, 7},                     /* Major */
+/* Preserve the historical invalid-index fallback independently of new defaults. */
+#define TB3PO_FALLBACK_SCALE 4 /* Natural Minor (MIN) */
+
+/* Display order; indices deliberately differ from schwung-tb3po. */
+static const scale_t SCALES[TB3PO_NSCALES] = {
+    {{0, 3, 5, 7, 10, 0, 0}, 5}, /* MinPent */
+    {{0, 2, 4, 7, 9, 0, 0}, 5}, /* Major Pentatonic */
+    {{0, 2, 5, 7, 10, 0, 0}, 5}, /* Egyptian Pentatonic */
+    {{0, 2, 3, 7, 8, 0, 0}, 5}, /* Hirajoshi */
+    {{0, 2, 3, 5, 7, 8, 10}, 7}, /* Minor */
+    {{0, 2, 4, 5, 7, 9, 11}, 7}, /* Major */
+    {{0, 2, 3, 5, 7, 9, 10}, 7}, /* Dorian */
+    {{0, 1, 3, 5, 7, 8, 10}, 7}, /* Phrygian */
+    {{0, 2, 4, 6, 7, 9, 11}, 7}, /* Lydian */
+    {{0, 2, 4, 5, 7, 9, 10}, 7}, /* Mixolydian */
+    {{0, 1, 3, 5, 6, 8, 10}, 7}, /* Locrian */
+    {{0, 2, 3, 5, 7, 8, 11}, 7}, /* HarmMinor */
+    {{0, 2, 3, 5, 7, 9, 11}, 7}, /* Melodic Minor */
+    {{0, 2, 4, 5, 7, 8, 11}, 7}, /* Harmonic Major */
+    {{0, 1, 3, 4, 6, 8, 10}, 7}, /* Altered */
+    {{0, 2, 3, 6, 7, 8, 11}, 7}, /* Hungarian Minor */
+    {{0, 2, 3, 6, 7, 9, 10}, 7}, /* Romanian Minor */
+    {{0, 1, 4, 5, 7, 8, 11}, 7}, /* Bhairav Thaat */
+    {{0, 1, 4, 6, 7, 9, 11}, 7}, /* Marva Thaat */
+    {{0, 1, 4, 6, 7, 8, 11}, 7}, /* Purvi Thaat */
+    {{0, 1, 3, 6, 7, 8, 11}, 7}, /* Todi Thaat */
+    {{0, 2, 4, 5, 6, 8, 10}, 7}, /* Arabic */
 };
-const char *const TB3PO_SCALE_NAMES[TB3PO_NSCALES] = {"MIN", "PHRY", "HARM", "MPEN", "DOR", "MAJ"};
+const char *const TB3PO_SCALE_NAMES[TB3PO_NSCALES] = {
+    "MPEN", "PMAJ", "EGYP", "HIRA",
+    "MIN", "MAJ", "DOR", "PHRY", "LYD", "MIXO", "LOCR",
+    "HARM", "MELM", "HMAJ", "ALTR", "GYPS",
+    "ROMN", "BHAI", "MARV", "PURV", "TODI", "ARAB",
+};
 
 static uint32_t rng_u32(uint32_t *r)                 /* xorshift32, as schwung-tb3po */
 {
@@ -33,12 +58,12 @@ static float rng_f(uint32_t *r)                      /* [0, 1) */
 
 void tb3po_defaults(tb3po_cfg_t *g, uint32_t seed)
 {
-    g->density = 70;                                 /* schwung-tb3po: 0.7 / 0.4 / 0.25, 2 octaves, A minor */
+    g->density = 70;                                 /* schwung-tb3po: 0.7 / 0.4 / 0.25, 2 octaves; root A */
     g->accent = 40;
     g->slide = 25;
     g->oct_range = 2;
     g->root = 9;
-    g->scale = 0;
+    g->scale = TB3PO_DEFAULT_SCALE;
     g->base_oct = 1;                                 /* note 24 + root: schwung-tb3po's base */
     g->mutate_bars = 0;
     g->seed = seed ? seed : 0xBEEF;
@@ -48,7 +73,7 @@ static int clampi(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : v;
 
 static uint8_t note_of(const tb3po_cfg_t *g, int degree, int oct)
 {
-    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : 0];
+    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : TB3PO_FALLBACK_SCALE];
     return (uint8_t)clampi(12 * (g->base_oct + 1) + g->root + sc->deg[degree] + 12 * oct, 0, 127);
 }
 
@@ -78,7 +103,7 @@ static uint8_t roll_kind(uint32_t *r, const tb3po_cfg_t *g)
 void tb3po_generate(bpart_t *b)
 {
     tb3po_cfg_t *g = &b->gen;
-    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : 0];
+    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : TB3PO_FALLBACK_SCALE];
     int range = clampi(g->oct_range, 1, 3), len = clampi(b->len, 1, NSTEPS), i, any = 0;
     uint32_t r = g->seed ? g->seed : 1;
     for (i = 0; i < NSTEPS; i++) {
@@ -113,7 +138,7 @@ void tb3po_generate(bpart_t *b)
 void tb3po_mutate(bpart_t *b, uint32_t *rng)
 {
     tb3po_cfg_t *g = &b->gen;
-    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : 0];
+    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : TB3PO_FALLBACK_SCALE];
     int range = clampi(g->oct_range, 1, 3), len = clampi(b->len, 1, NSTEPS), i;
     uint32_t r = *rng ? *rng : (g->seed ? g->seed : 1);
     for (i = 0; i < len; i++) {

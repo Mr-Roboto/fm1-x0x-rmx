@@ -1050,9 +1050,13 @@ static int copy_part(int dst, int src, int part)
         d->drum[part] = a->drum[part];
         if (part == PART_909)
             d->swing = a->swing;                      /* the 909 is the bar: its groove goes with it */
-    } else if (part < PART_BRK)
+    } else if (part < PART_BRK) {
+        uint8_t selection = pattern_remix_selection(a, part);
+        int enabled = pattern_remix_enabled(a, part);
         d->bass[part - NKIT] = a->bass[part - NKIT];
-    else
+        pattern_set_remix_selection(d, part, selection >> 4, selection & 15u);
+        pattern_set_remix_enabled(d, part, enabled);
+    } else
         d->brk = a->brk;
     clear_lanes(dst, part);
     for (k = 0; k < NLANE; k++) {                     /* a copy lands on pattern dst: never copied again */

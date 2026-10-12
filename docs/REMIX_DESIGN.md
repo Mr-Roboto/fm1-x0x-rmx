@@ -1,7 +1,7 @@
 # Orb-style Remix Design Specification
 
 This document is the authoritative musical and sequencing specification for the
-Remix feature in `fm1-x0x-rmx`. It records agreed requirements; the runtime-only
+Remix feature in `fm1-x0x-rmx`. It records agreed requirements; the persistent
 sequencer integration status is described below. Items explicitly marked unresolved require a decision or repository
 inspection before implementation; they must not be inferred from this document.
 
@@ -128,21 +128,47 @@ Keep the source representation readable during development. Build-time or
 generated nibble packing into 4-bit entries is preferred over manually maintained
 packed hexadecimal data. A packed 4096-entry 4-bit table occupies **2048 bytes**.
 
-The exact reserved-byte layout and Remix ON/OFF encoding are **unresolved**
-implementation decisions to finalize after inspecting current structures.
+Remix state is persistent per pattern, with no structure-size or format change:
+
+| Part | Selection byte | State byte | ON bit |
+| --- | --- | --- | --- |
+| 909 | `drum[0].rsv[0]` | `drum[0].rsv[1]` | 0 |
+| 808 | `drum[1].rsv[0]` | `drum[1].rsv[1]` | 0 |
+| 303A | `pattern.rsv[0]` | `pattern.rsv[2]` | 0 |
+| 303B | `pattern.rsv[1]` | `pattern.rsv[2]` | 1 |
+
+Selection is `(bank << 4) | pattern`, both zero-based. A drum marker is valid
+only when `(state & 0xFE) == 0xA4` (OFF `0xA4`, ON `0xA5`). The shared bass
+marker is valid only when `(state & 0xFC) == 0xA4` (`0xA4`..`0xA7`). All
+remaining bits must match; zero, erased `0xFF`, and other invalid state bytes
+read as A1/OFF regardless of selection bytes. This marker is an explicit
+signature, not a checksum: historical bytes that exactly match it are
+indistinguishable from deliberately stored state.
+
+New patterns remain zero-initialized (no marker), reading as A1/OFF. Format-1
+migration ignores historical reserved bytes and retains these defaults. Existing
+format-2 streams need no conversion: getters safely decode missing/invalid
+markers, and valid bytes round-trip through the existing stream. First setting a
+bass state with an invalid shared marker initializes BOTH bass selections to
+A1/OFF before applying the change. Helpers in `seq/pattern.h` own the encoding;
+selection and enable setters preserve each other and the other part.
+
+Part copy includes selection and ON/OFF; bass copy explicitly transfers its
+pattern-level state without replacing the sibling's state. Part clear preserves
+Remix, just as it preserves length/rate/direction. BREAK uses no Remix bytes.
 
 ## User Interface
 
 The UI must expose Bank **A–P** and Pattern **1–16** separately for each applicable
 track.
 
-An explicit Remix ON/OFF control is desired. Its exact UI and persistence encoding
-are **unresolved** and must be finalized during implementation design. A1 remains
+An explicit Remix ON/OFF control is desired. Its exact UI
+is **unresolved**; the persistence encoding is specified above. A1 remains
 a valid neutral mapping regardless of that design.
 
 ## Implementation Discipline and Validation
 
-### First sequencer integration (runtime only)
+### Sequencer integration (persistent state)
 
 The sequencer now maps source reads for Forward playback only. `seq_track_t.pos`,
 step callbacks, length/wrap/bar handling, transport, cueing, mutation cadence and
@@ -152,11 +178,11 @@ separately for TIE lookahead; previous-slide state still belongs to the previous
 played event. Reverse, Ping-Pong and Random bypass Remix for bass; drums have no
 direction setting. BREAK is unchanged.
 
-`seq_set_remix()` is a temporary internal control for each eligible track, using
-zero-based bank/pattern and an enable flag. Call it while stopped or between audio
-blocks. All selections default OFF in `seq_init()`. They survive transport and
-pattern switches, but are not stored in projects. No UI or persistent layout is
-implemented in this step.
+`seq_set_remix()` sets persistent state on the track's currently playing pattern,
+using zero-based bank/pattern and an enable flag. Call it while stopped or between
+audio blocks. Playback reads each part's current `ppat` independently. `seq_init()`
+does not reset stored Remix state. Transport preserves it; pattern changes use
+the new pattern's stored state. No Remix UI or Orb musical reverse is implemented.
 
 Motion, automation and p-locks are not mapped: the existing step callback receives
 the chronological slot and its existing directional lookahead. With Remix active,
@@ -218,11 +244,10 @@ validation before implementation:
 - Decide exact musical ping-pong behavior.
 - Decide exact musical-reverse behavior for partial lengths and multi-block
   patterns.
-- Inspect persistent pattern/project structures, reserved bytes, and persistence
-  semantics. Finalize the exact per-track selection/state layout while avoiding
-  structure-size increases where possible.
-- Finalize the desired explicit Remix ON/OFF control's UI, behavior, and
-  persistence encoding. Do not infer those details from the neutral A1 mapping.
+- Persistent layout and legacy handling are finalized above. Preserve these sizes
+  and marker semantics in later changes.
+- Finalize the desired explicit Remix ON/OFF control's UI. Persistence is specified
+  above; A1 does not imply ON.
 - Inspect current UI and motion paths and determine their integration with the
   agreed per-track Bank/Pattern selection. Any unspecified motion behavior
   requires an explicit decision.

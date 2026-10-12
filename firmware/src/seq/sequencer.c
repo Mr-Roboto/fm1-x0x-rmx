@@ -60,18 +60,20 @@ void seq_set_remix(seq_t *s, int track, int bank, int pattern, int enabled)
 {
     if ((unsigned)track >= NKIT + NBASS || (unsigned)bank >= 16u || (unsigned)pattern >= 16u)
         return;
-    s->remix[track] = (uint16_t)((enabled ? 0x100u : 0u) | (unsigned)bank << 4 | (unsigned)pattern);
+    pattern_set_remix_selection(&s->pat[s->ppat[track]], track, bank, pattern);
+    pattern_set_remix_enabled(&s->pat[s->ppat[track]], track, enabled);
 }
 
 /* Only source reads use this mapping. All traversal, timing and callbacks use
  * chronological slots. Other directions retain their existing source order. */
 static int source_step(const seq_t *s, int t, int chronological_slot)
 {
-    uint16_t selection;
+    const pattern_t *p = &s->pat[s->ppat[t]];
+    uint8_t selection;
     if (t == TRK_BRK || (is_bass(t) && (bpart(s, t - TRK_BASS0)->dir & 3) != DIR_FWD))
         return chronological_slot;
-    selection = s->remix[t];
-    return selection & 0x100u ? remix_source_step((selection >> 4) & 15u, selection & 15u,
+    selection = pattern_remix_selection(p, t);
+    return pattern_remix_enabled(p, t) ? remix_source_step((selection >> 4) & 15u, selection & 15u,
                                                 (uint8_t)chronological_slot) : chronological_slot;
 }
 

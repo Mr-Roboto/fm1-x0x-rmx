@@ -432,16 +432,20 @@ static void rm_step(void *ctx, int part, int slot)
     log_ev(E_MIDI + 1, part, slot, S.t[part].bars, 0);
 }
 static const seq_sink_t RM_SINK = {s_drum, s_on, s_off, s_brk, s_brkstop, s_midi, rm_step, 0};
-static void rm_run(uint32_t samples)
+static void rm_advance(uint32_t samples)
 {
-    seq_start(&S);
-    seq_advance(&S, 0, &RM_SINK);
     while (samples) {
         uint32_t k = seq_until_event(&S, samples < 256 ? samples : 256);
         now += k;
         seq_advance(&S, k, &RM_SINK);
         samples -= k;
     }
+}
+static void rm_run(uint32_t samples)
+{
+    seq_start(&S);
+    seq_advance(&S, 0, &RM_SINK);
+    rm_advance(samples);
 }
 static void rm_fixture(int len, int dir)
 {
@@ -452,7 +456,7 @@ static void rm_fixture(int len, int dir)
     P[0].swing = 100;
     P[0].brk.steps = 0x5A31;
     for (t = 0; t < 4; t++) {
-        CHECK(S.remix[t] == 0, "Remix defaults OFF for track %d", t);
+        CHECK(!pattern_remix_enabled(&P[0], t) && pattern_remix_selection(&P[0], t) == 0, "Remix defaults OFF for track %d", t);
         if (t < NKIT) {
             dpart_t *d = &P[0].drum[t];
             d->len = len;
@@ -566,12 +570,65 @@ static void test_remix_sequencer(void)
         rm_run(samples);
         rm_compare(len, DIR_FWD);
     }
+    /* Independent active pattern per part; seq_init must keep saved state.
+     * Compare mapped playback to physically materialized source events. */
+    rm_fixture(24, DIR_FWD);
+    rm_materialize();
+    for (t = 0; t < 4; t++) {
+        P[t + 1] = P[0];
+        S.ppat[t] = t + 1;
+    }
+    rm_run(300000);
+    rm_save_reference();
+    rm_fixture(24, DIR_FWD);
+    for (t = 0; t < 4; t++) {
+        P[t + 1] = P[0];
+        pattern_set_remix_selection(&P[t + 1], t, 0, RM_PAT[t]);
+        pattern_set_remix_enabled(&P[t + 1], t, 1);
+        /* Deliberately conflicting state on pattern zero. */
+        pattern_set_remix_selection(&P[0], t, 15, 15);
+        pattern_set_remix_enabled(&P[0], t, 1);
+    }
+    seq_init(&S, P);
+    S.bpm = 120.0f;
+    S.send_notes = S.send_clock = 1;
+    for (t = 0; t < 4; t++)
+        S.ppat[t] = t + 1;
+    rm_run(300000);
+    rm_compare(24, DIR_FWD);
+    /* Cue a saved ON pattern from OFF during playback; compare against a
+     * physically mapped pattern, including the transition's TIE lookahead. */
+    for (int mapped = 0; mapped < 2; mapped++) {
+        rm_fixture(16, DIR_FWD);
+        pattern_t original = P[0];
+        if (!mapped) {
+            rm_materialize();
+            P[1] = P[0];
+            P[0] = original;
+        } else {
+            P[1] = original;
+            for (t = 0; t < 4; t++) {
+                pattern_set_remix_selection(&P[1], t, 0, RM_PAT[t]);
+                pattern_set_remix_enabled(&P[1], t, 1);
+            }
+        }
+        rm_run(20000);
+        for (t = 0; t < 4; t++)
+            seq_cue_part(&S, t, 1);
+        rm_advance(300000);
+        for (t = 0; t < 4; t++)
+            CHECK(S.ppat[t] == 1, "Remix pattern cue applied to part %d", t);
+        if (!mapped)
+            rm_save_reference();
+        else
+            rm_compare(16, DIR_FWD);
+    }
     reset();
     seq_set_remix(&S, -1, 0, 0, 1);
     seq_set_remix(&S, NTRACKS, 0, 0, 1);
     seq_set_remix(&S, 0, 16, 0, 1);
     seq_set_remix(&S, 0, 0, -1, 1);
-    CHECK(S.remix[0] == 0, "invalid internal controls ignored");
+    CHECK(pattern_remix_selection(&P[0], 0) == 0 && !pattern_remix_enabled(&P[0], 0), "invalid internal controls ignored");
     printf("  Remix: independent source columns, TIE/slide, repeats, partial blocks, chronological swing/callbacks, BREAK, OFF/A1 and directions checked\n");
 }
 

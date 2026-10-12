@@ -93,3 +93,14 @@ static inline int sm_any(const uint32_t *m)
 
 /* default empty pattern: 16 steps, straight, 303 lines empty with TB-3PO defaults */
 void pattern_init(pattern_t *p, uint32_t seed_a, uint32_t seed_b);
+
+/* Persistent Remix, part 0..3 = 909, 808, 303A, 303B. Selection is
+ * (bank << 4) | pattern, both zero-based. Invalid markers read as A1/OFF.
+ * Drum marker: (rsv[1] & 0xFE) == 0xA4, bit 0 ON.
+ * Bass marker: (pattern.rsv[2] & 0xFC) == 0xA4, bits 0/1 A/B ON.
+ * Setters establish the marker; selection/enable setters preserve each other.
+ * Call while stopped or between audio blocks, as with other multi-byte edits. */
+uint8_t pattern_remix_selection(const pattern_t *p, int part);
+int pattern_remix_enabled(const pattern_t *p, int part);
+void pattern_set_remix_selection(pattern_t *p, int part, int bank, int pattern);
+void pattern_set_remix_enabled(pattern_t *p, int part, int enabled);

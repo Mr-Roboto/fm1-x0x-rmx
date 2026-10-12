@@ -8,7 +8,8 @@
 Glyph format: per glyph an advance width, a bitmap width and an offset; the
 bitmap starts FONT_PAD pixels left of the pen position (room for side
 bearings); rows top to bottom, 2 pixels per byte (high nibble first),
-alpha 0..15.
+alpha 0..15. Fully transparent leading/trailing rows are omitted; per-glyph
+top offsets and row counts retain their original position in the font cell.
 """
 import sys
 from pathlib import Path
@@ -176,10 +177,17 @@ def main(out):
         h, glyphs = render(ttf, px, scale, pixel, first, last)
         if name in KEEP:
             glyphs = [g if chr(first + i) in KEEP[name] else (0, 0, []) for i, g in enumerate(glyphs)]
-        data, offs = [], []
+        data, offs, tops, rows = [], [], [], []
         for adv, bw, g in glyphs:
             offs.append(len(data))
-            for y in range(h):
+            top, end = 0, h
+            while top < end and not any(g[top * bw:(top + 1) * bw]):
+                top += 1
+            while end > top and not any(g[(end - 1) * bw:end * bw]):
+                end -= 1
+            tops.append(top if top < end else 0)
+            rows.append(end - top)
+            for y in range(top, end):
                 row = g[y * bw:(y + 1) * bw] + [0]
                 for x in range(0, bw, 2):
                     data.append((row[x] << 4) | row[x + 1])
@@ -193,8 +201,11 @@ def main(out):
                      ", ".join(str(a) for a, _, _ in glyphs) + "};")
         lines.append(f"static const uint8_t FONT_{name}_BW[{len(glyphs)}] = {{" +
                      ", ".join(str(b) for _, b, _ in glyphs) + "};")
+        lines.append(f"static const uint8_t FONT_{name}_TOP[{len(tops)}] = {{" + ", ".join(map(str, tops)) + "};")
+        lines.append(f"static const uint8_t FONT_{name}_ROWS[{len(rows)}] = {{" + ", ".join(map(str, rows)) + "};")
         lines.append(f"static const felucca_font_t FONT_{name} = {{ {h}, {PAD * scale}, {first}, {last}, "
-                     f"FONT_{name}_ADV, FONT_{name}_BW, FONT_{name}_OFF, FONT_{name}_DATA }};")
+                     f"FONT_{name}_ADV, FONT_{name}_BW, FONT_{name}_OFF, FONT_{name}_DATA, "
+                     f"FONT_{name}_TOP, FONT_{name}_ROWS }};")
         lines.append("")
         print(f"font {name}: {ttf} {px}px h {h}, digit adv {glyphs[ord('0') - first][0]}, {len(data)} B")
     print(f"font set {FONTSET}: {sum(len(l) for l in lines if l.startswith('    0x')) // 6} B (approx)")

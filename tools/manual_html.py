@@ -166,10 +166,10 @@ def convert(md):
             continue
         if ln.startswith("# "):                         # the title; X0X's own a way home (the site's root)
             t = ln[2:].strip()
-            if t == "X0X":
-                out.append('<h1><a class="home" href="../">X0X</a></h1>')
+            if t in ("X0X", "X0X-RMX"):
+                out.append(f'<h1><a class="home" href="../">{inline(t)}</a></h1>')
             else:
-                out.append(f'<a class="home" href="../">X0X</a>\n<h1>{inline(t)}</h1>')
+                out.append(f'<a class="home" href="../">X0X-RMX</a>\n<h1>{inline(t)}</h1>')
         elif ln.startswith("## "):
             t = ln[3:].strip()
             m = re.match(r"(\d+)\. (.+)", t)
@@ -238,10 +238,10 @@ def main():
     dst = Path(args[1]) if len(args) > 1 else SRC / "docs" / "manual.html"
     md = src.read_text()
     h1 = re.search(r"^# (.+)$", md, re.M)
-    title, what = ("X0X Manual", "The manual") if not h1 or h1.group(1) == "X0X" else (f"X0X: {h1.group(1)}", h1.group(1))
+    title, what = ("X0X-RMX Manual", "The manual") if not h1 or h1.group(1) in ("X0X", "X0X-RMX") else (f"X0X-RMX: {h1.group(1)}", h1.group(1))
     body = convert(md)
     page = (f"<title>{html.escape(title)}</title>\n"
-            f'<meta name="description" content="{html.escape(what)} for X0X, groovebox firmware for the M-VAVE FM-1.">\n'
+            f'<meta name="description" content="{html.escape(what)} for X0X-RMX, groovebox firmware for the M-VAVE FM-1.">\n'
             '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
             '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
             '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&'

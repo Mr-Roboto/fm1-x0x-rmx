@@ -20,4 +20,22 @@ emcc -O2 -ffp-contract=off -std=gnu99 -Wall -Wno-unused-function -Wno-unused-par
     --no-entry -sSTANDALONE_WASM -sSTACK_SIZE=1048576 -sINITIAL_MEMORY=33554432 -sFILESYSTEM=0 \
     -o build/emu/x0x.wasm web/emu/x0x_web.c $U
 cp web/emu/index.html web/emu/worklet.js web/emu/favicon.svg build/emu/
+# Local provenance only: does not change firmware identity or WebAssembly behavior.
+python3 - <<'PROVENANCE'
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+wasm = Path("build/emu/x0x.wasm")
+info = {
+    "project": "X0X-RMX",
+    "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    "branch": subprocess.check_output(["git", "branch", "--show-current"], text=True).strip(),
+    "working_tree_changes": subprocess.check_output(["git", "status", "--porcelain"], text=True).splitlines(),
+    "wasm_sha256": hashlib.sha256(wasm.read_bytes()).hexdigest(),
+    "compiler": subprocess.check_output(["emcc", "--version"], text=True).splitlines()[0],
+}
+Path("build/emu/build-info.json").write_text(json.dumps(info, indent=2) + "\n")
+PROVENANCE
 echo "emu: build/emu ($(wc -c < build/emu/x0x.wasm) B wasm)"

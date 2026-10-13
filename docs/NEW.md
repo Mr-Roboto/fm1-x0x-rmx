@@ -1,9 +1,18 @@
-# What's new
+# X0X-RMX version history
 
-The newest version first. Install it with the [web installer](../install/); the
-[manual](../manual/) covers everything in detail.
+X0X-RMX development changes come first. Physical FM-1 validation is pending; the
+installer is reserved and no tested fork release is offered. See the [manual](MANUAL.md)
+and [local website preview](PAGES.md).
 
-## Unreleased · waveform-prototype fork
+## Unreleased · orb-remix
+
+- Independent Orb-inspired Remix for 909, 808, 303A and 303B; BREAK is unaffected.
+- Grids MAP/EUCLID drum generators with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo integration.
+- Extended TB-3PO scales, phrasing and mutation controls.
+- Additional color schemes and UI improvements.
+- Dedicated X0X-RMX website preparation and browser emulator, without public installation.
+
+## Unreleased · Morph waveform in orb-remix
 
 - **Experimental Wave 3:** the 303 WAVE choices are Saw, Square and Morph. In EDIT's SEL list,
   **MORE > MORPH** moves continuously through 0 = Sharkfin, 64 = Trapezoid and
@@ -18,6 +27,11 @@ The newest version first. Install it with the [web installer](../install/); the
   **FM1 hardware validation is pending.** These branch changes are not a claim about the
   upstream releases or hosted installer. See the [local manual](MANUAL.md#6-303a-and-303b) and
   [waveform specification](TB303_WAVEFORMS_DESIGN.md).
+
+## Original X0X history (Charles Vestal)
+
+The numbered entries below are retained upstream history. Their release, installer and
+hosted emulator links refer to original X0X, not X0X-RMX or a validated fork release.
 
 ## 1.0.6 · 11 October 2026
 

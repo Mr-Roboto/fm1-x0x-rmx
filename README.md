@@ -1,27 +1,35 @@
-# X0X for the M-VAVE FM-1
+# X0X-RMX for the M-VAVE FM-1
 
-X0X turns the M-VAVE FM-1 into a groovebox: a **909**, an **808**, two **303s** with an acid line
-generator, and a **breakbeat player**, all playing at once. Each part can play its own pattern,
-you can string patterns into a song, and you can record knob moves. Everything runs in stereo,
-with a shared reverb and tape delay and a punchy master compressor. Over USB, the FM-1 is both a
-MIDI device and an audio input, with no driver needed.
+X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x),
+a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
+knob motion, reverb, tape delay and master compression.
 
-The factory sound is set up for big beat, so it should make noise the moment you press PLAY.
+This fork adds:
 
-[![X0X running on the FM-1 (watch on YouTube)](https://img.youtube.com/vi/cZLYrZaLDUk/maxresdefault.jpg)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
+- **Orb-inspired Remix:** independent Bank A–P / Pattern 1–16 selections for 909, 808,
+  303A and 303B; A1 is sequential and BREAK is unaffected.
+- **Grids MAP/EUCLID drum generation:** NEW/MUTATE, FILL, OFFSET, CHAOS and Undo for 909/808.
+- **Extended TB-3PO:** 22 scales and additional phrasing and mutation controls.
+- **303 Morph waveform:** Sharkfin through Trapezoid to Notch-Trapezoid, with independent
+  Morph values; only one 303 can use Morph at a time.
+- **Additional color schemes and UI improvements.**
 
-- **Try it in your browser** (no FM-1 needed): <https://charlesvestal.github.io/fm1-x0x/emu/>
-- **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-x0x/install/>
-- **Read the manual**: <https://charlesvestal.github.io/fm1-x0x/manual/>
-- **TB-3PO scale reference (German)**: [22 scales, intervals and usage](docs/TB3PO_SCALES.md)
-- **TB-303 waveform specification (German, experimental)**: [Implemented Wave 3 and original design mathematics](docs/TB303_WAVEFORMS_DESIGN.md)
-- **Download the firmware file**: [releases](https://github.com/charlesvestal/fm1-x0x/releases)
+**Physical FM-1 validation is pending.** Development builds are not advertised as tested
+hardware releases. No X0X-RMX public installer or firmware download is enabled in this phase.
+Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
 
-> **X0X is in beta.** It's solid for everyday playing, but a very busy pattern can push the FM-1
-> to its limit. When that happens, X0X trades a little sound quality to keep playing rather than
-> drop out. Installing it is at your own risk, though it's hard to get stuck: the web installer
-> can put M-VAVE's firmware back, an FM-1 that keeps crashing starts in a safe mode, and the
-> manual's Troubleshooting section covers the rest.
+The planned project website is **https://mr-roboto.github.io/fm1-x0x-rmx/**, subject to
+GitHub Pages configuration, deployment and verification; it is not presented here as live.
+For now, [build and preview the fork's browser emulator and website locally](docs/PAGES.md).
+
+- [User manual](docs/MANUAL.md) and [version history](docs/NEW.md)
+- [Remix specification](docs/REMIX_DESIGN.md)
+- [Drum generator documentation](docs/DRUM_GENERATOR_CORE.md)
+- [TB-3PO scale reference (German)](docs/TB3PO_SCALES.md)
+- [TB-303 waveform specification (German, experimental)](docs/TB303_WAVEFORMS_DESIGN.md)
+
+[Original X0X demonstration by Charles Vestal (YouTube)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
+shows upstream X0X, not the X0X-RMX additions.
 
 ## What's inside
 
@@ -37,7 +45,7 @@ other. Pattern changes wait for the end of the bar, and patterns can be chained.
 
 ### Experimental Wave 3 in this fork
 
-On `waveform-prototype`, each 303's WAVE offers **Saw, Square and Morph**. In EDIT's SEL list,
+On `orb-remix`, each 303's WAVE offers **Saw, Square and Morph**. In EDIT's SEL list,
 **MORE > MORPH** blends continuously from **0 = Sharkfin**, through **64 = Trapezoid**, to
 **127 = Notch-Trapezoid**. Each voice keeps its own Morph value; the default is 64, and changes
 use a 5 ms slew while Morph is sounding.
@@ -51,12 +59,11 @@ values; a conflicting loaded pair keeps A on Morph and resets B to Saw.
 Wave 3 uses the tested **cubic four-box BLEP/BLAMP** implementation. Saw/Square processing,
 the default 2× oversampling and overload guard remain unchanged. Host regressions and firmware
 and emulator builds have passed, but **FM1 hardware timing and listening validation remain
-pending**. This is an experimental branch feature, not a release claim for the upstream
-downloads or hosted emulator linked above. See the [local manual](docs/MANUAL.md#6-303a-and-303b)
+pending**. This remains experimental pending hardware validation. See the [local manual](docs/MANUAL.md#6-303a-and-303b)
 for controls and the [existing specification](docs/TB303_WAVEFORMS_DESIGN.md) for kernel
 differences and remaining quality limits.
 
-X0X is a fork of [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton
+Original X0X is a fork of [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton
 Instruments). It keeps Felucca's foundations (the hardware layer, USB, the update loader, the web
 installer and the storage) and replaces the instrument on top.
 
@@ -64,8 +71,9 @@ installer and the storage) and replaces the instrument on top.
 
 X0X doesn't ship with any recorded breaks, only two loops played by its own 909. You can load
 your own into the FM-1's three sample slots, which hold about nine one-bar loops in total.
-The [break loops page](https://charlesvestal.github.io/fm1-x0x/breaks/) does it from Chrome or
-Edge (drop the files, press Upload); from the command line:
+The locally generated `/breaks/` page preserves the Chrome/Edge uploader for a compatible
+FM-1. See [website preparation](docs/PAGES.md); hardware validation is still pending.
+The command-line tool is also retained:
 
 ```
 tools/upload_breaks.py --bars amen.wav think.wav ...   # take one bar of each and upload them
@@ -89,14 +97,18 @@ X0X is tested before it reaches the FM-1.
 
 ## Licence and credits
 
-X0X is GPL-3.0-only, like Felucca, 9W9, 8W8 and schwung-tb3po. Open303 (by Robin Schmidt) is
+X0X-RMX is GPL-3.0-only, like Felucca, 9W9, 8W8 and schwung-tb3po. Open303 (by Robin Schmidt) is
 MIT. BB Gen is ported from mestela's schwung-breakbeat with the author's permission. The 909's
 hi-hat, ride and crash samples come from ER-99 (Matthew Cieplak, GPL-3.0). The fonts are Barlow
 Semi Condensed and Terminus (SIL OFL 1.1).
+
+Grids MAP data and arithmetic are by Emilie Gillet / Mutable Instruments (GPL-3.0-or-later),
+cross-checked against DEADACTIVE's Hortator port. See [LICENSING.md](LICENSING.md) and
+[Grids source attribution](assets/grids/README.md) for the complete component notices.
 
 Felucca's own assets that aren't under its GPL (the icon set, the panel photo and the Hügelton
 drum pack) aren't part of this fork.
 
 M-VAVE and FM-1 are trademarks of their owners. TR-808, TR-909 and TB-303 are Roland trademarks,
-used here only to describe what the parts are modelled on. X0X isn't affiliated with or endorsed
+used here only to describe what the parts are modelled on. X0X-RMX is an independent fork, without implied endorsement by Charles Vestal. It isn't affiliated with or endorsed
 by M-VAVE, Roland or Hügelton Instruments.

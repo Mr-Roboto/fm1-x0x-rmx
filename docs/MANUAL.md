@@ -1,10 +1,13 @@
-# X0X
+# X0X-RMX
 
 X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakbeat player,
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-New in this version: see [What's new](https://charlesvestal.github.io/fm1-x0x/new/).
+This manual covers the X0X-RMX fork of Charles Vestal's X0X. Physical FM-1 validation
+is pending; the public installer and firmware downloads remain reserved. Website sections
+below are available in the [local preview](PAGES.md), with public deployment still pending.
+See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)
 
@@ -36,37 +39,19 @@ New in this version: see [What's new](https://charlesvestal.github.io/fm1-x0x/ne
 
 ## 1. Install
 
-**Try it first:** the [X0X emulator](https://charlesvestal.github.io/fm1-x0x/emu/) runs the same
-code in the browser, with sound, played with the mouse, a touch screen or the keyboard.
+**Try it first:** build the X0X-RMX browser emulator and site using the
+[local preview instructions](PAGES.md). The emulator runs the current fork's code with sound,
+using mouse, touch or keyboard, including Grids MAP/EUCLID.
 
-**Install:** open the [web installer](https://charlesvestal.github.io/fm1-x0x/install/) in Chrome or
-Edge, connect the FM-1 with a USB data cable and press Install. Don't unplug it while it's
-writing; when it finishes, the FM-1 restarts into X0X.
+**Install/update:** X0X-RMX hardware validation and explicit release approval are still pending.
+The future `/install/` section is reserved and offers no package or installation controls.
+Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
-**Update:** the same way. An update keeps your project: the patterns, sounds, song and settings.
-Installing another firmware does not: it keeps its own things in the same memory, so coming back
-to X0X starts with an empty project.
-
-**Go back:** "Back to the stock firmware", at the bottom of the same page, puts M-VAVE's firmware
-back (download the FM-1 V15 file from the link there, choose it, press the button). M-VAVE's own
-updater, M-UPGRADE, works too.
-
-> Installing other firmware is at your own risk. If the FM-1 ever won't start, see
-> [Recovering an FM-1 that won't start](#recovering-an-fm-1-that-won-t-start).
-
-<details><summary>Install from the command line</summary>
-
-Download the firmware file (for example `x0x-1.0.fwsc`) from the
-[releases page](https://github.com/charlesvestal/fm1-x0x/releases), get the X0X source from GitHub,
-install Python 3 with `pip3 install mido python-rtmidi`, and run:
-
-```
-python3 tools/fm1_install.py x0x-1.0.fwsc
-```
-
-(The web installer on hugelton.github.io installs Felucca, not X0X.)
-
-</details>
+The existing command-line installer, update loader and recovery tools are retained for future
+validated releases. An update normally keeps the project; installing another firmware can
+replace its storage. See [BUILDING.md](../BUILDING.md) for tooling and
+[Recovering an FM-1 that won't start](#recovering-an-fm-1-that-won-t-start) for recovery.
+These tools do not imply that a tested X0X-RMX release is available.
 
 ---
 
@@ -474,7 +459,7 @@ and sends are on the mixer's PARTS page (LFO, black key 5).
 
 ### Your own breaks
 
-Load your own loops with the [break loops page](https://charlesvestal.github.io/fm1-x0x/breaks/), in
+Load your own loops with the [locally generated break loops page](PAGES.md), in
 Chrome or Edge with the FM-1 connected. They appear after X0X's own loops as BR1, BR2 and so on.
 There's room for about 21 seconds in all: around nine one-bar loops.
 
@@ -896,7 +881,7 @@ The script downloads M-VAVE's FM-1 V15 firmware and JieLi's flash loader, and ch
 known fingerprints. It writes only the firmware area of the memory, never the bootloader or the
 FM-1's own settings, and checks everything it writes. Running it again is always safe. If it fails,
 copy everything in the Terminal window and
-[open an issue](https://github.com/charlesvestal/fm1-x0x/issues). If the FM-1 never shows up at
+[open an X0X-RMX issue](https://github.com/Mr-Roboto/fm1-x0x-rmx/issues). If the FM-1 never shows up at
 all, Felucca's [FM-1-transporter](https://github.com/kurogedelic/FM-1-transporter) (a small
 RP2040 board wired to the USB lines) can still reach it.
 
@@ -993,6 +978,7 @@ second play in the middle instead.
 X0X is free software under the GNU General Public License, version 3. If you share the
 firmware, you must also share its source code.
 
+- **X0X-RMX** is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
 - The platform (hardware layer, USB, update loader, installer and storage) is from
   **Felucca** by Leo Kuroshita, Hügelton Instruments.
 - The 909 is from **9W9** by athousanddetails, which is based on **ER-99** by Matthew
@@ -1007,4 +993,4 @@ firmware, you must also share its source code.
 - The fonts are Barlow Semi Condensed and Terminus (SIL Open Font License).
 
 M-VAVE and FM-1 are trademarks of their owners, and TR-808, TR-909 and TB-303 are Roland
-trademarks. X0X is not connected with M-VAVE, Roland or Hügelton Instruments.
+trademarks. X0X-RMX does not imply endorsement by Charles Vestal and is not connected with M-VAVE, Roland or Hügelton Instruments.

@@ -5,8 +5,9 @@ all playing at once, in stereo. Each part can play its own pattern, you can arra
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
 This manual covers the X0X-RMX fork of Charles Vestal's X0X. Physical FM-1 validation
-is pending; the public installer and firmware downloads remain reserved. Website sections
-below are available in the [local preview](PAGES.md), with public deployment still pending.
+is pending; the public installer and firmware downloads remain reserved. The
+[public browser emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation
+are available. See [website details](PAGES.md).
 See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)

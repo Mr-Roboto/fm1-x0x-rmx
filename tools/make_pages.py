@@ -112,6 +112,9 @@ def site_doc_links(page):
     """Resolve repository Markdown links without confusing them with Pages routes."""
     def link(match):
         url = match.group(1)
+        site = "https://mr-roboto.github.io/fm1-x0x-rmx/"
+        if url.startswith(site):
+            return 'href="../' + url[len(site):] + '"'
         if ":" in url or url.startswith("#"):
             return match.group(0)
         path, _, fragment = url.partition("#")

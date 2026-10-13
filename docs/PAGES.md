@@ -1,7 +1,8 @@
 # X0X-RMX website preparation (P7.1)
 
-The expected URL is `https://mr-roboto.github.io/fm1-x0x-rmx/`, subject to configuration,
-deployment and verification. This document does not claim it is live. Source:
+The browser-only website is live at [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/),
+with the [emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation.
+Firmware installation and downloads remain disabled. Source:
 [Mr-Roboto/fm1-x0x-rmx](https://github.com/Mr-Roboto/fm1-x0x-rmx), development branch `orb-remix`.
 Keep `main` aligned with [original X0X](https://github.com/charlesvestal/fm1-x0x).
 
@@ -104,7 +105,7 @@ Installer libraries, package names, protocol and hardware identifiers are retain
 P7.2 can address the device illustration, favicon and visual branding after approval.
 P7.1 changes page identity and text only; it does not recolor or replace those assets.
 
-## P7.1 local verification record
+## Initial P7.1 preparation verification record
 
 Prepared from `orb-remix` at `44c37e7caf1d20081e2865440a17cf854a022d6c` with uncommitted
 website/documentation changes. Final preview: `build/preview-final/fm1-x0x-rmx/`.
@@ -126,7 +127,7 @@ website/documentation changes. Final preview: `build/preview-final/fm1-x0x-rmx/`
   `build/emu`, without changing the existing preview.
 - Python compilation, shell syntax and `git diff --check` passed.
 
-No browser executable or browser automation tool was available here. Therefore full HTML/CSS
+During the initial preparation, no browser executable or browser automation tool was available. Therefore full HTML/CSS
 visual rendering, browser AudioWorklet startup, audible playback and live mouse/keyboard
 interaction remain manual preview checks; the successful tests execute the real WASM directly
 and compare its LCD/audio output. External links were inspected for correct destinations,
@@ -137,4 +138,43 @@ Firmware sources and build configuration were not modified, and no firmware buil
 created. The existing P6.4 capacity figures remain the recorded baseline (579,788-byte image,
 1,776 bytes free Flash, 97,324 bytes static RAM, 334,348-byte pool); these are not a new P7.1
 hardware build measurement. Firmware branding, device illustration and favicon are untouched.
-No branch switch, commit, push, release or public deployment was performed.
+No branch switch, commit, push, release or public deployment was performed during the initial
+preparation. The subsequent authorized publication is recorded below.
+
+## Authorized public deployment verification
+
+The user explicitly authorized public browser-only publication, commits and normal pushes.
+P7.1 source preparation was committed as `e618f22` and pushed to `origin/orb-remix`.
+The first site commit was `c30e956` on a newly created `gh-pages` branch; no remote site history
+existed to replace. Subsequent site updates are normal fast-forward commits on that history.
+The workspace remains on `orb-remix`; `main` remains at `47f8e4c4ad602591b81c21bc5480db7a94f6d6af`.
+
+GitHub Pages is configured as **Deploy from a branch → gh-pages → /(root)** with HTTPS enforced.
+The initial [Pages deployment](https://github.com/Mr-Roboto/fm1-x0x-rmx/actions/runs/38474050384)
+succeeded. No manual settings action remains. Future publication still requires authorization;
+`tools/publish_pages.sh` remains a local preparation wrapper. The branch/root procedure above
+is the procedure used for this deployment.
+
+Verified public routes: `/`, `/emu/`, `/manual/`, `/new/`, `/breaks/`, `/install/`.
+The public WASM matched the locally built WASM byte-for-byte and passed the real Grids and host
+audio comparison tests after downloading. Public `emu/build-info.json` records the exact
+committed source revision and an empty working-tree change list. The WASM SHA-256 remains
+`616f98599225eb2fc3e45b16ce99068e0e05ffacd459bbd8640c75434a1404bd`.
+
+A temporary Playwright/Chromium installation enabled real-browser checks against the public
+HTTPS site. The checks passed:
+
+- All six pages rendered with X0X-RMX titles; documentation images loaded.
+- AudioWorklet boot completed; sound output measured a peak of **0.402**, with AudioContext
+  running and lights active. This measured browser audio output, not physical speaker listening.
+- Mouse buttons and wheel controls reached 909 MAP, EUCLID, FILL and OFFSET and 808 MAP pages;
+  the LCD header and controls/footer pixels matched host references.
+- NEW generated ordinary drum steps; keyboard HOME, pattern selection and PLAY worked.
+- No JavaScript page errors or failed site resource responses occurred.
+- `/install/` contains no script, input or button; `/firmware/` returns HTTP 404.
+
+Browser screenshots and results are in `build/host/p71-browser/`; build/test artifacts are
+local and are not added to the public site. The final documentation update replaces planned
+website links with verified public links and preserves local preview navigation.
+No installable package, firmware release, firmware source change, force-push or change to
+`main` was made. Hardware validation and P7.2 visual changes remain deferred.

@@ -18,9 +18,12 @@ This fork adds:
 hardware releases. No X0X-RMX public installer or firmware download is enabled in this phase.
 Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
 
-The planned project website is **https://mr-roboto.github.io/fm1-x0x-rmx/**, subject to
-GitHub Pages configuration, deployment and verification; it is not presented here as live.
-For now, [build and preview the fork's browser emulator and website locally](docs/PAGES.md).
+- **Project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
+- **Play in your browser:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), including Grids MAP/EUCLID.
+- **Read online:** [manual](https://mr-roboto.github.io/fm1-x0x-rmx/manual/) and [version history](https://mr-roboto.github.io/fm1-x0x-rmx/new/).
+
+The public site is browser-only: firmware installation remains reserved until real-device
+validation and release approval. You can also [build and preview the website locally](docs/PAGES.md).
 
 - [User manual](docs/MANUAL.md) and [version history](docs/NEW.md)
 - [Remix specification](docs/REMIX_DESIGN.md)
@@ -71,7 +74,7 @@ installer and the storage) and replaces the instrument on top.
 
 X0X doesn't ship with any recorded breaks, only two loops played by its own 909. You can load
 your own into the FM-1's three sample slots, which hold about nine one-bar loops in total.
-The locally generated `/breaks/` page preserves the Chrome/Edge uploader for a compatible
+The [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) preserves the Chrome/Edge uploader for a compatible
 FM-1. See [website preparation](docs/PAGES.md); hardware validation is still pending.
 The command-line tool is also retained:
 

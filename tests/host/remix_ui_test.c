@@ -13,8 +13,8 @@ static int test_motion_on;
 static int motion_applied;
 static int motion_base(void *ctx, int t, int v, int i)
 { (void)ctx; (void)t; (void)v; (void)i; return 77; }
-static void motion_apply(void *ctx, int t, int v, int i, int value)
-{ (void)ctx; (void)t; (void)v; (void)i; motion_applied = value; }
+static int motion_apply(void *ctx, int t, int v, int i, int value)
+{ (void)ctx; (void)t; (void)v; (void)i; motion_applied = value; return value; }
 static void playhead_shot(const char *name)
 {
     build_pages();

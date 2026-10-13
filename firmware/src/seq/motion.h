@@ -53,7 +53,7 @@ typedef struct {
     uint32_t len[MOT_PARTS][2];       /* the length of its last even / odd step (swing) */
     uint8_t last[MOT_PARTS];          /* its last step */
     int (*base)(void *ctx, int t, int v, int i);
-    void (*apply)(void *ctx, int t, int v, int i, int val);
+    int (*apply)(void *ctx, int t, int v, int i, int val); /* returns accepted/effective value */
     int (*record_source)(void *ctx, int part, int step); /* active mapping for gap writes; NULL = identity */
     void *ctx;
 } motion_t;

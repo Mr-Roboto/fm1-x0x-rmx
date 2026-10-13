@@ -14,6 +14,7 @@ The factory sound is set up for big beat, so it should make noise the moment you
 - **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-x0x/install/>
 - **Read the manual**: <https://charlesvestal.github.io/fm1-x0x/manual/>
 - **TB-3PO scale reference (German)**: [22 scales, intervals and usage](docs/TB3PO_SCALES.md)
+- **TB-303 waveform specification (German, experimental)**: [Implemented Wave 3 and original design mathematics](docs/TB303_WAVEFORMS_DESIGN.md)
 - **Download the firmware file**: [releases](https://github.com/charlesvestal/fm1-x0x/releases)
 
 > **X0X is in beta.** It's solid for everyday playing, but a very busy pattern can push the FM-1
@@ -33,6 +34,27 @@ The factory sound is set up for big beat, so it should make noise the moment you
 
 Each part has its own step length (up to 64 steps) and rate, so parts can drift against each
 other. Pattern changes wait for the end of the bar, and patterns can be chained.
+
+### Experimental Wave 3 in this fork
+
+On `waveform-prototype`, each 303's WAVE offers **Saw, Square and Morph**. In EDIT's SEL list,
+**MORE > MORPH** blends continuously from **0 = Sharkfin**, through **64 = Trapezoid**, to
+**127 = Notch-Trapezoid**. Each voice keeps its own Morph value; the default is 64, and changes
+use a 5 ms slew while Morph is sounding.
+
+Only **303A or 303B** may use Morph at a time. A conflicting selection is rejected and keeps
+the previous accepted Wave; it does not change the other voice or wait to acquire Morph later.
+Selecting Saw or Square on the owner releases the restriction. The same rule applies to direct
+parameter commands and motion. Projects store the accepted Wave settings and independent Morph
+values; a conflicting loaded pair keeps A on Morph and resets B to Saw.
+
+Wave 3 uses the tested **cubic four-box BLEP/BLAMP** implementation. Saw/Square processing,
+the default 2× oversampling and overload guard remain unchanged. Host regressions and firmware
+and emulator builds have passed, but **FM1 hardware timing and listening validation remain
+pending**. This is an experimental branch feature, not a release claim for the upstream
+downloads or hosted emulator linked above. See the [local manual](docs/MANUAL.md#6-303a-and-303b)
+for controls and the [existing specification](docs/TB303_WAVEFORMS_DESIGN.md) for kernel
+differences and remaining quality limits.
 
 X0X is a fork of [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton
 Instruments). It keeps Felucca's foundations (the hardware layer, USB, the update loader, the web

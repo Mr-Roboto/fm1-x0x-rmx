@@ -11,9 +11,173 @@
 
 #define FSO (BASS303_SR * (float)BASS303_OS)    /* oversampled rate */
 
+/* ---- experimental morph oscillator ----------------------------------------------------- */
+/* Cubic four-box BLEP/BLAMP and precise gains from tests/host/waveform_prototype.c.
+ * This intentionally differs from the design document's triangular kernel:
+ * support is +/-2 increments and Sharkfin DC compensation is -shark*d*d.
+ * Keep all event overlaps, including adjacent periodic images at d > .25. */
+typedef struct {
+    float shark, trap, notch, dc, jump, slope[5];
+} bass303_morph_mix_t;
+
+/* Signed event distance avoids rounding frac(phase+.5) near one and
+ * amplifying that rounding by 1/d. Equivalent to the documented residuals
+ * for d<.5, including coincident supports from different events. */
+static inline float distance(float p, float event)
+{
+    float t = p - event;
+    if (t < -0.5f) t += 1.0f;
+    if (t > 0.5f) t -= 1.0f;
+    return t;
+}
+/* Four equal boxes of phase width d convolve to a cubic B-spline kernel.
+ * tail(r) is its integral from r*d to infinity, r >= 0. The BLEP residual
+ * for a 2-high step is +/-2*tail. The BLAMP is d*integral_r^infinity tail.
+ * Use the far piece's small powers near support boundaries, avoiding the
+ * cancellation in a generic truncated-power implementation. */
+static inline void cubic_residual(float t, float d, int need_step, float *step, float *slope)
+{
+    float r = fm_fabsf(t), tail, ramp;
+    *step = *slope = 0.0f;
+    if (r >= 2.0f * d) return;
+    r /= d;
+    if (r >= 1.0f) {
+        float x = 2.0f - r, x2 = x * x, x4 = x2 * x2;
+        tail = need_step ? x4 * (1.0f / 24.0f) : 0.0f;
+        ramp = x4 * x * (1.0f / 120.0f);
+    } else {
+        float r2 = r * r;
+        tail = need_step ? 0.5f + r * (-2.0f / 3.0f
+               + r2 * (1.0f / 3.0f - r * 0.125f)) : 0.0f;
+        ramp = 7.0f / 30.0f + r * (-0.5f + r * (1.0f / 3.0f
+               + r2 * (-1.0f / 12.0f + r * (1.0f / 40.0f))));
+    }
+    *step = t < 0.0f ? 2.0f * tail : -2.0f * tail;
+    *slope = d * ramp;
+}
+static float cubic_active_correction(float t, float d, float jump, float slope)
+{
+    float b, r, y;
+    cubic_residual(t, d, jump != 0.0f, &b, &r);
+    y = jump * b + slope * r;
+    /* For d>.25 the support exceeds a half-cycle. Periodic images of the
+     * SAME event can overlap, in addition to overlaps between different events.
+     * For 0<d<.5 only this adjacent image can contribute. */
+    if (d > 0.25f) {
+        cubic_residual(t < 0.0f ? t + 1.0f : t - 1.0f, d, jump != 0.0f, &b, &r);
+        y += jump * b + slope * r;
+    }
+    return y;
+}
+static inline float cubic_correction(float t, float d, float jump, float slope)
+{
+    /* Keep the very common unsupported event cheap even if the compiler
+     * chooses not to inline the larger polynomial/image helper. A nearest
+     * image outside support implies every other image is outside as well. */
+    if (fm_fabsf(t) >= 2.0f * d) return 0.0f;
+    return cubic_active_correction(t, d, jump, slope);
+}
+static float precise_compensation(float variance)
+{
+    float c;
+    if (variance == 1.0f) return 1.0f;
+    c = fm_rsqrtf(variance);
+    /* One additional Newton step, outside the sample loop. The exact unity
+     * branch makes converging endpoint weights use exact endpoint gain. */
+    return c * (1.5f - 0.5f * variance * c * c);
+}
+static void morph_prepare(bass303_morph_mix_t *v, float m)
+{
+    const float gs = 0.6454972243679028f, gt = 0.7071067811865475f;
+    const float gn = 0.8295613557843402f;
+    float x, w, c;
+    int endpoint;
+    m = fm_clampf(m, 0.0f, 127.0f);
+    endpoint = m == 0.0f ? 0 : m == 64.0f ? 1 : m == 127.0f ? 2 : -1;
+    v->shark = v->trap = v->notch = 0.0f;
+    if (endpoint >= 0) {
+        if (endpoint == 0) v->shark = gs;
+        else if (endpoint == 1) v->trap = gt;
+        else { v->trap = gn; v->notch = gn; }
+    } else if (m < 64.0f) {
+        x = m / 64.0f;
+        w = x * x * (3.0f - 2.0f * x);
+        c = precise_compensation((1.0f - w) * (1.0f - w) + w * w
+                     + 2.0f * 0.3423265984407288f * w * (1.0f - w));
+        v->shark = c * (1.0f - w) * gs;
+        v->trap = c * w * gt;
+    } else {
+        x = (m - 64.0f) / 63.0f;
+        w = x * x * (3.0f - 2.0f * x);
+        c = precise_compensation((1.0f - w) * (1.0f - w) + w * w
+                     + 2.0f * 0.9532062476387964f * w * (1.0f - w));
+        v->trap = c * ((1.0f - w) * gt + w * gn);
+        v->notch = c * w * gn;
+    }
+    v->dc = v->notch * 0.125f;
+    v->jump = 1.5f * v->shark;
+    v->slope[0] = 6.0f * v->shark - 8.0f * v->trap - 8.0f * v->notch;
+    v->slope[1] = 16.0f * v->notch;
+    v->slope[2] = -8.0f * v->trap - 8.0f * v->notch;
+    v->slope[3] = v->slope[4] = 8.0f * v->trap;
+}
+static float morph_eval(const bass303_morph_mix_t *v, float phase, float d)
+{
+    float u = phase < 0.5f ? phase + 0.5f : phase - 0.5f;
+    float y = v->dc;
+    if (v->shark != 0.0f) y += v->shark * (1.0f - 3.0f * u * u);
+    if (v->trap != 0.0f) {
+        float t = u < 0.25f ? 1.0f : u < 0.5f ? 3.0f - 8.0f * u
+                  : u < 0.75f ? -1.0f : 8.0f * u - 7.0f;
+        y += v->trap * t;
+    }
+    if (v->notch != 0.0f && u < 0.25f)
+        y -= v->notch * (u < 0.125f ? 8.0f * u : 2.0f - 8.0f * u);
+    {
+        float t = distance(phase, 0.5f);
+        if (v->jump != 0.0f) y -= v->shark * d * d;
+        y += cubic_correction(t, d, v->jump, v->slope[0]);
+        if (v->slope[1] != 0.0f)
+            y += cubic_correction(distance(phase, 0.625f), d, 0.0f, v->slope[1]);
+        if (v->slope[2] != 0.0f)
+            y += cubic_correction(distance(phase, 0.75f), d, 0.0f, v->slope[2]);
+        if (v->slope[3] != 0.0f) {
+            y += cubic_correction(distance(phase, 0.0f), d, 0.0f, v->slope[3]);
+            y += cubic_correction(distance(phase, 0.25f), d, 0.0f, v->slope[4]);
+        }
+    }
+    return y;
+}
+/* Low-level oscillator controls; engine.c enforces application Wave exclusion.
+ * bass303_set handles the normal parameter/pot path, including Morph at index 12. */
+void bass303_set_waveform(bass303_t *b, int mode)
+{
+    if (mode >= BASS303_WAVE_SAW && mode <= BASS303_WAVE_MORPH)
+        b->wave = mode;
+}
+
+void bass303_set_morph(bass303_t *b, int value)
+{
+    if (value < 0) value = 0;
+    if (value > 127) value = 127;
+    b->morph_target = (uint8_t)value;
+    if (b->idle) b->morph = (float)value;
+}
+
+/* Finite 5 ms slew at base rate, independent of oversampling and Lite.
+ * Coefficients are held for a control chunk; settled preparation is once per block. */
+static void morph_advance(bass303_t *b, int samples)
+{
+    float delta = (float)b->morph_target - b->morph;
+    float step = (127.0f / 221.0f) * (float)samples;
+    if (delta > step) b->morph += step;
+    else if (delta < -step) b->morph -= step;
+    else b->morph = (float)b->morph_target;
+}
+
 /* ---- parameters ------------------------------------------------------------------------ */
 
-static const char *const wave_names[] = { "Saw", "Sqr" };
+static const char *const wave_names[] = { "Saw", "Square", "Morph" };
 static const char *const drv_names[] = { "Off", "Soft", "RAT" };
 
 /* defaults are schwung-303's (every knob at 0.5, Devilfish values stock), except Volume,
@@ -24,13 +188,14 @@ static const x0x_param_t params[BASS303_NPARAMS] = {
     { "EnvMod", 127, 64, 0 },        /* 0 .. 100 % */
     { "Decay", 127, 64, 0 },         /* 200 .. 2000 ms, exponential (stock 303 range) */
     { "Accent", 127, 64, 0 },        /* 0 .. 100 % */
-    { "Wave", 1, 0, wave_names },
+    { "Wave", 2, 0, wave_names },
     { "Tune", 127, 64, 0 },          /* A4 = 440 + (pot - 64) * 0.625 Hz: 400 .. 479.4 */
     { "Volume", 127, 96, 0 },        /* -60 .. 0 dB; 96 = -14.6 dB: peaks ~0.5 (schwung-303: 102) */
     { "Drive", 127, 0, 0 },          /* 0 = bypass */
     { "DrvTyp", 2, 1, drv_names },
     { "Slide", 127, 21, 0 },         /* 2 .. 360 ms (Devilfish); 21 = 61 ms, stock is 60 */
     { "AccDec", 127, 7, 0 },         /* 30 .. 3000 ms (Devilfish); 7 = 194 ms, stock is 200 */
+    { "Morph", 127, 64, 0 },        /* Sharkfin / Trapezoid / Notch-Trapezoid */
 };
 
 int bass303_nparams(void) { return BASS303_NPARAMS; }
@@ -183,6 +348,9 @@ void bass303_set(bass303_t *b, int i, int v)
     case BASS303_WAVE:
         b->wave = v;
         break;
+    case BASS303_MORPH:
+        bass303_set_morph(b, v);
+        break;
     case BASS303_TUNE:
         b->tuning = 440.0f + (float)(v - 64) * 0.625f;
         break;
@@ -319,6 +487,8 @@ void bass303_init(bass303_t *b)
     for (i = 0; i < BASS303_NPARAMS; i++)
         bass303_set(b, i, params[i].def);
 
+    b->morph_target = 64;
+    b->morph = 64.0f;
     b->osc_freq = b->slew_y = 440.0f;
     b->env_c = b->decay_c;
     env_tables(b);
@@ -532,10 +702,16 @@ static void run(bass303_t *b, float *out, int n)
     const float out_gain = b->amp_scaler;
     const int square = b->wave;
     float os[BASS303_OS];
+    bass303_morph_mix_t mix;
+    if (square == BASS303_WAVE_MORPH) morph_prepare(&mix, b->morph);
 
     for (i = 0; i < n; i += m) {
         float e0, fc, fx, n_b0, n_k, n_g2, n_inc, n_a, rm, d_inc, d_b0, d_k, d_g2, d_a;
         m = n - i < BASS303_CTRL ? n - i : BASS303_CTRL;
+        if (square == BASS303_WAVE_MORPH && b->morph != (float)b->morph_target) {
+            morph_advance(b, m);
+            morph_prepare(&mix, b->morph);
+        }
 
         /* ---- control step: Open303's per-sample recursions advanced m samples in closed
          * form (exact), then the cutoff and amp they produce at the chunk's last sample */
@@ -604,7 +780,9 @@ static void run(bass303_t *b, float *out, int n)
             {
                 int q;
                 for (q = 0; q < nos; q++) {
-                    if (!square) {
+                    if (square == BASS303_WAVE_MORPH) {
+                        s = morph_eval(&mix, phase, inc);
+                    } else if (!square) {
                         t = phase + 0.5f;                       /* Saw303: rises -1..1, jump at p = .5 */
                         if (t >= 1.0f)
                             t -= 1.0f;
@@ -685,6 +863,7 @@ void bass303_render(bass303_t *b, float *out, int n)
         for (i = 0; i < n; i++)
             out[i] = 0.0f;
         idle_advance(b, n);
+        b->morph = (float)b->morph_target;
         return;
     }
     run(b, out, n);

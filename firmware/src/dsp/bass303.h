@@ -68,8 +68,9 @@ enum {
     BASS303_CUTOFF, BASS303_RESO, BASS303_ENVMOD, BASS303_DECAY,     /* page 1 */
     BASS303_ACCENT, BASS303_WAVE, BASS303_TUNE, BASS303_VOLUME,      /* page 2 */
     BASS303_DRIVE, BASS303_DRVTYPE, BASS303_SLIDE, BASS303_ACCDEC,   /* page 3 */
-    BASS303_NPARAMS
+    BASS303_MORPH, BASS303_NPARAMS                              /* MORE, index 12 */
 };
+enum { BASS303_WAVE_SAW, BASS303_WAVE_SQUARE, BASS303_WAVE_MORPH };
 enum { BASS303_DRV_OFF, BASS303_DRV_SOFT, BASS303_DRV_RAT };
 
 typedef struct { float b0, b1, b2, a1, a2, z1, z2; } bass303_bq_t;     /* TDF-II biquad */
@@ -88,7 +89,7 @@ typedef struct bass303 {
     float amp_scaler;        /* volume, linear */
     float decay_c, accdec_c; /* main-envelope multipliers for normal / accented notes */
     float slew_c;            /* pitch slew-limiter coefficient */
-    int wave;                /* 0 saw, 1 square */
+    int wave;                /* 0 saw, 1 square, 2 morph family */
     int drv_type;
     float drv_amt;
 
@@ -144,6 +145,9 @@ typedef struct bass303 {
     float r_b[4], r_a[4], r_z[3];        /* RAT op-amp, 3rd-order TDF-II */
     float r_corr_b1, r_corr_z, r_tone_b1, r_tone_z;
     float dcb_x1, dcb_y1;
+    /* Runtime Morph state; persistent sound allocation stays at 16 bytes. */
+    float morph;             /* slewed 0..127; 0 shark, 64 trap, 127 notch-trap */
+    uint8_t morph_target;
 } bass303_t;
 
 void bass303_init(bass303_t *b);
@@ -158,3 +162,10 @@ int bass303_nparams(void);
 const x0x_param_t *bass303_param(int i);
 void bass303_set(bass303_t *b, int i, int value);
 int bass303_get(const bass303_t *b, int i);
+
+/* Low-level oscillator controls; application exclusion belongs to engine.c.
+ * Use bass303_set for normal parameter/pot updates. Morph defaults
+ * to 64; targets clamp to 0..127 and slew over <=221 base-rate samples plus a chunk.
+ * Setting Morph while idle settles immediately. No voice arbitration here. */
+void bass303_set_waveform(bass303_t *b, int mode);
+void bass303_set_morph(bass303_t *b, int value);

@@ -313,7 +313,7 @@ static int pref_get(pref_t r)
     case R_RPAT: return pattern_remix_selection(pat_of(r.a), r.a) & 15u;
     case R_RENABLE: return pattern_remix_enabled(pat_of(r.a), r.a);
     case R_RAPPLY: return settings_remix_apply(&proj.set);
-    case R_ENG: return proj.sound.v[r.a][r.b][r.c];
+    case R_ENG: return r.a == T_303 && r.c == BASS303_WAVE ? engine_bass_wave(r.b) : proj.sound.v[r.a][r.b][r.c];
     case R_SWING: return pat_of(PART_909)->swing;
     case R_DLEN: return pat_of(r.a)->drum[r.a].len - 1;
     case R_DRATE: return pat_of(r.a)->drum[r.a].rate;
@@ -385,7 +385,8 @@ static void pref_set(pref_t r, int v)
         seq.remix_apply = (uint8_t)v;
         break;
     case R_ENG:
-        proj.sound.v[r.a][r.b][r.c] = (uint8_t)v;
+        if (r.a != T_303 || r.c != BASS303_WAVE)
+            proj.sound.v[r.a][r.b][r.c] = (uint8_t)v;
         engine_set(r.a, r.b, r.c, v);
         if (r.a == T_MST && r.c == MST_COMP1)          /* the macros: the details they set, for the list */
             master_comp1_pots(v, &proj.sound.v[T_MST][0][MST_THRESH], &proj.sound.v[T_MST][0][MST_RATIO],
@@ -832,6 +833,7 @@ static void build_pages(void)
             more(PR(R_ENG, T_303, b, BASS303_VOLUME));
             more(PR(R_ENG, T_303, b, BASS303_DRVTYPE));
             more(PR(R_ENG, T_303, b, BASS303_ACCDEC));
+            more(PR(R_ENG, T_303, b, BASS303_MORPH));
         } else {
             pg_grp = GR_PAT;                           /* (its groove and retrigs: SEQ) */
             add_page("LOOPS", PR(R_BRKSLOT, 0, 0, 0), PR(R_BRKSLOT, 1, 0, 0), PR(R_BRKSET, 0, 0, BRK_BCHANCE),
@@ -4181,6 +4183,7 @@ static void autosave(void)
 void ui_frame(void)
 {
     uint32_t i;
+    engine_sync_sound(&proj.sound);
     input();
     undo_tick();
     autosave();
@@ -4200,6 +4203,6 @@ void ui_frame(void)
     ui.frame++;
 }
 
-void ui_input_only(void) { input(); }
+void ui_input_only(void) { engine_sync_sound(&proj.sound); input(); }
 int ui_dirty(void) { return ui.dirty != 0; }
 void ui_say(const char *a, const char *b) { say(a, b); }

@@ -13,12 +13,17 @@ void motion_init(motion_t *m, lane_t *lanes)
         m->rt[i].applied = m->rt[i].rec_last = MOT_NONE;
 }
 
-static void put(motion_t *m, const lane_t *l, lane_rt_t *r, int v)
+static int put(motion_t *m, const lane_t *l, lane_rt_t *r, int v)
 {
     if (r->applied != v) {
-        m->apply(m->ctx, l->t, l->v, l->i, v);
-        r->applied = (uint8_t)v;
+        int accepted = m->apply(m->ctx, l->t, l->v, l->i, v);
+        r->applied = (uint8_t)accepted;
+        if (accepted != v) {
+            r->ramp = 0;                              /* no retry after an owner releases */
+            return 0;
+        }
     }
+    return 1;
 }
 
 static void to_base(motion_t *m, const lane_t *l, lane_rt_t *r)
@@ -105,7 +110,8 @@ void motion_step_source(motion_t *m, int part, int pat, int step,
             continue;
         }
         v = l->val[source];
-        put(m, l, r, v == MOT_NONE ? m->base(m->ctx, l->t, l->v, l->i) : v);
+        if (!put(m, l, r, v == MOT_NONE ? m->base(m->ctx, l->t, l->v, l->i) : v))
+            continue;                                 /* rejection consumes this step request */
         nv = l->val[source_next];
         r->ramp = (uint8_t)(v != MOT_NONE && nv != MOT_NONE && nv != v);
         r->from = (uint8_t)v;

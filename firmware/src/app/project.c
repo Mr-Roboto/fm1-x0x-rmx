@@ -475,6 +475,7 @@ int project_load(void)
     if (sound_ok && proj.set.snd_rev < 2)             /* before the one-knob COMP, FILTER, TAPE */
         sound_rev2();
     proj.set.snd_rev = PROJ_SND_REV;
+    engine_sound_validate_bass(&proj.sound);
     return bad ? -1 : 0;
 }
 
@@ -497,6 +498,7 @@ void project_apply_io(void)
 int project_save(void)
 {
     int p;
+    engine_sync_sound(&proj.sound);
     for (p = 0; p < 5; p++)
         proj.set.midi_ch[p] = (uint8_t)(seq.ch[p] == SEQ_CH_OFF ? 17 : seq.ch[p] + 1);
     proj.set.bpm_x10 = (uint16_t)(seq.bpm * 10.0f + 0.5f);

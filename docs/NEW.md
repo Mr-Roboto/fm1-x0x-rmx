@@ -3,6 +3,22 @@
 The newest version first. Install it with the [web installer](../install/); the
 [manual](../manual/) covers everything in detail.
 
+## Unreleased · waveform-prototype fork
+
+- **Experimental Wave 3:** the 303 WAVE choices are Saw, Square and Morph. In EDIT's SEL list,
+  **MORE > MORPH** moves continuously through 0 = Sharkfin, 64 = Trapezoid and
+  127 = Notch-Trapezoid, with independent settings and a 5 ms slew for each voice.
+- Only 303A or 303B may use Morph at a time. Conflicting UI, direct parameter and motion
+  requests keep the prior accepted Wave; they do not force the other voice to change or wait
+  for ownership to become available. Returning the owner to Saw or Square releases the limit.
+- Projects save accepted Wave settings and both Morph values in the existing sound allocation.
+  A conflicting loaded pair keeps A on Morph and loads B as Saw.
+- The implementation uses cubic four-box BLEP/BLAMP, replacing the original triangular
+  correction proposal for Wave 3. Saw/Square, the 2× default and overload guard are unchanged.
+  **FM1 hardware validation is pending.** These branch changes are not a claim about the
+  upstream releases or hosted installer. See the [local manual](MANUAL.md#6-303a-and-303b) and
+  [waveform specification](TB303_WAVEFORMS_DESIGN.md).
+
 ## 1.0.6 · 11 October 2026
 
 - **Free play on the 303s:** press SEQ, turn SELECT to the KEYS page and set FREE PLAY to ON. The keys

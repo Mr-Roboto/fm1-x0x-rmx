@@ -60,12 +60,18 @@ int engine_nparams(int target, int voice);
 const x0x_param_t *engine_param(int target, int voice, int i);
 const char *engine_voice_name(int target, int voice);
 
+/* Audio-accepted Wave mirror; queued Wave requests must not be stored optimistically.
+ * Motion display uses effective Waves; rejected requests are never replayed. */
+int engine_bass_wave(int voice);
+void engine_sync_sound(sound_t *s);                         /* main: before display/save */
+void engine_sound_validate_bass(sound_t *s);                /* cold load: clamp, A wins */
+
 /* main loop -> ISR */
-void engine_set(int target, int voice, int i, int value);   /* queued; the sound_t mirror is the caller's */
+void engine_set(int target, int voice, int i, int value);   /* queued; Wave mirror comes from engine_sync_sound */
 void engine_out_loud(int on);          /* 1: the output at the codec's full scale (6 dB hotter than Felucca's) */
 void engine_usb_full(int on);          /* 1: engine_render at full level, engine_volume the MASTER knob after */
 void engine_volume(int32_t *out_lr, uint32_t n);   /* ISR, after engine_render (and the USB tap) */
-void engine_apply_sound(const sound_t *s);                  /* queue every value (load, init) */
+void engine_apply_sound(sound_t *s);                        /* validate/queue sound (load, init) */
 void engine_sound_defaults(sound_t *s);                     /* each engine's power-on values */
 void engine_sound_centre_drum_pans(sound_t *s);             /* every drum voice's PAN (its last pot) to centre */
 void engine_drum(int kit, int voice, float vel);            /* play now (keys) */

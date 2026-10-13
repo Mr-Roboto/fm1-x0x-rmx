@@ -70,6 +70,19 @@ for those sources); flash storage; Felucca's update-path tests against `build/x0
 (the loader test needs `AC79_SDK`); and the whole app in the simulator
 (`tests/scenarios/*.x0x`), with its screenshots and audio in `build/scenarios/`.
 
+The experimental Wave 3 integration also has focused checks:
+
+```
+sh tests/host/run_bass303_waveform.sh   # cubic prototype identity, legacy bits, Morph and isolation
+sh tests/host/run_bass303_ui.sh         # UI, command/motion exclusion and project persistence
+```
+
+These use the local host waveform prototype; the UI check also uses the generated assets in
+`build/gen/`. They are included in `tests/run_tests.sh` and do not generate WAV collections or
+run spectral matrices. Passing them, or building firmware and the emulator, does not validate
+FM1 CPU deadlines or device listening. Those checks remain pending; see the
+[waveform specification](docs/TB303_WAVEFORMS_DESIGN.md).
+
 `host/build_host.sh` builds the simulator alone; `build/host/x0x_host SCRIPT OUTDIR` runs one
 script (the command list is at the top of `host/x0x_host.c`).
 

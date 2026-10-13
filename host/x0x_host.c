@@ -841,7 +841,8 @@ int main(int argc, char **argv)
                 printf("line %d: no param %d %d %d\n", lineno, t, v, i);
                 return 2;
             }
-            proj.sound.v[t][v][i] = (uint8_t)val;
+            if (t != T_303 || i != BASS303_WAVE)
+                proj.sound.v[t][v][i] = (uint8_t)val;
             engine_set(t, v, i, val);
             run_ms(1);
         } else if (!strcmp(cmd, "master"))

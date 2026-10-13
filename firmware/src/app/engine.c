@@ -100,7 +100,7 @@ static float mix_pl[NPARTS] = {1, 1, 1, 1, 1}, mix_pr[NPARTS] = {1, 1, 1, 1, 1};
 /* ------------------------------------------------------- command queue --- */
 /* uint32 commands, single producer (main loop) / single consumer (audio ISR):
  * type:4 | a:8 | b:8 | c:12 */
-enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP };
+enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_BWAVES };
 #define CQ 1024u
 static uint32_t cq[CQ];
 static volatile uint32_t cq_w, cq_r;
@@ -113,6 +113,33 @@ static void cq_put(uint32_t type, uint32_t a, uint32_t b, uint32_t c)
     cq[w % CQ] = (type << 28) | ((a & 0xFFu) << 20) | ((b & 0xFFu) << 12) | (c & 0xFFFu);
     __asm__ volatile("" ::: "memory");
     cq_w = w + 1;
+}
+
+/* Audio publishes one atomic word: accepted base Waves (low nibble), effective
+ * Waves (high nibble). Main never reads/writes bass303 state. No owner/pending flag. */
+static volatile uint32_t bass_waves;
+int engine_bass_wave(int v)
+{
+    return v >= 0 && v < NBASS ? (int)((bass_waves >> (2 * v)) & 3u) : 0;
+}
+void engine_sync_sound(sound_t *s)
+{
+    uint32_t waves = bass_waves;
+    int v;
+    for (v = 0; v < NBASS; v++)
+        s->v[T_303][v][BASS303_WAVE] = (uint8_t)((waves >> (2 * v)) & 3u);
+}
+void engine_sound_validate_bass(sound_t *s)
+{
+    int v;
+    for (v = 0; v < NBASS; v++) {
+        uint8_t *p = s->v[T_303][v];
+        if (p[BASS303_WAVE] > BASS303_WAVE_MORPH) p[BASS303_WAVE] = BASS303_WAVE_SAW;
+        if (p[BASS303_MORPH] > 127) p[BASS303_MORPH] = 127;
+    }
+    if (s->v[T_303][0][BASS303_WAVE] == BASS303_WAVE_MORPH &&
+        s->v[T_303][1][BASS303_WAVE] == BASS303_WAVE_MORPH)
+        s->v[T_303][1][BASS303_WAVE] = BASS303_WAVE_SAW;
 }
 
 /* ------------------------------------------------------------ params --- */
@@ -172,12 +199,28 @@ const char *engine_voice_name(int t, int v)
     }
 }
 
-static void apply_param(int t, int v, int i, int val)    /* ISR */
+static int apply_param(int t, int v, int i, int val)    /* ISR */
 {
     switch (t) {
     case T_909: drum909_set(&d909, v, i, val); break;
     case T_808: drum808_set(&d808, v, i, val); break;
-    case T_303: if (v >= 0 && v < NBASS) bass303_set(&b303[v], i, val); break;
+    case T_303:
+        if (v < 0 || v >= NBASS) return 0;
+        if (i == BASS303_WAVE) {
+            uint32_t base = bass_waves & 15u;
+            int peer = v ^ 1;
+            val = val < 0 ? 0 : val > BASS303_WAVE_MORPH ? BASS303_WAVE_MORPH : val;
+            if (val == BASS303_WAVE_MORPH && b303[peer].wave == BASS303_WAVE_MORPH)
+                return 0;                              /* prior DSP/base values stay accepted */
+            bass303_set(&b303[v], i, val);
+            /* Motion may have released an earlier Morph base. Once the peer
+             * acquires Morph, that old base cannot become a hidden pending claim.
+             * Only its mirror is reconciled; the peer DSP already left Morph. */
+            if (val == BASS303_WAVE_MORPH && ((base >> (2 * peer)) & 3u) == BASS303_WAVE_MORPH)
+                base = (base & ~(3u << (2 * peer))) | ((uint32_t)b303[peer].wave << (2 * peer));
+            bass_waves = base | ((uint32_t)b303[0].wave << 4) | ((uint32_t)b303[1].wave << 6);
+        } else bass303_set(&b303[v], i, val);
+        break;
     case T_BRK: breaks_set(&brk, BRK_NSET + i, val); break;
     case T_FX: fxbus_set(&fx, i, val); break;
     case T_MIX:
@@ -195,9 +238,17 @@ static void apply_param(int t, int v, int i, int val)    /* ISR */
     case T_MST: master_set(&mst, i, val); break;
     default: break;
     }
+    return 1;
 }
 
-void engine_set(int t, int v, int i, int val) { cq_put((uint32_t)t, (uint32_t)v, (uint32_t)i, (uint32_t)val); }
+void engine_set(int t, int v, int i, int val)
+{
+    if (t == T_303 && (i == BASS303_WAVE || i == BASS303_MORPH)) {
+        int max = bass303_param(i)->max;
+        val = val < 0 ? 0 : val > max ? max : val;
+    }
+    cq_put((uint32_t)t, (uint32_t)v, (uint32_t)i, (uint32_t)val);
+}
 
 /* the output's scale: Felucca's -6 dBFS ceiling of the 24-bit codec (2^22), or its full scale (LOUD); the
  * clamp keeps an over from wrapping (normal: the codec's own full scale, as before) */
@@ -300,15 +351,19 @@ void engine_sound_centre_drum_pans(sound_t *s)
         }
 }
 
-void engine_apply_sound(const sound_t *s)
+void engine_apply_sound(sound_t *s)
 {
     int t, v, i;
+    engine_sound_validate_bass(s);
+    /* A whole sound replaces both Waves in a single audio command. In particular
+     * a previous B owner cannot prevent A from winning a conflicting cold load. */
+    cq_put(C_BWAVES, s->v[T_303][0][BASS303_WAVE], s->v[T_303][1][BASS303_WAVE], s == mot_base_snd);
     engine_set(T_MST, 0, MST_COMP1, s->v[T_MST][0][MST_COMP1]);   /* the macros first: the pots they set */
     engine_set(T_MST, 0, MST_DJF, s->v[T_MST][0][MST_DJF]);       /* follow as saved (a project's own sound) */
     for (t = 0; t < NTARGETS; t++)
         for (v = 0; v < engine_nvoices(t) && v < NVOICES_MAX; v++)
             for (i = 0; i < engine_nparams(t, v) && i < NPARAMS_MAX; i++)
-                if (t != T_MST || i < MST_COMP1)
+                if ((t != T_MST || i < MST_COMP1) && (t != T_303 || i != BASS303_WAVE))
                     engine_set(t, v, i, s->v[t][v][i]);
 }
 
@@ -418,18 +473,24 @@ static int mot_record_source(void *x, int part, int step)
 static int mot_base(void *x, int t, int v, int i)
 {
     (void)x;
+    if (t == T_303 && i == BASS303_WAVE)
+        return engine_bass_wave(v);
     if (t >= NTARGETS)
         return 100;                                   /* T_PROB: always */
     return mot_base_snd ? mot_base_snd->v[t][v][i] : 0;
 }
-static void mot_apply(void *x, int t, int v, int i, int val)
+static int mot_apply(void *x, int t, int v, int i, int val)
 {
     (void)x;
     if (t == T_PROB) {
         if ((v >> 4) < NPARTS && (v & 15) < NDRUM)
             prob[v >> 4][v & 15] = (uint8_t)val;
-    } else if (t < NTARGETS)
+    } else if (t < NTARGETS) {
         apply_param(t, v, i, val);
+        if (t == T_303 && i == BASS303_WAVE && v >= 0 && v < NBASS)
+            return b303[v].wave;
+    }
+    return val;
 }
 
 int engine_motion_part(int t, int v)
@@ -444,7 +505,13 @@ int engine_motion_part(int t, int v)
     default: return PART_909;                     /* FX, master: the bar */
     }
 }
-int engine_motion_value(int k) { return motion_value(&mot, k); }
+int engine_motion_value(int k)
+{
+    int val = motion_value(&mot, k);
+    if (val >= 0 && mot.lane[k].t == T_303 && mot.lane[k].i == BASS303_WAVE && mot.lane[k].v < NBASS)
+        return (int)((bass_waves >> (4 + 2 * mot.lane[k].v)) & 3u);
+    return val;
+}
 void engine_motion_rec(int k) { motion_req_rec(&mot, k); }
 void engine_motion_hold(int k) { motion_req_hold(&mot, k); }
 static const seq_sink_t SINK = {s_drum_seq, s_bon, s_boff, s_brk, s_brkstop, s_midi, s_step, 0};
@@ -496,8 +563,29 @@ static void drain(void)
     while (r != cq_w) {
         uint32_t c = cq[r % CQ], type = c >> 28, a = (c >> 20) & 0xFFu, b = (c >> 12) & 0xFFu, v = c & 0xFFFu;
         r++;
-        if (type < 8u)
-            apply_param((int)type, (int)a, (int)b, (int)v);
+        if (type < 8u) {
+            int accepted = apply_param((int)type, (int)a, (int)b, (int)v);
+            if (accepted && type == T_303 && a < NBASS && b == BASS303_WAVE) {
+                uint32_t shift = 2u * a;
+                bass_waves = (bass_waves & ~(3u << shift)) | ((uint32_t)b303[a].wave << shift);
+            }
+        } else if (type == C_BWAVES) {
+            /* Producer validates, consumer also protects against malformed pairs. */
+            int wa = a <= BASS303_WAVE_MORPH ? (int)a : BASS303_WAVE_SAW;
+            int wb = b <= BASS303_WAVE_MORPH ? (int)b : BASS303_WAVE_SAW;
+            if (wa == BASS303_WAVE_MORPH && wb == BASS303_WAVE_MORPH) wb = BASS303_WAVE_SAW;
+            /* Release the old owner before acquiring the replacement. */
+            if (wa == BASS303_WAVE_MORPH) {
+                bass303_set(&b303[1], BASS303_WAVE, wb);
+                bass303_set(&b303[0], BASS303_WAVE, wa);
+            } else {
+                bass303_set(&b303[0], BASS303_WAVE, wa);
+                bass303_set(&b303[1], BASS303_WAVE, wb);
+            }
+            /* PERF's temporary factory sound must not overwrite the project. */
+            bass_waves = (v ? (uint32_t)wa | ((uint32_t)wb << 2) : bass_waves & 15u)
+                       | ((uint32_t)wa << 4) | ((uint32_t)wb << 6);
+        }
         else if (type == C_DRUM)
             s_drum(0, (int)a, (int)b, (float)v / 4095.0f);
         else if (type == C_BON && a < NBASS)
@@ -952,6 +1040,7 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     drum808_init(&d808);
     bass303_init(&b303[0]);
     bass303_init(&b303[1]);
+    bass_waves = 0;
     breaks_init(&brk);
     fxbus_init(&fx, dly_buf, DLY_LEN);
     master_init(&mst);

@@ -290,10 +290,41 @@ you can try lines and turn EDIT's knobs as you go; the top line says FREE PLAY. 
 written until you press REC, which records as above. Set FREE PLAY back to OFF for the steps.
 Each 303 has its own, and both are off at power-on.
 
-**The pages.** EDIT has TONE (CUTOFF, RESO, ENVMOD, DECAY) and VOICE (ACCENT, WAVE, saw or
-square, DRIVE, SLIDE time); TUNE, VOLUME, DRIVE TYPE (off, soft or RAT) and ACCENT DECAY are in
-SEL's list. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION (forward, reverse, ping-pong
-or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
+**The pages.** EDIT has TONE (CUTOFF, RESO, ENVMOD, DECAY) and VOICE (ACCENT, WAVE, DRIVE,
+SLIDE time). WAVE offers **Saw, Square and Morph**. TUNE, VOLUME, DRIVE TYPE (off, soft or RAT),
+ACCENT DECAY and MORPH are under **MORE** in SEL's list. SEQ has the line's LENGTH (1–64 steps),
+RATE, DIRECTION (forward, reverse, ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
+
+**Morph (experimental Wave 3).** Pick 303A or 303B with ALGORITHM, press EDIT and turn SELECT
+to VOICE. Set WAVE to Morph with KNOB 2. Press SEL, use SELECT to highlight MORPH under MORE,
+and turn ALGORITHM to change it:
+
+| Morph | Shape |
+|---|---|
+| 0 | Sharkfin: a curved falling ramp with an upward reset |
+| 64 | Trapezoid: two plateaus joined by sloping edges |
+| 127 | Notch-Trapezoid: a trapezoid with a triangular notch in the upper plateau |
+
+Intermediate values blend continuously. The default is 64. Each 303 stores its own Morph
+value, including while Saw or Square is selected; Morph only affects the Morph waveform.
+While Morph is sounding, changes slew over at most about 5 ms. Setting it while the voice is
+idle settles immediately.
+
+**One Morph voice at a time.** If 303A uses Morph, a Morph selection on 303B is rejected and B
+keeps its prior accepted Wave. The same applies with A and B reversed. The other voice is not
+forced to change. Set the current owner to Saw or Square before selecting Morph on the other
+voice. A rejected choice does not become active later when the owner releases it; make a new
+selection. Direct parameter changes and Wave motion obey the same rule.
+
+SAVE stores accepted Wave settings and both Morph values. A rejected Morph choice is not
+saved as successful. If a loaded project contains Morph on both voices, A keeps Morph and B
+loads Saw; their Morph values remain independent.
+
+Wave 3 uses cubic four-box BLEP/BLAMP correction. The existing Saw/Square DSP, 2× default
+oversampling, overload guard, filters and drive remain unchanged. **FM1 hardware timing and
+listening validation are pending.** Host tests and successful builds do not establish hardware
+realtime performance or a universal audio-quality pass. The
+[waveform specification](TB303_WAVEFORMS_DESIGN.md) describes the implementation and remaining limits.
 
 ---
 
@@ -472,6 +503,14 @@ it, fills in short pauses so a slow sweep has no gaps, and on playback glides fr
   and master into the 909's. Copying or clearing a pattern copies or clears its motion too.
 - When you stop, every knob goes back to its own setting.
 
+Wave motion on the 303s respects the one-Morph-voice limit. A conflicting request keeps the
+previous effective Wave, and its ramp stops; releasing the owner does not replay that rejected
+request. A new motion step can make a fresh request. The motion indicator shows the effective
+Wave. If motion releases a voice's Morph setting and the other voice acquires Morph, the former
+voice's base Wave is reconciled to its already effective Saw or Square. It will not silently
+reclaim Morph when motion stops. Recorded lanes can still contain Morph requests; playback
+checks each request against the active voice.
+
 With Forward Remix ON, Motion recording changes the original source-step Motion
 data for the events you hear. Short gaps still interpolate across chronological
 positions, with each value written to its active mapped source step. Repeated
@@ -639,6 +678,11 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 **SAVE** saves the sounds, all 32 patterns, the song, the knob motion, the tempo and the
 settings. A small grey dot at the top right of the screen means there are unsaved changes, and
 anything unsaved is lost when you switch off.
+
+For experimental Wave 3, each 303's Morph value is saved independently. Wave selections go
+through the audio command queue: saving uses the last audio-accepted settings, including if a
+new selection has not yet been processed. Rejected selections never replace those saved Wave
+values. A conflicting loaded pair resolves to Morph on A and Saw on B.
 
 With **AUTOSAVE** on (the default) you'll rarely need SAVE: whenever the pattern is stopped and
 nothing has been touched for four seconds, X0X saves and says AUTOSAVED.
@@ -832,7 +876,8 @@ in SEL's list; the rest are its sound pages.
 | Cutoff, Reso, EnvMod | 0–127 |
 | Decay | 200–2000 ms |
 | Accent | 0–127 |
-| Wave | Saw or square |
+| Wave | Saw, Square or Morph; only one 303 may use Morph at a time |
+| Morph (MORE) | 0–127; 0 Sharkfin, 64 Trapezoid, 127 Notch-Trapezoid; default 64 |
 | Tune | A from 400 to 480 Hz; the middle is 440 Hz |
 | Volume | 0–127 |
 | Drive, Drive type | Off, soft or RAT |

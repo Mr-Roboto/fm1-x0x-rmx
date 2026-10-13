@@ -14,7 +14,7 @@ static motion_t M;
 static int knob = 64, eng = 64, applies;   /* one parameter: the knob (base) and the engine's value */
 
 static int base(void *x, int t, int v, int i) { (void)x; (void)t; (void)v; (void)i; return knob; }
-static void apply(void *x, int t, int v, int i, int val) { (void)x; (void)t; (void)v; (void)i; eng = val; applies++; }
+static int apply(void *x, int t, int v, int i, int val) { (void)x; (void)t; (void)v; (void)i; eng = val; applies++; return val; }
 
 /* one pass of a 16-step part, `per` samples a step; with f, the knob is turned to f(step) before
  * each step, recording (lane k) */

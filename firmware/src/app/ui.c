@@ -583,6 +583,8 @@ static const char *pref_name(pref_t r)
         default: break;
         }
     }
+    if (r.kind == R_ENG && r.a == T_303 && r.c == BASS303_DRVTYPE)
+        return "DrvType";
     if (r.kind == R_BRKSET && r.c == BRK_BCHANCE)
         return "B CHANCE";
     if (r.kind == R_ENG && (r.a == T_909 || r.a == T_808) && r.b < NDRUM && ui.view == V_MIX && ui.overlay == O_LIST) {
@@ -876,11 +878,9 @@ static void build_pages(void)
                      PR(R_ENG, T_303, b, BASS303_ENVMOD), PR(R_ENG, T_303, b, BASS303_DECAY));
             add_page("VOICE", PR(R_ENG, T_303, b, BASS303_ACCENT), PR(R_ENG, T_303, b, BASS303_WAVE),
                      PR(R_ENG, T_303, b, BASS303_DRIVE), PR(R_ENG, T_303, b, BASS303_SLIDE));
-            more(PR(R_ENG, T_303, b, BASS303_TUNE));
+            add_page("EXTRA", PR(R_ENG, T_303, b, BASS303_MORPH), PR(R_ENG, T_303, b, BASS303_ACCDEC),
+                     PR(R_ENG, T_303, b, BASS303_DRVTYPE), PR(R_ENG, T_303, b, BASS303_TUNE));
             more(PR(R_ENG, T_303, b, BASS303_VOLUME));
-            more(PR(R_ENG, T_303, b, BASS303_DRVTYPE));
-            more(PR(R_ENG, T_303, b, BASS303_ACCDEC));
-            more(PR(R_ENG, T_303, b, BASS303_MORPH));
         } else {
             pg_grp = GR_PAT;                           /* (its groove and retrigs: SEQ) */
             add_page("LOOPS", PR(R_BRKSLOT, 0, 0, 0), PR(R_BRKSLOT, 1, 0, 0), PR(R_BRKSET, 0, 0, BRK_BCHANCE),

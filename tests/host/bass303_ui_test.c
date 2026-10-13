@@ -26,6 +26,144 @@ static void setup(void)
     flush();
     ui_init();
 }
+static void panel_tap(int button)
+{
+    held_btn = 1u << button; ui_input_only();
+    held_btn = 0; ui_input_only();
+    flush();
+}
+static void panel_turn(int encoder, int amount)
+{
+    accel_off = 1;
+    enc_acc[encoder] = amount; ui_input_only();
+    accel_off = 0;
+    flush();
+}
+static void panel_chord(int button)
+{
+    held_btn = 1u << B_HOME; ui_input_only();
+    held_btn |= 1u << button; ui_input_only();
+    held_btn = 1u << B_HOME; ui_input_only();
+    held_btn = 0; ui_input_only();
+    flush();
+}
+static void page_shot(int voice, const char *name)
+{
+    char path[96];
+    snprintf(path, sizeof path, "build/host/waveform-ui/303%c-%s.png", voice ? 'b' : 'a', name);
+    ui.help = 0; ui.msg_until = 0; ui.touched = -1;
+    build_pages(); draw_header(); draw_main(); draw_knobs();
+    png_write(path);
+}
+static void extra_pages(void)
+{
+    static const int params[3][4] = {
+        {BASS303_CUTOFF, BASS303_RESO, BASS303_ENVMOD, BASS303_DECAY},
+        {BASS303_ACCENT, BASS303_WAVE, BASS303_DRIVE, BASS303_SLIDE},
+        {BASS303_MORPH, BASS303_ACCDEC, BASS303_DRVTYPE, BASS303_TUNE},
+    };
+    static const char *const names[3] = {"TONE", "VOICE", "EXTRA"};
+    static const char *const labels[4] = {"MORPH", "ACCDEC", "DRVTYPE", "TUNE"};
+    setup();
+    held_btn = held_keys = 0;
+    memset(enc_acc, 0, sizeof enc_acc);
+    ui.page[V_PART][PART_303A] = ui.page[V_PART][PART_303B] = 0;
+    for (int v = 0; v < 2; v++) {
+        ui.part = PART_303A + v; ui.view = V_PART; ui.overlay = O_NONE;
+        build_pages();
+        assert(pg.n == 3 && pg.nmore == 1);
+        assert(pg.more[0].kind == R_ENG && pg.more[0].a == T_303 && pg.more[0].b == v && pg.more[0].c == BASS303_VOLUME);
+        for (int page = 0; page < 3; page++) {
+            assert(cur_page() == page && !strcmp(pg.title[page], names[page]) && pg.group[page] == GR_SOUND);
+            for (int k = 0; k < 4; k++) {
+                pref_t r = pg.r[page][k];
+                assert(r.kind == R_ENG && r.a == T_303 && r.b == v && r.c == params[page][k]);
+                if (page == 2) {
+                    assert(!strcmp(caps_of(pref_name(r)), labels[k]));
+                    assert(tw(&FONT_XS, labels[k]) <= 56);
+                }
+            }
+            page_shot(v, page == 0 ? "tone" : page == 1 ? "voice" : "extra");
+            panel_tap(B_EDIT);
+        }
+        assert(cur_page() == 0); /* EDIT wraps; SELECT retains its established clamping. */
+        panel_turn(EN_SELECT, -1); assert(cur_page() == 0);
+        panel_turn(EN_SELECT, 1); assert(cur_page() == 1);
+        panel_turn(EN_SELECT, 1); assert(cur_page() == 2);
+        panel_turn(EN_SELECT, 1); assert(cur_page() == 2);
+        panel_turn(EN_SELECT, -1); assert(cur_page() == 1);
+        panel_turn(EN_SELECT, 1);
+        panel_tap(B_SEL);
+        assert(ui.overlay == O_LIST && ui.list_n == 14);
+        for (int i = 0; i < 12; i++) {
+            pref_t r = list_rows[i];
+            assert(r.kind == R_ENG && r.a == T_303 && r.b == v && r.c == params[i / 4][i % 4]);
+            for (int j = 0; j < i; j++) assert(list_rows[j].c != r.c);
+        }
+        assert(list_rows[12].kind == R_HDR && list_rows[12].a == GR_MORE);
+        assert(list_rows[13].kind == R_ENG && list_rows[13].c == BASS303_VOLUME);
+        ui.list_sel = 8; ui.list_top = 8; page_shot(v, "sel-extra");
+        ui.list_sel = 13; page_shot(v, "sel-volume");
+        int volume = pref_get(list_rows[13]);
+        panel_turn(EN_ALGO, -1); assert(pref_get(list_rows[13]) == volume - 1);
+        panel_turn(EN_ALGO, 1); assert(pref_get(list_rows[13]) == volume);
+        panel_tap(B_HOME); assert(ui.overlay == O_NONE && cur_page() == 2);
+        undo_start();
+        sound_t before = proj.sound, edited;
+        for (int k = 0; k < 4; k++) {
+            sound_t expected = proj.sound;
+            pref_t r = pg.r[2][k];
+            int old = pref_get(r);
+            assert(old == (k == 2 ? 2 : pref_desc(r)->def)); /* existing factory RAT default */
+            int delta = k == 2 ? -1 : 1;
+            panel_turn(EN_K1 + k, delta);
+            expected.v[T_303][v][r.c] = old + delta;
+            assert(!memcmp(&proj.sound, &expected, sizeof expected));
+            assert(bass303_get(&b303[v], r.c) == old + delta);
+        }
+        edited = proj.sound;
+        assert(undo_commit(&undo) == 1);
+        panel_chord(B_REC); assert(!memcmp(&proj.sound, &before, sizeof before));
+        panel_chord(B_PLAY); assert(!memcmp(&proj.sound, &edited, sizeof edited));
+        assert(project_save() == 0);
+        boot(); flush(); assert(!memcmp(&proj.sound, &edited, sizeof edited));
+        ui.part = PART_303A + v; ui.view = V_PART; ui.page[V_PART][ui.part] = 2; build_pages();
+        page_shot(v, "extra-edited");
+        for (int k = 0; k < 4; k++) {
+            pref_t r = pg.r[2][k];
+            pref_set(r, pref_desc(r)->max); flush();
+            panel_turn(EN_K1 + k, 1); assert(pref_get(r) == pref_desc(r)->max);
+            pref_set(r, 0); flush();
+            panel_turn(EN_K1 + k, -1); assert(pref_get(r) == 0);
+            pref_set(r, pref_desc(r)->def); flush();
+        }
+    }
+    /* EXTRA's encoder path records each existing parameter, separately per voice. */
+    setup();
+    for (int v = 0; v < 2; v++) {
+        ui.part = PART_303A + v; ui.view = V_PART; ui.page[V_PART][ui.part] = 2; build_pages();
+        ui.rec = 1; seq.playing = 1;
+        for (int k = 0; k < 4; k++) {
+            int param = params[2][k];
+            panel_turn(EN_K1 + k, k == 2 ? -1 : 1);
+            int lane = motion_find(proj.arr.lane, 0, ui.part, T_303, v, param);
+            motion_step(&mot, ui.part, 0, 0, 1, 16);
+            assert(lane >= 0 && proj.arr.lane[lane].val[0] == pref_get(pg.r[2][k]));
+        }
+        seq.playing = 0; ui.rec = 0;
+    }
+    /* Voice pages keep the real knob-based one-Morph-owner restriction. */
+    setup(); pref_set(wave_ref(0), 2); pref_set(wave_ref(1), 1); flush();
+    ui.part = PART_303B; ui.view = V_PART; ui.page[V_PART][ui.part] = 1; build_pages();
+    panel_turn(EN_K2, 1); assert(pref_get(wave_ref(1)) == 1);
+    panel_tap(B_EDIT); panel_turn(EN_K1, 1);
+    assert(pref_get(morph_ref(1)) == 65 && pref_get(wave_ref(1)) == 1 && pref_get(wave_ref(0)) == 2);
+    ui.part = PART_303A; build_pages();
+    assert(cur_page() == 2); /* independent remembered page */
+    panel_turn(EN_SELECT, -1); panel_turn(EN_K2, -1); assert(pref_get(wave_ref(0)) == 1);
+    ui.part = PART_303B; build_pages(); assert(cur_page() == 2);
+    panel_turn(EN_SELECT, -1); panel_turn(EN_K2, 1); assert(pref_get(wave_ref(1)) == 2);
+}
 static void selections(void)
 {
     setup();
@@ -36,10 +174,8 @@ static void selections(void)
     for (int v = 0; v < 2; v++) {
         ui.view = V_PART; ui.part = PART_303A + v;
         build_pages();
-        int found = 0;
-        for (int i = 0; i < pg.nmore; i++)
-            found |= pg.more[i].kind == R_ENG && pg.more[i].a == T_303 && pg.more[i].b == v && pg.more[i].c == BASS303_MORPH;
-        assert(found);
+        assert(pg.n == 3 && pg.r[2][0].kind == R_ENG && pg.r[2][0].a == T_303 &&
+               pg.r[2][0].b == v && pg.r[2][0].c == BASS303_MORPH);
         assert(pref_get(morph_ref(v)) == 64);
         pref_set(morph_ref(v), v ? 127 : 0);
     }
@@ -151,11 +287,11 @@ static void persistence(void)
     accel_off = 0;
     assert(proj.sound.v[T_303][0][12] == 126 && b303[0].morph_target == 126);
     draw_header(); draw_main(); draw_knobs();
-    png_write("build/host/waveform-ui/303-more.png");
+    png_write("build/host/waveform-ui/303-sel-morph.png");
 }
 int main(void)
 {
-    selections(); automation(); persistence();
-    puts("bass303 UI/command exclusion/motion/persistence: PASS");
+    extra_pages(); selections(); automation(); persistence();
+    puts("bass303 EXTRA pages/knobs/SEL/Undo and command exclusion/motion/persistence: PASS");
     return 0;
 }

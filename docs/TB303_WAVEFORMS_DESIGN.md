@@ -34,7 +34,7 @@ Audioqualitäts- und Echtzeitprüfungen.
 Die endgültige Morph-Zuordnung lautet **0 = Sharkfin, 64 = Trapezoid,
 127 = Notch-Trapezoid**. Zwischenwerte verwenden kontinuierliches Smoothstep-
 Blending mit Gain-Kompensation. Default ist 64. Der Morph-Regler liegt in
-**EDIT → SEL → MORE → MORPH** und hat pro Stimme einen eigenen Wert und 5-ms-Slew.
+**EDIT → EXTRA → KNOB 1 (MORPH)** und hat pro Stimme einen eigenen Wert und 5-ms-Slew.
 
 **Verbindliche Architektur:** Höchstens eine von 303A/303B darf `Wave = Morph`
 verwenden. Eine konkurrierende Auswahl wird abgewiesen und belässt den zuvor

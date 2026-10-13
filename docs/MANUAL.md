@@ -317,14 +317,25 @@ you can try lines and turn EDIT's knobs as you go; the top line says FREE PLAY. 
 written until you press REC, which records as above. Set FREE PLAY back to OFF for the steps.
 Each 303 has its own, and both are off at power-on.
 
-**The pages.** EDIT has TONE (CUTOFF, RESO, ENVMOD, DECAY) and VOICE (ACCENT, WAVE, DRIVE,
-SLIDE time). WAVE offers **Saw, Square and Morph**. TUNE, VOLUME, DRIVE TYPE (off, soft or RAT),
-ACCENT DECAY and MORPH are under **MORE** in SEL's list. SEQ has the line's LENGTH (1–64 steps),
-RATE, DIRECTION (forward, reverse, ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
+**The pages.** Both 303A and 303B have three EDIT pages. Press EDIT repeatedly to cycle
+**TONE → VOICE → EXTRA → TONE**, or turn SELECT to move between pages (SELECT stops at
+TONE and EXTRA). Each voice remembers its own page.
+
+| EDIT page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 |
+|---|---|---|---|---|
+| TONE | CUTOFF | RESO | ENVMOD | DECAY |
+| VOICE | ACCENT | WAVE | DRIVE | SLIDE |
+| EXTRA | MORPH | ACCDEC | DRVTYPE | TUNE |
+
+WAVE offers **Saw, Square and Morph**. EXTRA uses the existing Morph, accent decay,
+drive type (off, soft or RAT) and tuning controls, with unchanged ranges and defaults.
+SEL lists these with the page parameters in the same order; only VOLUME remains under
+**MORE**. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION (forward, reverse,
+ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
 
 **Morph (experimental Wave 3).** Pick 303A or 303B with ALGORITHM, press EDIT and turn SELECT
-to VOICE. Set WAVE to Morph with KNOB 2. Press SEL, use SELECT to highlight MORPH under MORE,
-and turn ALGORITHM to change it:
+to VOICE. Set WAVE to Morph with KNOB 2, then move to EXTRA and use KNOB 1 to change MORPH.
+MORPH also remains available in SEL's normal sound parameter list.
 
 | Morph | Shape |
 |---|---|
@@ -934,7 +945,7 @@ in SEL's list; the rest are its sound pages.
 | Decay | 200–2000 ms |
 | Accent | 0–127 |
 | Wave | Saw, Square or Morph; only one 303 may use Morph at a time |
-| Morph (MORE) | 0–127; 0 Sharkfin, 64 Trapezoid, 127 Notch-Trapezoid; default 64 |
+| Morph (EXTRA) | 0–127; 0 Sharkfin, 64 Trapezoid, 127 Notch-Trapezoid; default 64 |
 | Tune | A from 400 to 480 Hz; the middle is 440 Hz |
 | Volume | 0–127 |
 | Drive, Drive type | Off, soft or RAT |

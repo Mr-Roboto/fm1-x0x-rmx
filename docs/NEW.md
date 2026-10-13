@@ -14,8 +14,8 @@ and [local website preview](PAGES.md).
 
 ## Unreleased · Morph waveform in orb-remix
 
-- **Experimental Wave 3:** the 303 WAVE choices are Saw, Square and Morph. In EDIT's SEL list,
-  **MORE > MORPH** moves continuously through 0 = Sharkfin, 64 = Trapezoid and
+- **Experimental Wave 3:** the 303 WAVE choices are Saw, Square and Morph. On EDIT's **EXTRA** page,
+  **KNOB 1 (MORPH)** moves continuously through 0 = Sharkfin, 64 = Trapezoid and
   127 = Notch-Trapezoid, with independent settings and a 5 ms slew for each voice.
 - Only 303A or 303B may use Morph at a time. Conflicting UI, direct parameter and motion
   requests keep the prior accepted Wave; they do not force the other voice to change or wait

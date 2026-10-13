@@ -48,8 +48,8 @@ other. Pattern changes wait for the end of the bar, and patterns can be chained.
 
 ### Experimental Wave 3 in this fork
 
-On `orb-remix`, each 303's WAVE offers **Saw, Square and Morph**. In EDIT's SEL list,
-**MORE > MORPH** blends continuously from **0 = Sharkfin**, through **64 = Trapezoid**, to
+On `orb-remix`, each 303's WAVE offers **Saw, Square and Morph**. On EDIT's **EXTRA** page,
+**KNOB 1 (MORPH)** blends continuously from **0 = Sharkfin**, through **64 = Trapezoid**, to
 **127 = Notch-Trapezoid**. Each voice keeps its own Morph value; the default is 64, and changes
 use a 5 ms slew while Morph is sounding.
 

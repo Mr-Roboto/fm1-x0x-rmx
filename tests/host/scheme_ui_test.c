@@ -118,6 +118,13 @@ static void legacy_appearance(void)
                     assert(pg.n == 3 && pg.r[0][0].kind == R_DGEN);
                     assert(!strcmp(pg.title[0], "MAP"));
                     assert(!strcmp(pref_desc(pg.r[0][0])->name, "X"));
+                } else if (appearance_views[v] == V_PART && (part == PART_303A || part == PART_303B)) {
+                    /* EXTRA adds a third page dot and shifts the tag. Normalize only
+                     * that navigation strip to keep every original TONE pixel checked. */
+                    assert(pg.n == 3 && !strcmp(pg.title[2], "EXTRA"));
+                    pg.n = 2;
+                    draw_knobs();
+                    assert(screen_hash() == original_lcd[p][part][v]);
                 } else assert(screen_hash() == original_lcd[p][part][v]);
             }
     for (int p = 0; p < 5; p++) {
@@ -126,7 +133,7 @@ static void legacy_appearance(void)
         char path[96]; snprintf(path, sizeof path, "build/host/schemes/default-%d-comp-active.png", p);
         png_write(path);
     }
-    puts("DEFAULT: 200 unchanged P4 scenes and five intentional active COMP/GR references passed");
+    puts("DEFAULT: legacy pixels (303 page dots normalized), Grids replacements and five active COMP/GR references passed");
 }
 
 static void global_memory(void)

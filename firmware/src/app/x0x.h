@@ -4,6 +4,7 @@
 #pragma once
 #include <stdint.h>
 #include "plat.h"
+#include "../color_scheme.h"
 #include "engine.h"
 #include "../seq/pattern.h"
 #include "../seq/sequencer.h"
@@ -29,7 +30,7 @@ typedef struct {
     uint16_t bpm_x10;
     uint8_t accent_q7, keysound;         /* black drum keys sound: 0 = only when stopped or recording, 1 = always */
     uint8_t autosave_off;                /* 0: save by itself while stopped and idle (ui.c autosave) */
-    uint8_t rsv_bright;                  /* was the screen's brightness (removed: always full); unused */
+    uint8_t rsv_bright;                  /* SCHEME: 0xD0..0xD5; legacy brightness 0..8 = DEFAULT */
     uint8_t stereo;                      /* the pans the sound has: 0 none (saved mono), 1 the parts', 2 the
                                           * drum voices' too (PROJ_STEREO); a load centres what is missing */
     uint8_t snd_rev;                     /* the sound's layout (PROJ_SND_REV): 0 = before the 909 SD's DECAY */
@@ -39,6 +40,17 @@ typedef struct {
     uint8_t usb_full;                    /* 1: USB audio at full level, the MASTER knob for the FM-1's own outputs */
     uint8_t rsv[1];                      /* Remix APPLY: 0xB4..0xB7, invalid = BEAT */
 } settings_t;
+
+static inline int settings_scheme(const settings_t *s)
+{
+    unsigned id = s->rsv_bright & 7u;
+    return (s->rsv_bright & 0xF8u) == 0xD0u && id < NSCHEMES ? (int)id : SCHEME_DEFAULT;
+}
+static inline void settings_set_scheme(settings_t *s, int id)
+{
+    if ((unsigned)id < NSCHEMES)
+        s->rsv_bright = (uint8_t)(0xD0u | id);
+}
 
 /* Six signature bits distinguish legacy reserved bytes from APPLY. */
 static inline int settings_remix_apply(const settings_t *s)

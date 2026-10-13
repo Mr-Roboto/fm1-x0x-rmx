@@ -184,7 +184,7 @@ static void fm1_fault(const fm1_crash_t *c)
     char b[12];
     uint32_t t0;
     fm1_audio_stop();
-    lcd_fill(0, 0, 240, 240, RGB(160, 0, 0));
+    lcd_fill(0, 0, 240, 240, C_CRASH_BG);
     draw_text_box(0, 8, 240, &FONT_S, "X0X CRASH", C_WHITE, 1);
     hexs(b, c->vec);
     draw_text_box(10, 40, 220, &FONT_S, b, C_WHITE, 0);
@@ -285,7 +285,7 @@ static void fm1_main(void)
         }
     }
     lcd_init();
-    palette_set(1);
+    scheme_set(SCHEME_DEFAULT, 1);
     draw_text_box(0, 96, 240, &FONT_M, "X0X", C_HI, 1);
     draw_text_box(0, 134, 240, &FONT_S, "909 808 303 303 BREAK", C_GRAY, 1);
     if (x0x_dbg.magic != DBG_MAGIC) {
@@ -302,7 +302,7 @@ static void fm1_main(void)
         b[2] = ' ';
         hexs(b + 3, fm1_crash.pc);
         draw_text_box(0, 176, 240, &FONT_S, fm1_crash.core == 1 ? "THE SECOND CORE CRASHED"
-                      : "RESTARTED AFTER A CRASH", RGB(255, 80, 60), 1);
+                      : "RESTARTED AFTER A CRASH", C_WARNING, 1);
         draw_text_box(0, 196, 240, &FONT_S, b, C_GRAY, 1);
         fm1_wdt_feed();
         fm1_delay_ms(2500);

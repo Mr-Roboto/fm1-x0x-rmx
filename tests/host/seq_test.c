@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Sequencer and TB-3PO tests on the host: event times to the sample, 303 gate / slide /
  * tie semantics, swing, rates, polymeter, pattern cue + chain, external clock, MIDI clock
- * out, the break clock, and TB-3PO lines identical to schwung-tb3po's for the same seed. */
+ * out, the break clock, and deterministic TB-3PO automatic mutation. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -368,70 +368,27 @@ static void test_tb3po_default_scale(void)
           "new TB-3PO configurations default to Minor Pentatonic at index 0");
 }
 
-/* ---- TB-3PO against schwung-tb3po: include its plugin source and call its generator */
-#ifdef REF_TB3PO
-#define move_plugin_init_v2 ref_move_plugin_init_v2
-#define slot_init_defaults ref_slot_init_defaults
-#define generate_pattern ref_generate_pattern
-#define mutate_pattern ref_mutate_pattern
-#include REF_TB3PO
-static void test_tb3po_matches_reference(void)
+/* Automatic mutation must use the same phrase-preserving edits as OCT-. */
+static void test_tb3po_auto_mutate(void)
 {
-    /* Reference indices describe its own ordering, not persistent IDs in this fork. */
-    static const char *const ref_names[] = {"MIN", "PHRY", "HARM", "MPEN", "DOR", "MAJ"};
-    uint8_t scale_map[6];
-    int seed, len, i, same = 0, total = 0;
-    for (i = 0; i < 6; i++) {
-        int j;
-        for (j = 0; j < TB3PO_NSCALES; j++)
-            if (!strcmp(ref_names[i], TB3PO_SCALE_NAMES[j]))
-                break;
-        CHECK(j < TB3PO_NSCALES, "original scale %s is available", ref_names[i]);
-        if (j == TB3PO_NSCALES)
-            return;
-        scale_map[i] = (uint8_t)j;
-    }
-    for (seed = 1; seed < 400; seed++) {
-        for (len = 8; len <= 32; len += 8) {
-            tb3po_slot_t ref;
-            bpart_t b;
-            ref_slot_init_defaults(&ref);
-            ref.length = len;
-            ref.density = (float)(30 + seed % 70) / 100.0f;
-            ref.accent = (float)(seed % 90) / 100.0f;
-            ref.slide = (float)(seed % 60) / 100.0f;
-            ref.octave_range = 1 + seed % 3;
-            ref.scale = seed % 6;
-            ref.root = seed % 12;
-            ref_generate_pattern(&ref, (uint32_t)seed * 7919u);
-            memset(&b, 0, sizeof b);
-            b.len = (uint8_t)len;
-            tb3po_defaults(&b.gen, (uint32_t)seed * 7919u);
-            b.gen.density = (uint8_t)(30 + seed % 70);
-            b.gen.accent = (uint8_t)(seed % 90);
-            b.gen.slide = (uint8_t)(seed % 60);
-            b.gen.oct_range = (uint8_t)(1 + seed % 3);
-            b.gen.scale = scale_map[seed % 6];
-            b.gen.root = (uint8_t)(seed % 12);
-            tb3po_generate(&b);
-            for (i = 0; i < len; i++) {
-                int rk = ref.steps[i], gate = bstep_gate(&b.step[i]);
-                int kind = gate == G_REST ? 0 : (b.step[i].flags & BS_SLIDE) ? 3 : (b.step[i].flags & BS_ACCENT) ? 2 : 1;
-                int ok = rk == kind;
-                if (ok && kind)
-                    ok = b.step[i].note == note_for_step(&ref, i);
-                same += ok;
-                total++;
-                if (!ok && total - same < 5)
-                    printf("  seed %d len %d step %d: ref kind %d note %d, ours %d note %d\n", seed, len, i, rk,
-                           note_for_step(&ref, i), kind, b.step[i].note);
-            }
-        }
-    }
-    CHECK(same == total, "TB-3PO steps identical to schwung-tb3po: %d of %d", same, total);
-    printf("  TB-3PO vs schwung-tb3po: %d / %d steps identical over 396 seeds x 4 lengths\n", same, total);
+    reset();
+    S.bpm = 120.0f;
+    tb3po_generate(&P[0].bass[0]);
+    P[0].bass[0].gen.mutate_bars = 2;
+    bpart_t expected = P[0].bass[0];
+    pattern_t before = P[0];
+    uint32_t rng = 0;
+    seq_start(&S);
+    run(44100 * 8 + 1); /* four 16-step loops, including the fourth wrap */
+    tb3po_mutate(&expected, &rng);
+    tb3po_mutate(&expected, &rng);
+    CHECK(!memcmp(&expected, &P[0].bass[0], sizeof expected), "automatic and manual mutation agree");
+    CHECK(S.mut_rng[0] == rng, "automatic mutation stream agrees");
+    CHECK(!memcmp(before.drum, P[0].drum, sizeof before.drum) &&
+          !memcmp(&before.bass[1], &P[0].bass[1], sizeof before.bass[1]) &&
+          !memcmp(&before.brk, &P[0].brk, sizeof before.brk), "mutation leaves other parts intact");
+    printf("  TB-3PO automatic mutation: shared algorithm/stream, other parts retained\n");
 }
-#endif
 
 /* Remix oracle: materialize the expected chronological pattern from explicit
  * historical A3/A5/A7/A8 rows, then compare every callback and gate time with
@@ -665,9 +622,7 @@ int main(void)
     test_break_clock();
     test_remix_sequencer();
     test_tb3po_default_scale();
-#ifdef REF_TB3PO
-    test_tb3po_matches_reference();
-#endif
+    test_tb3po_auto_mutate();
     printf("seq: %s\n", fails ? "FAIL" : "ok");
     return fails != 0;
 }

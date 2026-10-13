@@ -23,9 +23,8 @@ static int32_t cv_oy;            /* y offset for graph drawing */
 static int32_t cv_y0, cv_y1;     /* X0X: the rows drawing may touch (cv_band) */
 
 #define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
-#define C_BLACK 0x0000u
-#define C_WHITE 0xFFFFu              /* accent only: what is being touched / where we are */
-/* The screen's five steps, darkest to brightest, plus white; picked as THEME in GLOBAL. */
+#include "color_scheme.h"
+/* Original LCD palettes remain available to DEFAULT for saved-project compatibility. */
 typedef struct {
     const char *name;
     uint16_t c[5];
@@ -42,9 +41,54 @@ static const palette_t PALETTES[] = {
     {"MONO", {NEUTRALS, RGB(196, 196, 202), RGB(236, 236, 240)}},
 };
 #define NPALETTES (sizeof(PALETTES) / sizeof(PALETTES[0]))
+typedef struct {
+    uint16_t lcd[5];                 /* rules, inactive, labels, secondary, values */
+    uint16_t part[5];                /* 909, 808, 303A, 303B, BREAK */
+    uint16_t background, accent;
+} color_scheme_t;
+/* RGB565 in flash; each coordinated scheme occupies 24 bytes. Black backgrounds
+ * keep the small LCD readable. Warm/cool and brightness differences separate parts. */
+static const color_scheme_t SCHEMES[NSCHEMES] = {
+    {{NEUTRALS, RGB(232, 136, 30), RGB(255, 184, 70)},
+     {RGB(255, 150, 40), RGB(255, 72, 64), RGB(130, 240, 90), RGB(70, 205, 255), RGB(214, 120, 255)},
+     RGB(0, 0, 0), RGB(255, 255, 255)},
+    {{RGB(40, 36, 48), RGB(88, 80, 100), RGB(184, 176, 200), RGB(208, 184, 232), RGB(248, 232, 208)},
+     {RGB(187, 143, 180), RGB(232, 152, 192), RGB(184, 160, 240), RGB(160, 184, 248), RGB(216, 128, 240)},
+     RGB(0, 0, 0), RGB(248, 244, 232)},
+    {{RGB(48, 32, 40), RGB(100, 76, 92), RGB(200, 168, 188), RGB(224, 160, 208), RGB(248, 208, 224)},
+     {RGB(248, 176, 152), RGB(248, 112, 152), RGB(192, 160, 248), RGB(224, 144, 208), RGB(248, 208, 224)},
+     RGB(0, 0, 0), RGB(248, 240, 240)},
+    {{RGB(48, 36, 32), RGB(100, 80, 68), RGB(200, 176, 152), RGB(232, 152, 96), RGB(248, 212, 152)},
+     {RGB(248, 192, 88), RGB(232, 120, 96), RGB(248, 216, 168), RGB(208, 152, 104), RGB(224, 144, 168)},
+     RGB(0, 0, 0), RGB(248, 240, 216)},
+    {{RGB(32, 44, 44), RGB(72, 96, 96), RGB(168, 192, 184), RGB(96, 200, 184), RGB(192, 240, 216)},
+     {RGB(152, 240, 192), RGB(80, 192, 168), RGB(184, 216, 136), RGB(96, 208, 232), RGB(168, 184, 216)},
+     RGB(0, 0, 0), RGB(232, 248, 240)},
+    {{RGB(32, 40, 48), RGB(76, 88, 104), RGB(176, 188, 200), RGB(136, 176, 216), RGB(240, 232, 208)},
+     {RGB(240, 224, 184), RGB(152, 176, 208), RGB(120, 192, 224), RGB(104, 144, 200), RGB(192, 200, 224)},
+     RGB(0, 0, 0), RGB(248, 244, 232)},
+};
+static const char *const SCHEME_N[NSCHEMES] = {
+    "DEFAULT", "WHITE LILAC", "PINK LILAC", "SUNSET ORANGE", "GRAPHITE MINT", "WHITE BLUE"
+};
+static const color_scheme_t *scheme = &SCHEMES[SCHEME_DEFAULT];
+#define C_BLACK (scheme->background)
+#define C_WHITE (scheme->accent)       /* touched / current position */
+#define PART_COL (scheme->part)
+/* Recording and warnings retain their original red meanings in every scheme.
+ * Compressor text and meter share a vivid red, including in DEFAULT. */
+#define C_RECORD_TEXT RGB(255, 90, 80)
+#define C_RECORD_DOT RGB(255, 50, 50)
+#define C_RECORD_PLAY RGB(255, 80, 70)
+#define C_WARNING RGB(255, 80, 60)
+#define C_GAIN RGB(255, 60, 60)
+#define C_CPU_WARNING RGB(255, 60, 60)
+#define C_CRASH_BG RGB(160, 0, 0)
 static uint16_t pal[5];
 #define C_LINE pal[0]                /* 1 rules, separators */
 #define C_DIM pal[1]                 /* 2 inactive, empty steps, units */
+/* Footer only: +16 per channel is safe for the five new schemes' dim colors. */
+#define C_FOOT (scheme == &SCHEMES[SCHEME_DEFAULT] ? C_DIM : (uint16_t)(C_DIM + RGB(16, 16, 16)))
 #define C_GRAY pal[2]                /* 3 labels */
 #define C_AMB pal[3]                 /* 4 secondary text */
 #define C_HI pal[4]                  /* 5 values, curves */
@@ -54,6 +98,19 @@ static void palette_set(uint32_t i)
     uint32_t k;
     for (k = 0; k < 5u; k++)
         pal[k] = PALETTES[i % NPALETTES].c[k];
+}
+
+static void scheme_set(uint32_t i, uint32_t legacy_palette)
+{
+    uint32_t k;
+    if (i >= NSCHEMES)
+        i = SCHEME_DEFAULT;
+    scheme = &SCHEMES[i];
+    if (i == SCHEME_DEFAULT)
+        palette_set(legacy_palette);
+    else
+        for (k = 0; k < 5u; k++)
+            pal[k] = scheme->lcd[k];
 }
 
 static inline uint16_t swap16(uint32_t c) { return (uint16_t)(((c >> 8) & 0xFFu) | ((c & 0xFFu) << 8)); }

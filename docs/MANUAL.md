@@ -334,8 +334,8 @@ TB-3PO writes 303 lines for you. Pick a 303 with ALGORITHM and press ARP.
 
 ![TB-3PO](img/screen-tb3po.png)
 
-Press **OCT+** to write a completely new line, or **OCT-** to mutate the current one (about a
-quarter of its steps change).
+Press **OCT+** to write a completely new line, or **OCT-** to mutate the current one
+(a few small edits that retain the melodic anchors).
 
 TB-3PO has two pages (press ARP again, or turn SELECT):
 
@@ -347,8 +347,38 @@ TB-3PO has two pages (press ARP again, or turn SELECT):
 These knobs don't change the line you're hearing. They set up the next OCT+ or OCT-, so your
 line stays exactly as it is, hand edits included, until you press one. When the knobs no longer
 match the line, the screen shows NEW LINE with a star. The same settings and seed always give
-the same line. The six original scales also match Schwung's TB-3PO module when selected
-by the same scale name.
+the same line. Historical Schwung generator output is no longer identical.
+
+The line uses short four- or eight-step motifs with recognizable root anchors. A 16-step
+line pairs a question with a small rhythmic and melodic answer. Longer lines combine two
+related motifs and develop their answers, rather than stretching one phrase across the
+whole pattern. All lengths from 1 to 64 steps work, including 18 or 24: partial final phrases
+end at the selected length and connect back to the start. Beats stay on the four-step grid;
+offbeats and anticipations retain their syncopation.
+
+Root and fifth are preferred; a fifth is used only when it belongs to the chosen scale.
+Other scale tones add colour. Register choices stay close, with generated melodic moves no
+larger than seven semitones, including the loop boundary. OCTS makes higher registers
+available, while favoring the lower octave.
+
+DENS sets the approximate percentage of sounding steps in each eight-step phrase (including
+partial phrases). Recurring beats and seeded offbeats form the rhythm; answers exchange a
+gap and a weak note position. At 100 every step plays; at 0 one root remains, as before.
+ACCENT favors beats and anticipations. SLIDE favors short pitch moves into beats or roots,
+with fewer repeated-pitch slides and consecutive slides. Both can occur together: an outgoing
+slide connects to the next note, whose own accent is still applied. At 0 the respective
+articulation is absent; at 100 all notes are accented or all eligible adjacent notes slide.
+A one-step loop does not slide into itself.
+
+Mutation attempts at most one small edit in each eight-step segment, including a partial
+final segment. It favors rhythm and articulation changes; occasional pitch changes stay
+within three semitones. The first two positions of each four-step cell retain their pitch
+and note/rest status, while their articulation may vary. DENS guides rest changes, and new
+notes echo a neighbor in the selected scale and stay close to both neighbors. Mutation can
+leave the line unchanged. Existing hand edits or notes from a previously selected scale are
+retained unless that step changes; mutation does not quantize the whole line. Automatic
+mutation uses the same rules. OCT+ and OCT- show the resulting line immediately, including
+after a recent knob edit.
 
 Scale selection follows this order: MPEN, PMAJ, EGYP, HIRA, MIN, MAJ, DOR, PHRY,
 LYD, MIXO, LOCR, HARM, MELM, HMAJ, ALTR, GYPS, ROMN, BHAI, MARV, PURV, TODI, ARAB.
@@ -664,11 +694,11 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 | USB AUDIO | FOLLOWS KNOB (the default): USB audio is as loud as the FM-1, MASTER knob and all. FULL: USB audio stays at full level whatever the knob says, so you can record over the cable with the speaker turned down. |
 | LIGHTS | ON: the key lights show the steps, and the unlit buttons glow dimly so they can be read. KEYS: the key lights only. OFF: neither. |
 | KEY SOUND | STOPPED (the default): picking a drum or editing a 303 step is silent while the pattern plays, unless REC is on. ALWAYS: you always hear it. The 303 keyboard always plays either way. |
-| THEME | The screen colour: green, amber, cyan, red or mono. |
+| SCHEME | Coordinated LCD and part colours: DEFAULT, WHITE LILAC, PINK LILAC, SUNSET ORANGE, GRAPHITE MINT or WHITE BLUE. DEFAULT preserves the original colours, including the legacy screen palette in an older saved project. All schemes keep the black LCD background and red recording/warning indicators. |
 | SAVE PROJECT | Saves everything. |
 | AUTOSAVE | ON (the default): while the pattern is stopped, changes are saved by themselves once nothing has been touched for four seconds. OFF: only SAVE saves. |
 | CLEAR PATTERN | Clears all five parts of the current pattern. |
-| FACTORY RESET | Goes back to the factory sounds and empty patterns, with no song and no knob motion. Your saved project is kept until you save over it. |
+| FACTORY RESET | Goes back to the factory sounds and empty patterns, with no song and no knob motion, and selects DEFAULT with the original amber screen palette. Your saved project is kept until you save over it. |
 | PERFORMANCE | Opens the performance page (below). |
 | ABOUT X0X | Shows the version, how full the memory for patterns is (MEM), and the audio load. |
 | BATTERY | The battery's charge: FULL, 2/3, 1/3 or EMPTY; USB POWER while a computer powers the FM-1. Read only. |

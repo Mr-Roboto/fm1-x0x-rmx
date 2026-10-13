@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# X0X host tests: the maths, the sequencer + TB-3PO (against schwung-tb3po), each engine
+# X0X host tests: the maths, the sequencer + motif-based TB-3PO, each engine
 # against its reference implementation, and the whole firmware app in the simulator
 # (tests/scenarios/*.x0x: UI, patterns, persistence, MIDI clock), with screenshots and
 # audio in build/scenarios/. Needs the reference sources (see tests/host/run_*.sh).
@@ -25,18 +25,11 @@ W="-O2 -ffp-contract=off -Wall -Wextra -Wdouble-promotion -Werror"
 run tb3po sh tests/host/run_tb3po.sh
 run remix sh tests/host/run_remix.sh
 run remix-state sh tests/host/run_remix_state.sh
+run schemes sh tests/host/run_scheme_ui.sh
 run fastmath sh -c "$CC -O2 -ffp-contract=off -Wall -Wextra -Werror -o $OUT/fastmath_test tests/host/fastmath_test.c -lm && $OUT/fastmath_test"   # its reference is double on purpose
-TB3PO_REF="${TB3PO_REF:-../schwung-tb3po/src/dsp/tb3po.c}"
 seq_test() {
-    if [ -f "$TB3PO_REF" ]; then
-        ref="$(cd "$(dirname "$TB3PO_REF")" && pwd)/$(basename "$TB3PO_REF")"
-        $CC -O2 -ffp-contract=off -Wall -Wextra "-DREF_TB3PO=\"$ref\"" -o $OUT/seq_test tests/host/seq_test.c \
-            -Ibuild/gen firmware/src/seq/sequencer.c firmware/src/seq/remix.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
-    else
-        echo "(no schwung-tb3po checkout at $TB3PO_REF: the TB-3PO comparison is skipped)"
-        $CC -O2 -ffp-contract=off -Wall -Wextra -o $OUT/seq_test tests/host/seq_test.c \
-            -Ibuild/gen firmware/src/seq/sequencer.c firmware/src/seq/remix.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
-    fi
+    $CC -O2 -ffp-contract=off -Wall -Wextra -o $OUT/seq_test tests/host/seq_test.c \
+        -Ibuild/gen firmware/src/seq/sequencer.c firmware/src/seq/remix.c firmware/src/seq/tb3po.c firmware/src/seq/pattern.c || return 1
     $OUT/seq_test
 }
 run sequencer seq_test
@@ -79,6 +72,7 @@ if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # 
     run emu sh -c "sh web/emu/build.sh >/dev/null 2>&1 && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
         node tests/host/emu_test.mjs build/emu/x0x.wasm build/host/emu_ref.wav"
     run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
+    run scheme-emu node tests/host/scheme_emu_test.mjs build/emu/x0x.wasm
     mkdir -p build/scenarios/remix_parity
     run remix-emu sh -c "build/host/x0x_host tests/scenarios/remix_parity.x0x build/scenarios/remix_parity && \
         node tests/host/remix_emu_test.mjs build/emu/x0x.wasm build/scenarios/remix_parity/remix_parity.wav"

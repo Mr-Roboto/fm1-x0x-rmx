@@ -23,8 +23,6 @@ static uint8_t WHITE_KEY[16], BLACK_KEY[11];
 
 enum { V_HOME, V_PART, V_GEN, V_FX, V_MIX, V_GLO, V_SONG, V_PERF, V_SEQ, NVIEWS };
 static const char *const VIEW_N[NVIEWS] = {"HOME", "", "TB-3PO", "FX", "MIX", "GLOBAL", "SONG", "PERF", "SEQ"};
-static const uint16_t PART_COL[NPARTS] = {RGB(255, 150, 40), RGB(255, 72, 64), RGB(130, 240, 90), RGB(70, 205, 255),
-                                          RGB(214, 120, 255)};
 static const char *const PART_N[NPARTS] = {"909", "808", "303A", "303B", "BREAK"};
 static const char *const PART_S[NPARTS] = {"909", "808", "303A", "303B", "BRK"};   /* 4 chars: lane labels */
 
@@ -65,6 +63,7 @@ typedef struct {
     uint32_t touch_until;
     uint8_t overlay;
     uint8_t list_sel, list_top, list_n;
+    uint8_t global_sel, global_top;     /* GLOBAL's session-local cursor, independent of other lists */
     uint8_t ask_act;
     uint16_t ask_arg;
     char ask_q[2][28];
@@ -178,7 +177,7 @@ static void say(const char *a, const char *b)
 
 /* =============================================================== param refs === */
 enum { R_NONE, R_ENG, R_SWING, R_DLEN, R_DRATE, R_BLEN, R_BRATE, R_BDIR, R_BTRANS, R_GEN, R_BRKSET,
-       R_BRKSLOT, R_TEMPO, R_ACCENT, R_CLKOUT, R_NOTEOUT, R_PALETTE, R_KEYLED, R_KEYSOUND, R_AUTOSAVE, R_ACT, R_SBAR, R_SPAT,
+       R_BRKSLOT, R_TEMPO, R_ACCENT, R_CLKOUT, R_NOTEOUT, R_SCHEME, R_KEYLED, R_KEYSOUND, R_AUTOSAVE, R_ACT, R_SBAR, R_SPAT,
        R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY, R_RBANK, R_RPAT, R_RENABLE, R_RAPPLY };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
 typedef struct { uint8_t kind, a, b, c; } pref_t;
 #define PR(k, a, b, c) ((pref_t){(k), (a), (b), (c)})
@@ -194,7 +193,6 @@ static const x0x_param_t REMIX_P[] = {
     {"REMIX", 1, 0, ONOFF_N}, {"APPLY", 3, REMIX_BEAT, APPLY_N},
 };
 static const char *const ROOT_N[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-static const char *const THEME_N[] = {"GREEN", "AMBER", "CYAN", "RED", "MONO"};
 enum { G_DENS, G_ACC, G_SLIDE, G_OCTS, G_ROOT, G_SCALE, G_BASE, G_MUT, NGEN };
 static const x0x_param_t GEN_P[NGEN] = {
     {"DENS", 100, 70, 0}, {"ACCENT", 100, 40, 0}, {"SLIDE", 100, 25, 0}, {"OCTS", 2, 1, 0},
@@ -202,13 +200,13 @@ static const x0x_param_t GEN_P[NGEN] = {
     {"MUTATE", 16, 0, 0},
 };
 enum { SQ_SWING, SQ_DLEN, SQ_DRATE, SQ_BLEN, SQ_BRATE, SQ_BDIR, SQ_BTRANS, SQ_TEMPO, SQ_ACCENT, SQ_CLK, SQ_NOTES,
-       SQ_THEME, SQ_KEYLED, SQ_KEYSOUND, SQ_AUTOSAVE, NSQ };
+       SQ_SCHEME, SQ_KEYLED, SQ_KEYSOUND, SQ_AUTOSAVE, NSQ };
 static const char *const KEYSOUND_N[] = {"STOPPED", "ALWAYS"};
 static const char *const LIGHTS_N[] = {"OFF", "ON", "KEYS"};   /* ON: the keys, and the unlit buttons glow */
 static const x0x_param_t SEQ_P[NSQ] = {
     {"SWING", 100, 0, 0}, {"LENGTH", NSTEPS - 1, 15, 0}, {"RATE", 3, 0, RATE_N}, {"LENGTH", NSTEPS - 1, 15, 0},
     {"RATE", 3, 0, RATE_N}, {"DIR", 3, 0, DIR_N}, {"TRANSP", 48, 24, 0}, {"TEMPO", 255, 105, 0},
-    {"ACCENT", 127, 88, 0}, {"CLOCK OUT", 1, 1, ONOFF_N}, {"NOTES OUT", 1, 0, ONOFF_N}, {"THEME", 4, 1, THEME_N},
+    {"ACCENT", 127, 88, 0}, {"CLOCK OUT", 1, 1, ONOFF_N}, {"NOTES OUT", 1, 0, ONOFF_N}, {"SCHEME", NSCHEMES - 1, SCHEME_DEFAULT, SCHEME_N},
     {"LIGHTS", 2, 1, LIGHTS_N}, {"KEY SOUND", 1, 0, KEYSOUND_N},
     {"AUTOSAVE", 1, 1, ONOFF_N},
 };
@@ -278,7 +276,7 @@ static const x0x_param_t *pref_desc(pref_t r)
     case R_ACCENT: return &SEQ_P[SQ_ACCENT];
     case R_CLKOUT: return &SEQ_P[SQ_CLK];
     case R_NOTEOUT: return &SEQ_P[SQ_NOTES];
-    case R_PALETTE: return &SEQ_P[SQ_THEME];
+    case R_SCHEME: return &SEQ_P[SQ_SCHEME];
     case R_KEYLED: return &SEQ_P[SQ_KEYLED];
     case R_KEYSOUND: return &SEQ_P[SQ_KEYSOUND];
     case R_AUTOSAVE: return &SEQ_P[SQ_AUTOSAVE];
@@ -340,7 +338,7 @@ static int pref_get(pref_t r)
     case R_ACCENT: return seq.accent_q7;
     case R_CLKOUT: return seq.send_clock;
     case R_NOTEOUT: return seq.send_notes;
-    case R_PALETTE: return proj.set.palette;
+    case R_SCHEME: return settings_scheme(&proj.set);
     case R_KEYLED: return proj.set.keyled;
     case R_KEYSOUND: return proj.set.keysound;
     case R_AUTOSAVE: return !proj.set.autosave_off;
@@ -430,7 +428,10 @@ static void pref_set(pref_t r, int v)
     case R_ACCENT: seq.accent_q7 = (uint8_t)v; break;
     case R_CLKOUT: seq.send_clock = (uint8_t)v; break;
     case R_NOTEOUT: seq.send_notes = (uint8_t)v; break;
-    case R_PALETTE: proj.set.palette = (uint8_t)v; palette_set((uint32_t)v); break;
+    case R_SCHEME:
+        settings_set_scheme(&proj.set, v);
+        scheme_set((uint32_t)v, proj.set.palette);
+        break;
     case R_KEYLED: proj.set.keyled = (uint8_t)v; break;
     case R_KEYSOUND: proj.set.keysound = (uint8_t)v; break;
     case R_AUTOSAVE: proj.set.autosave_off = (uint8_t)!v; ui.last_autosave = (uint8_t)!v; break;
@@ -1003,7 +1004,7 @@ static void open_global(void)
     list_rows[ui.list_n++] = PR(R_HDR, GR_KEYS, 0, 0);
     list_add(PR(R_KEYLED, 0, 0, 0));
     list_add(PR(R_KEYSOUND, 0, 0, 0));
-    list_add(PR(R_PALETTE, 0, 0, 0));
+    list_add(PR(R_SCHEME, 0, 0, 0));
     list_rows[ui.list_n++] = PR(R_HDR, GR_PROJECT, 0, 0);
     list_add(PR(R_ACT, ACT_SAVE, 0, 0));
     list_add(PR(R_AUTOSAVE, 0, 0, 0));
@@ -1014,9 +1015,14 @@ static void open_global(void)
     list_add(PR(R_ACT, ACT_ABOUT, 0, 0));
     list_add(PR(R_BATT, 0, 0, 0));
     put_s(list_title, "GLOBAL");
-    ui.list_sel = ui.list_top = 0;
+    ui.list_sel = ui.global_sel < ui.list_n ? ui.global_sel : (uint8_t)(ui.list_n - 1);
+    ui.list_top = ui.global_top < ui.list_n ? ui.global_top : (uint8_t)(ui.list_n - 1);
     while (list_skip(ui.list_sel))
         ui.list_sel++;
+    if (ui.list_sel < ui.list_top)
+        ui.list_top = ui.list_sel;
+    if (ui.list_sel >= ui.list_top + 6)
+        ui.list_top = (uint8_t)(ui.list_sel - 5);
     ui.overlay = O_LIST;
 }
 
@@ -1632,7 +1638,7 @@ static void run_action(int act, int arg)
         project_defaults();
         engine_apply_sound(&proj.sound);
         engine_brk_loops();
-        palette_set(proj.set.palette);
+        scheme_set((uint32_t)settings_scheme(&proj.set), proj.set.palette);
         mark_dirty();
         ui.outline_ok = 0;
         say("FACTORY SOUND + PATTERNS", 0);
@@ -1681,6 +1687,10 @@ static int32_t accel(int role, int32_t s, int range)
 
 static void set_view(int v)
 {
+    if (ui.view == V_GLO) {
+        ui.global_sel = ui.list_sel;
+        ui.global_top = ui.list_top;
+    }
     if (v != ui.view)
         ui.prev_view = ui.view;
     ui.view = (uint8_t)v;
@@ -2413,6 +2423,8 @@ static void button_tap(int b)
                 ui.gen_stale[bidx()] = 0;
                 say("MUTATED", 0);
             }
+            ui.touched = -1;                        /* show the new line immediately, without the knob readout */
+            ui.spage = 0;                           /* reveal its opening, even after paging a longer line in SEQ */
             mark_dirty();
         } else if (kbd_on() && steps_view()) {        /* the keyboard's octave */
             if (ui.btn & (1u << B_LFO)) {                 /* LFO + OCT: a tie; ENV + OCT: a rest */
@@ -2962,7 +2974,7 @@ static void draw_header(void)
         if (seq.song_on) {
             b[0] = 'S';
             put_i(b + 1, (seq.playing ? seq.song_pos : ui.song_sel) + 1);
-            x = cv_text(132, vc(&FONT_B, 1, 17), &FONT_B, b, seq.song_rec ? RGB(255, 90, 80) : C_AMB);
+            x = cv_text(132, vc(&FONT_B, 1, 17), &FONT_B, b, seq.song_rec ? C_RECORD_TEXT : C_AMB);
         } else {
             b[0] = 'P';
             put_i(b + 1, seq.ppat[part] + 1);
@@ -2995,7 +3007,7 @@ static void draw_header(void)
     if (seq.playing)
         play_icon(217, 4, (eng_step[TRK_DRUM] & 3) == 0 ? C_WHITE : C_HI);
     if (ui.rec)
-        dot(231, 9, 4, RGB(255, 50, 50));
+        dot(231, 9, 4, C_RECORD_DOT);
     else if (ui.dirty)
         dot(233, 9, 1, C_GRAY);
     cv_commit(0, 0, 0);
@@ -3009,9 +3021,10 @@ static int32_t col_x(int c) { return GX + c * 13 + (c >> 2); }   /* a pixel betw
 /* Keep page visibility chronological, then show the audible source column. */
 static int playback_head(int track)
 {
-    if (!seq.playing || (eng_step[track] >> 4) != ui.spage)
+    int slot = eng_step[track];
+    if (!seq.playing || (slot >> 4) != ui.spage)
         return -1;
-    return seq_playback_source_step(&seq, track);
+    return seq_source_step(&seq, track, slot);
 }
 
 #define DROW 11                                    /* drum rows: 12 of them over both bands, a gap under */
@@ -3123,6 +3136,9 @@ static void draw_303(int band, int gen)
         rbox(x + 1, 101 - o, 10, 4, 2, g && (st->flags & BS_ACCENT) ? C_WHITE : C_LINE);   /* its accent, its slide */
         rbox(x + 1, 113 - o, 10, 4, 2, g && (st->flags & BS_SLIDE) ? col : C_LINE);
     }
+    /* Draw last: even a Remix source outside the pitch range cannot hide it. */
+    if (ph >= 0)
+        cv_rect(col_x(ph & 15), ROLL_TOP - 4 - o, 12, 2, col);
     cv_text(3, vc(&FONT_XS, 99, 8) - o, &FONT_XS, "AC", C_GRAY);
     cv_text(3, vc(&FONT_XS, 111, 8) - o, &FONT_XS, "SL", C_GRAY);
     if (ui.held_step >= 0 || ui.rec) {   /* the step held (or being written) */
@@ -3294,7 +3310,7 @@ static void draw_song(int band)
         put_i(t, k + 1);
         cv_text(4, vc(&FONT_XS, y, 11), &FONT_XS, t, k == ui.song_sel ? C_WHITE : C_GRAY);
         if (seq.song_on && seq.playing && k == seq.song_pos)
-            play_icon(26, y + 1, seq.song_rec ? RGB(255, 80, 70) : C_WHITE);
+            play_icon(26, y + 1, seq.song_rec ? C_RECORD_PLAY : C_WHITE);
         if (k == sg->len) {                            /* one past the end: where the song grows */
             cv_text(50, vc(&FONT_XS, y, 11), &FONT_XS, k ? "END" : "EMPTY: WHITE KEYS ADD BARS", C_DIM);
             continue;
@@ -3408,7 +3424,7 @@ static void draw_mix(int band)
             gr = gr > 64 ? 64 : gr;
             rbox(206, 4, 8, 64, 4, C_LINE);
             if (gr > 1)
-                rbox(206, 4, 8, gr, 4, RGB(255, 80, 60));
+                rbox(206, 4, 8, gr, 4, C_GAIN);
             cv_text(218, 2, &FONT_XS, "GR", C_GRAY);
         }
     } else {
@@ -3419,14 +3435,14 @@ static void draw_mix(int band)
             put_s(put_i(put_s(t, "COMP -"), (int)(engine_gr_db() + 0.5f)), "dB");
         else
             put_s(t, "COMP 0dB");
-        cv_text(4, 20, &FONT_B, t, engine_gr_db() > 0.5f ? RGB(255, 110, 90) : C_GRAY);
+        cv_text(4, 20, &FONT_B, t, engine_gr_db() > 0.5f ? C_GAIN : C_GRAY);
         pref_value(PR(R_ENG, T_MST, 0, MST_PUMP), a, u);
         q = put_s(put_s(t, "PUMP "), a);
         put_s(q, u);
         cv_text(124, 20, &FONT_B, t, proj.sound.v[T_MST][0][MST_PUMP] ? C_HI : C_GRAY);
         put_s(put_i(a, (int)plat_cpu_pct()), "%");
         cv_text(4, 50, &FONT_XS, "AUDIO LOAD", C_DIM);
-        cv_text(70, 50, &FONT_XS, a, plat_cpu_pct() > 85u ? RGB(255, 60, 60) : C_GRAY);
+        cv_text(70, 50, &FONT_XS, a, plat_cpu_pct() > 85u ? C_CPU_WARNING : C_GRAY);
         if (engine_guard_active())                    /* the overload guard is saving the CPU */
             cv_text(100, 50, &FONT_XS, "GUARD", C_AMB);
     }
@@ -3461,7 +3477,7 @@ static void draw_perf(int band)
                 put_i(put_s(q, ": BAD READS "), (int)plat_cpu2_bad());
             else if (plat_cpu2_gave_up() == 2)
                 put_s(q, ": 2ND TIMED OUT");
-            text_r(236, 6, &FONT_XS, t, plat_cpu2_gave_up() ? RGB(255, 80, 60) : C_GRAY);
+            text_r(236, 6, &FONT_XS, t, plat_cpu2_gave_up() ? C_WARNING : C_GRAY);
         }
         if (perf.test >= 0) {
             int done = perf.phase == 4;
@@ -3500,7 +3516,7 @@ static void draw_perf(int band)
             q = put_i(q, (int)plat_irq_stack_used());
             q = put_s(q, " / ");
             put_s(put_i(q, (int)plat_irq_stack_size()), " B");
-            text_r(236, 46, &FONT_XS, t, plat_irq_stack_used() * 4u > plat_irq_stack_size() * 3u ? RGB(255, 80, 60) : C_GRAY);
+            text_r(236, 46, &FONT_XS, t, plat_irq_stack_used() * 4u > plat_irq_stack_size() * 3u ? C_WARNING : C_GRAY);
         }
         return;
     }
@@ -3527,7 +3543,7 @@ static void draw_perf(int band)
             q = put_i(q, (int)plat_irq_stack_used());
             q = put_s(q, " / ");
             put_s(put_i(q, (int)plat_irq_stack_size()), " B");
-            text_r(236, 50, &FONT_XS, t, plat_irq_stack_used() * 4u > plat_irq_stack_size() * 3u ? RGB(255, 80, 60) : C_GRAY);
+            text_r(236, 50, &FONT_XS, t, plat_irq_stack_used() * 4u > plat_irq_stack_size() * 3u ? C_WARNING : C_GRAY);
         }
         return;
     }
@@ -3648,7 +3664,7 @@ static void draw_list(int band)
 
 static void draw_ask(int band)
 {
-    uint16_t red = RGB(255, 80, 60);
+    uint16_t red = C_WARNING;
     if (band == 0) {
         frame(6, 10, 228, 62, red);
         cv_rect(7, 71, 226, 1, C_BLACK);
@@ -3784,7 +3800,7 @@ static uint16_t footer_text(const char **a, const char **b, const char **c)
         *a = "STEP + 1-8: PIN A SLICE";                /* (1-8 play the slices numbered above) */
         *b = "9 REV 10 HALF 11 STUT";
     }
-    return C_DIM;
+    return C_FOOT;
 }
 #define FOOT_Y 71                     /* in the knob row: its last line, in the tiny face */
 static void draw_footer(void)
@@ -3854,6 +3870,7 @@ static uint32_t knobs_sig(void)
     MIXIN(ui.held_step);
     MIXIN(lock_step() + 1);
     MIXIN(proj.set.palette);
+    MIXIN(settings_scheme(&proj.set));
     MIXIN(ui.sel[0] | ui.sel[1] << 8);
     MIXIN(seq.ppat[ui.part]);
     MIXIN(ui.song_sel);
@@ -4143,7 +4160,8 @@ void ui_init(void)
     ui.touched = -1;
     ui.overlay = O_NONE;
     ui.outline_ok = 0;
-    palette_set(proj.set.palette);
+    ui.global_sel = ui.global_top = 0;
+    scheme_set((uint32_t)settings_scheme(&proj.set), proj.set.palette);
     for (i = 0; i < 4; i++)
         blit_hash[i] = 0;
     build_pages();

@@ -64,7 +64,7 @@ tests/run_tests.sh
 ```
 
 Runs, on the build machine: the maths library against libm; the sequencer and TB-3PO
-(against schwung-tb3po, from `../schwung-tb3po` or `TB3PO_REF`); each engine against its
+(local scale, phrasing, mutation and UI regressions); each engine against its
 original (9W9, 8W8, schwung-303, BB Gen — the scripts in `tests/host/` say where they look
 for those sources); flash storage; Felucca's update-path tests against `build/x0x.fwsc`
 (the loader test needs `AC79_SDK`); and the whole app in the simulator

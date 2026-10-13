@@ -38,6 +38,7 @@ void project_defaults(void)
     proj.set.rsv[0] = 0;                /* legacy/default APPLY = BEAT */
     proj.set.magic = PROJ_MAGIC;
     proj.set.format = PROJ_FORMAT;
+    settings_set_scheme(&proj.set, SCHEME_DEFAULT);
     proj.set.palette = 1;                /* amber */
     proj.set.keyled = 1;
     proj.set.keysound = 0;

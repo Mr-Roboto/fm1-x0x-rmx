@@ -3,11 +3,27 @@
 TB-3PO erzeugt für 303A und 303B zufallsbasierte Notenlinien aus einem gewählten
 Grundton (ROOT), einer Skala, einer Oktavlage und einem Seed. DENS, ACCENT, SLIDE
 und OCTS gestalten Dichte, Artikulation und Tonumfang. **OCT+** erzeugt eine neue
-Linie, **OCT-** mutiert ungefähr ein Viertel der Steps. Auch die automatische
+Linie, **OCT-** versucht bis zu eine kleine Änderung je acht Steps (aufgerundet),
+wobei die ersten zwei Positionen jedes Vier-Step-Motivs erhalten bleiben. Auch die automatische
 Mutation verwendet die gewählte Skala. Die Auswahl ändert eine bereits geschriebene
 Linie erst beim Generieren oder Mutieren; sie quantisiert handbearbeitete Noten nicht nachträglich.
 Mutation kann vorhandene Noten behalten. Deshalb macht sie eine alte oder von Hand
 bearbeitete Linie nicht zwangsläufig vollständig skalenrein.
+
+Der Generator kombiniert kurze Vier- oder Acht-Step-Motive mit rhythmischen Antworten
+und kleinen melodischen Variationen. 16 Steps bilden Frage und Antwort; längere Linien
+entwickeln mehrere kurze Motive. Alle Längen von 1 bis 64 Steps einschließlich 18 und 24
+werden berücksichtigt, auch unvollständige Schlussphrasen und der Übergang zum Loop-Anfang.
+Beats bleiben am Vier-Step-Raster ausgerichtet, Synkopen bleiben erhalten. Grundton und
+Quinte werden bevorzugt; fehlt die reine Quinte in der Skala, wird sie nicht hinzugefügt.
+Neue melodische Bewegungen bleiben nah beieinander. DENS bestimmt den ungefähren
+Notenanteil je Acht-Step-Phrase: 100 spielt jeden Step, 0 erhält einen Grundton.
+ACCENT bevorzugt Beats und Vorwegnahmen, SLIDE kurze Tonwechsel zu Beats oder Grundtönen.
+Akzent und Slide können zusammen auftreten; ein Ein-Step-Loop erhält keinen Slide.
+Mutation variiert vor allem Rhythmus und Artikulation, selten die Tonhöhe (höchstens drei
+Halbtöne), und schützt Tonhöhe und Rhythmus der ersten zwei Positionen jeder Vier-Step-Zelle.
+Gleicher Seed und gleiche Einstellungen bleiben reproduzierbar; historische
+Schwung-Notenfolgen werden nicht mehr identisch erzeugt.
 
 Die Firmware bietet genau **22 Skalen: vier pentatonische und 18 siebentönige**.
 Neue TB-3PO-Konfigurationen starten mit **Minor Pentatonic (`MPEN`), Index 0**.

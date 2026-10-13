@@ -23,7 +23,7 @@ static void playhead_shot(const char *name)
     draw_knobs();
     /* Verify the rendered 303 stripe, including sources beyond partial lengths. */
     int ph = playback_head(ui.part);
-    uint16_t color = dim(part_col(), 2);
+    uint16_t color = part_col();
     color = (uint16_t)((color >> 8) | (color << 8));
     for (int c = 0; c < 16; c++)
         assert((fb[(MAIN_Y + 1) * 240 + col_x(c) + 1] == color) ==

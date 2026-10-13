@@ -6,6 +6,9 @@ mkdir -p build/host
 ${CC:-cc} -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Werror \
     -o build/host/tb3po_scale_test tests/host/tb3po_scale_test.c
 build/host/tb3po_scale_test
+${CC:-cc} -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Werror \
+    -o build/host/tb3po_phrase_test tests/host/tb3po_phrase_test.c
+build/host/tb3po_phrase_test
 python3 tests/tb3po_scales_doc_test.py
 mkdir -p build/gen
 python3 tools/gen_remix.py build/gen/x0x_remix_table.h

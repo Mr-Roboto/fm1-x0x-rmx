@@ -33,51 +33,6 @@ static const char *const names[] = {
     "MPEN", "PMAJ", "EGYP", "HIRA", "MIN", "MAJ", "DOR", "PHRY", "LYD", "MIXO", "LOCR", "HARM", "MELM", "HMAJ", "ALTR", "GYPS", "ROMN", "BHAI", "MARV", "PURV", "TODI", "ARAB"
 };
 
-static unsigned hash_steps(unsigned h, const bpart_t *b)
-{
-    for (int i = 0; i < NSTEPS; i++) {
-        h = (h ^ b->step[i].note) * 16777619u;
-        h = (h ^ b->step[i].flags) * 16777619u;
-    }
-    return h;
-}
-
-static void original_golden(void)
-{
-    /* Captured from the unmodified six-scale generator before reordering.
-     * Hash note/flag bytes only; independent of padding and persistent layout. */
-    static const char *const original[] = {"MIN", "PHRY", "HARM", "MPEN", "DOR", "MAJ"};
-    static const unsigned hashes[] = {
-        4104073993u, 2022290718u, 2759431201u, 579650023u, 4250102505u, 2607199972u
-    };
-    for (int o = 0; o < 6; o++) {
-        int s = 0;
-        while (s < TB3PO_NSCALES && strcmp(original[o], TB3PO_SCALE_NAMES[s])) s++;
-        assert(s < TB3PO_NSCALES);
-        unsigned h = 2166136261u;
-        for (int seed = 1; seed <= 64; seed++) {
-            bpart_t b;
-            memset(&b, 0, sizeof b);
-            b.len = 1 + seed % NSTEPS;
-            tb3po_defaults(&b.gen, seed * 7919u);
-            b.gen.scale = s;
-            b.gen.root = seed % 12;
-            b.gen.density = 30 + seed % 70;
-            b.gen.accent = seed % 90;
-            b.gen.slide = seed % 60;
-            b.gen.oct_range = 1 + seed % 3;
-            tb3po_generate(&b);
-            h = hash_steps(h, &b);
-            uint32_t rng = 0;
-            for (int m = 0; m < 8; m++) {
-                tb3po_mutate(&b, &rng);
-                h = hash_steps(h, &b);
-            }
-        }
-        assert(h == hashes[o]);
-    }
-}
-
 static void check_notes(const bpart_t *b, int s, int root)
 {
     for (int i = 0; i < b->len; i++) {
@@ -153,7 +108,7 @@ int main(void)
     tb3po_mutate(&minor, &mr);
     assert(ir == mr && invalid.gen.scale == 255);
     assert(!memcmp(invalid.step, minor.step, sizeof minor.step));
-    original_golden();
-    puts("TB-3PO: 22 unique scales, 4 pentatonic/18 seven-note, exact tables, all roots, generate/mutate and original golden sequences passed");
+
+    puts("TB-3PO: 22 unique scales, 4 pentatonic/18 seven-note, exact tables, all roots, generate/mutate and repeatability passed");
     return 0;
 }

@@ -20,6 +20,7 @@ static void fixture(int palette)
     memset(enc_acc, 0, sizeof enc_acc);
     held_btn = held_keys = now_ms = 0;
     project_defaults();
+    drum_gen_init(0);
     proj.set.palette = (uint8_t)palette;
     proj.pat[0].drum[0].hit[DR_BD][0] = 0x1111;
     proj.pat[0].drum[0].hit[DR_SD][0] = 0x1010;
@@ -111,7 +112,13 @@ static void legacy_appearance(void)
             for (int v = 0; v < 8; v++) {
                 fixture(p);
                 render_scene(part, appearance_views[v]);
-                assert(screen_hash() == original_lcd[p][part][v]);
+                if (appearance_views[v] == V_GEN && part < NKIT) {
+                    /* P6.3 replaces the formerly unreachable drum TB-3PO
+                     * fixture with Grids; retain all other P4 pixel baselines. */
+                    assert(pg.n == 3 && pg.r[0][0].kind == R_DGEN);
+                    assert(!strcmp(pg.title[0], "MAP"));
+                    assert(!strcmp(pref_desc(pg.r[0][0])->name, "X"));
+                } else assert(screen_hash() == original_lcd[p][part][v]);
             }
     for (int p = 0; p < 5; p++) {
         fixture(p); test_gr = 12.0f; render_scene(PART_909, V_MIX);

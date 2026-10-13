@@ -70,21 +70,24 @@ static void ud_drop_oldest(undo_t *u)
 
 /* the changes since the last commit, as one entry. 1 = an entry was made, 0 = nothing changed,
  * -1 = too big to keep (the history is emptied; the region is the new starting point) */
-static int undo_commit(undo_t *u)
+/* A scoped commit leaves other edits pending in the existing shadow. Drum
+ * generation uses this because the audio ISR can edit bass/motion elsewhere.
+ * Bounds are offsets in region, [first, limit), supplied by the caller. */
+static int undo_commit_range(undo_t *u, uint32_t first, uint32_t limit)
 {
-    uint32_t i = 0, sz = 8, runs = 0, lo = 0, hi = 0;
+    uint32_t i = first, sz = 8, runs = 0, lo = 0, hi = 0;
     uint8_t *e;
     /* first pass: the runs and the entry's size */
-    while (i < u->len) {
+    while (i < limit) {
         uint32_t s, end, q;
         if (u->region[i] == u->shadow[i]) {
             i++;
             continue;
         }
         s = end = i;
-        while (end + 1u < u->len) {                       /* extend over short gaps */
+        while (end + 1u < limit) {                       /* extend over short gaps */
             uint32_t nxt = end + 1u, lim = end + 1u + UNDO_GAP, found = 0;
-            for (q = nxt; q < u->len && q < lim; q++)
+            for (q = nxt; q < limit && q < lim; q++)
                 if (u->region[q] != u->shadow[q]) {
                     found = q;
                     break;
@@ -125,9 +128,9 @@ static int undo_commit(undo_t *u)
             continue;
         }
         s = end = i;
-        while (end + 1u < u->len) {
+        while (end + 1u < limit) {
             uint32_t nxt = end + 1u, lim = end + 1u + UNDO_GAP, found = 0;
-            for (q = nxt; q < u->len && q < lim; q++)
+            for (q = nxt; q < limit && q < lim; q++)
                 if (u->region[q] != u->shadow[q]) {
                     found = q;
                     break;
@@ -153,6 +156,8 @@ static int undo_commit(undo_t *u)
     u->at[u->n] = u->used;
     return 1;
 }
+
+static int undo_commit(undo_t *u) { return undo_commit_range(u, 0, u->len); }
 
 /* swap entry k with the region; changed(off, len) for every run, after the swap */
 static void ud_swap(undo_t *u, int k, void (*changed)(uint32_t off, uint32_t len))

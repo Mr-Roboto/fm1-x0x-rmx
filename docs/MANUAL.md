@@ -113,7 +113,7 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | SELECT | The previous or next page. In a list, up and down. Hold a step and turn it for the step's chance (section 11). |
 | PRESETS | The next pattern: on a part's screen for that part only, on HOME for all five. |
 | ALGORITHM | The part: 909, 808, 303A, 303B or BREAK. In a list, it changes the value. |
-| OCT-, OCT+ | The steps, 16 at a time (1–16 … 49–64). On HOME and SONG, patterns 1–16 or 17–32. On the 303 keyboard, the octave. On TB-3PO, mutate the line or write a new one. |
+| OCT-, OCT+ | The steps, 16 at a time (1–16 … 49–64). On HOME and SONG, patterns 1–16 or 17–32. On the 303 keyboard, the octave. In a generator, mutate or write a new pattern. |
 | KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. |
 | FX | The reverb and the delay. |
 | SEL | Everything on this screen as a list, including the settings on no page (see Lists). In a question, yes. |
@@ -123,7 +123,7 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | GLO | The settings. Press again to close. |
 | HOME | The pattern: all five parts, which pattern they play, mutes. Again: the song, and again back. In a list, back; in a question, no. |
 | SAVE | Save everything (while playing: when you stop). Hold it to copy the pattern; then a white key pastes it. |
-| ARP | TB-3PO, the 303 line generator (on a 303). |
+| ARP | GRIDS on 909/808; TB-3PO on 303A/303B. Again: the next generator page. |
 | SEQ | The selected part's steps, with its LENGTH and RATE (on a 303 also DIRECTION and TRANSPOSE). |
 | PLAY | Start and stop. |
 | REC | Record on and off: drum hits, 303 notes, knob moves, and on the SONG screen the song. On a 303 the keys become a keyboard while it's on. |
@@ -259,6 +259,47 @@ Each track's level, pan and reverb and delay sends are on the mixer: press LFO a
 or 808 MIX, which shows all eleven levels at once. The black keys pick a track and the knobs are
 its LEVEL, PAN, REV and DLY. On the 808 the alternate sounds share their track's pan, so the
 conga sits where the tom does.
+
+### Grids drum generator
+
+Pick 909 or 808 and press **ARP**. **OCT+** writes a new Kick, Snare and Closed
+Hi-Hat rhythm into the current pattern; **OCT-** mutates it. The other eight
+instrument rows, length, rate, Remix selection and hidden steps are retained.
+
+ARP again, or SELECT, moves through three pages:
+
+| Page | Knob 1 | Knob 2 | Knob 3 | Knob 4 |
+| --- | --- | --- | --- | --- |
+| MAP | X | Y | CHAOS | MODE |
+| EUCLID | LEN K | LEN S | LEN H | MODE |
+| FILL | FILL K | FILL S | FILL H | Unused |
+| OFFSET | OFF K | OFF S | OFF H | Unused |
+
+MODE chooses MAP or EUCLID as the first page. MAP blends original Mutable
+Instruments Grids rhythms using X/Y; FILL controls density and CHAOS varies
+successive 16-step bars. CHAOS 0 gives identical full bars and no mutation.
+EUCLID repeats three independently sized, evenly spaced cycles with an exact
+rounded hit count from FILL. LEN is bounded by 32 and the current pattern length.
+Positive OFFSET rotates later, wrapping within 16 steps for MAP or LEN for EUCLID.
+
+EUCLID MUTATE shifts only Snare or Hi-Hat by +2 or −2, selecting an effective
+rotation and updating OFFSET. **NO CHANGE** means there was no effective edit.
+**NEW FIRST** means stored Snare/Hi-Hat steps no longer match the current knobs;
+press NEW explicitly to regenerate them before mutating.
+
+909 and 808 keep separate generator settings for the session. Pattern changes
+retain them, shorter patterns clamp LEN/OFFSET, and restart restores defaults.
+Turning generator knobs changes the next operation, leaves current steps alone,
+and is not saved or recorded as motion.
+
+Generated accents use the shared accent row, so other drums on the same column
+sound accented too. Existing accents coincident with unrelated instrument hits
+are protected. Accent provenance is unavailable: manual target-only accents may
+be cleared, while protected or orphaned old accents may remain.
+
+Each effective command is a separate Undo edit: **HOME+REC** undoes and
+**HOME+PLAY** redoes pattern data. Knobs and seeds stay current; Undo can therefore
+make EUCLID MUTATE show NEW FIRST. A no-change command adds no Undo entry.
 
 ---
 
@@ -472,7 +513,7 @@ with notes in that pattern: bright where that part is playing it now, dim otherw
 
 - **All five parts:** on HOME, press a white key or turn PRESETS. From any other screen, hold
   HOME and press a white key.
-- **One part:** on that part's screen (SEQ, EDIT, TB-3PO), turn PRESETS.
+- **One part:** on that part's screen (SEQ, EDIT, GRIDS or TB-3PO), turn PRESETS.
 - **A chain:** on HOME, hold two white keys at once. All five parts play each pattern from the
   first to the second, a bar each, then start again. Choosing a single pattern ends the chain.
 
@@ -960,6 +1001,8 @@ firmware, you must also share its source code.
 - The 303 is from **schwung-303**, built on Open303 by Robin Schmidt (MIT licence), with
   extensions based on jc303 and dm-Rat.
 - TB-3PO is from **schwung-tb3po**, which comes from the Phazerville Hemisphere Suite.
+- Grids rhythm maps and MAP arithmetic are by **Emilie Gillet / Mutable Instruments**;
+  the C arithmetic was cross-checked against **DEADACTIVE's Hortator** port.
 - The break generator is from **BB Gen** by mestela, used with permission.
 - The fonts are Barlow Semi Condensed and Terminus (SIL Open Font License).
 

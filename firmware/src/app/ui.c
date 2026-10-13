@@ -14,6 +14,7 @@
 #include "../dsp/fastmath.h"
 #include "../dsp/master.h"
 #include "../dsp/bass303.h"                    /* BASS303_* (the 303's pages) */
+#include "../seq/drum_gen.h"
 #include "undo.c"
 
 /* ================================================================ model === */
@@ -83,6 +84,8 @@ static ui_t ui;
 static uint8_t any_button;             /* a button has been pressed since power-on (the footer's first line) */
 #define FOOT_GAP 7                     /* between the footer's parts */
 static uint16_t footer_text(const char **a, const char **b, const char **c);
+static void build_pages(void);
+static void open_list_of_pages(void);
 
 /* something the project keeps changed: SAVE (or the autosave) has work to do */
 static void mark_dirty(void) { ui.dirty = 1; }
@@ -178,7 +181,7 @@ static void say(const char *a, const char *b)
 /* =============================================================== param refs === */
 enum { R_NONE, R_ENG, R_SWING, R_DLEN, R_DRATE, R_BLEN, R_BRATE, R_BDIR, R_BTRANS, R_GEN, R_BRKSET,
        R_BRKSLOT, R_TEMPO, R_ACCENT, R_CLKOUT, R_NOTEOUT, R_SCHEME, R_KEYLED, R_KEYSOUND, R_AUTOSAVE, R_ACT, R_SBAR, R_SPAT,
-       R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY, R_RBANK, R_RPAT, R_RENABLE, R_RAPPLY };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
+       R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY, R_RBANK, R_RPAT, R_RENABLE, R_RAPPLY, R_DGEN };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
 typedef struct { uint8_t kind, a, b, c; } pref_t;
 #define PR(k, a, b, c) ((pref_t){(k), (a), (b), (c)})
 #define NONE PR(R_NONE, 0, 0, 0)
@@ -198,6 +201,18 @@ static const x0x_param_t GEN_P[NGEN] = {
     {"DENS", 100, 70, 0}, {"ACCENT", 100, 40, 0}, {"SLIDE", 100, 25, 0}, {"OCTS", 2, 1, 0},
     {"ROOT", 11, 9, ROOT_N}, {"SCALE", TB3PO_NSCALES - 1, TB3PO_DEFAULT_SCALE, TB3PO_SCALE_NAMES}, {"OCTAVE", 4, 1, 0},
     {"MUTATE", 16, 0, 0},
+};
+/* c is a verified byte offset in transient configuration; b = 1 for LEN,
+ * whose generic UI value is zero-based. These refs are never pattern/motion. */
+enum { D_MODE = __builtin_offsetof(drum_gen_cfg_t, mode), D_X = __builtin_offsetof(drum_gen_cfg_t, x),
+       D_CHAOS = __builtin_offsetof(drum_gen_cfg_t, chaos), D_FILL = __builtin_offsetof(drum_gen_cfg_t, fill),
+       D_LEN = __builtin_offsetof(drum_gen_cfg_t, len), D_OFF = __builtin_offsetof(drum_gen_cfg_t, offset) };
+static const char *const D_MODE_N[] = {"MAP", "EUCLID"};
+static const x0x_param_t DGEN_P[] = {
+    {"MODE", 1, 0, D_MODE_N}, {"X", 255, 128, 0}, {"Y", 255, 128, 0}, {"CHAOS", 100, 0, 0},
+    {"FILL K", 100, 50, 0}, {"FILL S", 100, 35, 0}, {"FILL H", 100, 65, 0},
+    {"LEN K", 31, 15, 0}, {"LEN S", 31, 15, 0}, {"LEN H", 31, 15, 0},
+    {"OFF K", 15, 0, 0}, {"OFF S", 15, 4, 0}, {"OFF H", 15, 2, 0},
 };
 enum { SQ_SWING, SQ_DLEN, SQ_DRATE, SQ_BLEN, SQ_BRATE, SQ_BDIR, SQ_BTRANS, SQ_TEMPO, SQ_ACCENT, SQ_CLK, SQ_NOTES,
        SQ_SCHEME, SQ_KEYLED, SQ_KEYSOUND, SQ_AUTOSAVE, NSQ };
@@ -258,6 +273,16 @@ static const x0x_param_t *pref_desc(pref_t r)
         return &REMIX_P[r.kind - R_RBANK];
     case R_ENG: return engine_param(r.a, r.b, r.c);
     case R_GEN: return &GEN_P[r.c % NGEN];
+    case R_DGEN: {
+        static x0x_param_t d;
+        d = DGEN_P[r.c - D_MODE];
+        if (r.b) {
+            int n = pat_of(r.a)->drum[r.a].len;
+            d.max = (uint8_t)((n < 32 ? n : 32) - 1);
+        } else if (r.c >= D_OFF && drum_gen_session[r.a].mode == DG_EUCLID)
+            d.max = drum_gen_session[r.a].len[r.c - D_OFF] - 1;
+        return &d;
+    }
     case R_BRKSET: return breaks_param(r.c);
     case R_SWING: return &SEQ_P[SQ_SWING];
     case R_DLEN: return &SEQ_P[SQ_DLEN];
@@ -307,6 +332,7 @@ static int pref_get(pref_t r)
 {
     pattern_t *p = cur_pat();
     switch (r.kind) {
+    case R_DGEN: return ((uint8_t *)&drum_gen_session[r.a])[r.c] - r.b;
     case R_RBANK: return pattern_remix_selection(pat_of(r.a), r.a) >> 4;
     case R_RPAT: return pattern_remix_selection(pat_of(r.a), r.a) & 15u;
     case R_RENABLE: return pattern_remix_enabled(pat_of(r.a), r.a);
@@ -368,6 +394,15 @@ static void pref_set(pref_t r, int v)
     if (!d || r.kind == R_ACT)
         return;
     v = v < 0 ? 0 : v > d->max ? d->max : v;
+    if (r.kind == R_DGEN) {
+        ((uint8_t *)&drum_gen_session[r.a])[r.c] = (uint8_t)(v + r.b);
+        build_pages();
+        if (r.c == D_MODE && ui.overlay == O_LIST) {
+            open_list_of_pages();
+            ui.list_sel = 3;                        /* MODE stays the selected list row */
+        }
+        return;
+    }
     mark_dirty();
     switch (r.kind) {
     case R_RBANK: case R_RPAT: case R_RENABLE: {
@@ -393,7 +428,10 @@ static void pref_set(pref_t r, int v)
             master_djf_pots(v, &proj.sound.v[T_MST][0][MST_MODE], &proj.sound.v[T_MST][0][MST_CUTOFF]);
         break;
     case R_SWING: pat_of(PART_909)->swing = (uint8_t)v; break;
-    case R_DLEN: pat_of(r.a)->drum[r.a].len = (uint8_t)(v + 1); break;
+    case R_DLEN:
+        pat_of(r.a)->drum[r.a].len = (uint8_t)(v + 1);
+        drum_gen_normalize(&drum_gen_session[r.a], v + 1);
+        break;
     case R_DRATE: pat_of(r.a)->drum[r.a].rate = (uint8_t)v; break;
     case R_BLEN: pat_of(NKIT + r.a)->bass[r.a].len = (uint8_t)(v + 1); break;
     case R_BRATE: pat_of(NKIT + r.a)->bass[r.a].rate = (uint8_t)v; break;
@@ -637,6 +675,10 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
         }
         put_i(num, v);
         return;
+    case R_DGEN:
+        put_i(num, v + r.b);
+        if (r.c >= D_CHAOS && r.c < D_LEN) put_s(unit, "%");
+        return;
     case R_RPAT: put_i(num, v + 1); return;
     case R_DLEN:
     case R_BLEN: put_i(num, v + 1); put_s(unit, "st"); return;
@@ -708,18 +750,18 @@ static void title(int i, const char *s)
     pg.title[i][k] = 0;
 }
 
-static void add_page(const char *t, pref_t a, pref_t b, pref_t c, pref_t d)
+/* The target ABI passes structs indirectly. One row avoids four separate
+ * argument copies at every page construction site. */
+static void add_page_refs(const char *t, const pref_t refs[4])
 {
     if (pg.n >= MAXPAGES)
         return;
-    pg.r[pg.n][0] = a;
-    pg.r[pg.n][1] = b;
-    pg.r[pg.n][2] = c;
-    pg.r[pg.n][3] = d;
+    memcpy(pg.r[pg.n], refs, sizeof pg.r[pg.n]);
     title(pg.n, t);
     pg.group[pg.n] = pg_grp;
     pg.n++;
 }
+#define add_page(t, a, b, c, d) add_page_refs((t), (const pref_t[]){(a), (b), (c), (d)})
 
 static void add_eng_pages(int t, int v, int from, int to, const char *name)
 {
@@ -782,6 +824,10 @@ static uint8_t *page_of(int view)
 static void build_pages(void)
 {
     int p = ui.part, b = bidx();
+    /* Also covers pattern cues becoming active, project load and Undo length
+     * changes. Only session bounds change; no generation in this path. */
+    for (int k = 0; k < NKIT; k++)
+        drum_gen_normalize(&drum_gen_session[k], pat_of(k)->drum[k].len);
     pg.n = pg.nmore = 0;
     pg_grp = GR_NONE;
     switch (ui.view) {
@@ -844,6 +890,17 @@ static void build_pages(void)
         break;
     case V_GEN:
         pg_grp = GR_PAT;
+        if (is_drum()) {
+            int euclid = drum_gen_session[p].mode == DG_EUCLID;
+            for (int i = 0; i < 3; i++) {
+                int c = i ? (i == 1 ? D_FILL : D_OFF) : euclid ? D_LEN : D_X;
+                add_page(i ? (i == 1 ? "FILL" : "OFFSET") : D_MODE_N[euclid], NONE, NONE, NONE, NONE);
+                for (int j = 0; j < 3; j++)
+                    pg.r[i][j] = PR(R_DGEN, p, !i && euclid, c + j);
+                if (!i) pg.r[i][3] = PR(R_DGEN, p, 0, D_MODE);
+            }
+            break;
+        }
         add_page("GENERATE", PR(R_GEN, b, 0, G_DENS), PR(R_GEN, b, 0, G_ACC), PR(R_GEN, b, 0, G_SLIDE),
                  PR(R_GEN, b, 0, G_OCTS));
         add_page("SCALE", PR(R_GEN, b, 0, G_ROOT), PR(R_GEN, b, 0, G_SCALE), PR(R_GEN, b, 0, G_BASE),
@@ -983,7 +1040,8 @@ static void open_list_of_pages(void)
     if (ui.view == V_SEQ)
         put_s(put_s(list_title, PART_N[ui.part]), " SEQ");
     else
-        put_s(list_title, ui.view == V_PART ? PART_N[ui.part] : VIEW_N[ui.view]);
+        put_s(list_title, ui.view == V_PART ? PART_N[ui.part] :
+              ui.view == V_GEN && is_drum() ? "GRIDS" : VIEW_N[ui.view]);
     ui.list_sel = ui.list_top = 0;
     while (list_skip(ui.list_sel))
         ui.list_sel++;
@@ -1177,8 +1235,9 @@ static int help_lines(int b, const char *l[HELP_LINES])
         break;
     }
     case B_ARP:
-        L("TB-3PO: THE 303 LINE"); L("GENERATOR (303A, 303B)");
-        if (gen) { L("OCT+: A NEW LINE"); L("OCT-: MUTATE IT"); }
+        L(is_drum() ? "GRIDS: 909 / 808" : "TB-3PO: THE 303 LINE");
+        if (!is_drum()) L("GENERATOR (303A, 303B)");
+        if (gen) { L(is_drum() ? "OCT+: NEW" : "OCT+: A NEW LINE"); L("OCT-: MUTATE IT"); }
         L("AGAIN: THE NEXT PAGE");
         break;
     case B_SEQ:
@@ -1191,7 +1250,10 @@ static int help_lines(int b, const char *l[HELP_LINES])
         break;
     case B_OCTDN:
     case B_OCTUP:
-        if (gen) L(b == B_OCTUP ? "A NEW 303 LINE" : "MUTATE THE LINE");
+        if (gen) {
+            if (is_drum()) L(b == B_OCTUP ? "NEW DRUMS" : "MUTATE DRUMS");
+            else L(b == B_OCTUP ? "A NEW 303 LINE" : "MUTATE THE LINE");
+        }
         else if (kbd) { L("THE KEYBOARD'S OCTAVE"); L("LFO + OCT: A TIE  ENV + OCT: A REST"); }
         else if (ui.view == V_HOME || ui.view == V_SONG) L(b == B_OCTUP ? "PATTERNS 17-32" : "PATTERNS 1-16");
         else {
@@ -1337,6 +1399,31 @@ static void do_undo(int redo)
     mark_dirty();
     undo_name(lo, hi, t);
     say(redo ? "REDO " : "UNDO ", t);
+}
+
+/* Explicit main-loop command. Scoped commits keep playback's bass/motion
+ * edits pending separately; only publication is protected from audio reads. */
+static void drum_generate(int up)
+{
+    int k = ui.part;
+    dpart_t *d = &cur_pat()->drum[k];
+    drum_gen_cfg_t *g = &drum_gen_session[k];
+    drum_gen_edit_t edit;
+    drum_gen_normalize(g, d->len);
+    int result = up ? drum_gen_new(d, g, k, &edit) : drum_gen_mutate(d, g, k, &edit);
+    if (result == DG_CHANGED) {
+        uint32_t off = (uint32_t)((uint8_t *)d - undo.region);
+        undo_commit_range(&undo, off, off + sizeof *d);
+        plat_edit_lock();
+        drum_gen_apply(d, g, k, &edit);
+        plat_edit_unlock();
+        undo_commit_range(&undo, off, off + sizeof *d);
+        mark_dirty();
+    } else if (up && result == DG_UNCHANGED) *g = edit.cfg;
+    say(result == DG_CHANGED ? (up ? "NEW DRUMS" : "MUTATED") :
+        result == DG_NEW_FIRST ? "NEW FIRST" : result == DG_UNCHANGED ? "NO CHANGE" : "INVALID", 0);
+    ui.touched = -1;
+    ui.spage = 0;
 }
 
 /* SAVE while playing waits for the stop: writing the flash stops the audio (the code and the samples
@@ -2362,8 +2449,8 @@ static void button_tap(int b)
             set_view(V_PART);
         break;
     case B_ARP:
-        if (!is_303()) {
-            say("TB-3PO: PICK 303A OR 303B", 0);
+        if (ui.part == PART_BRK) {
+            say("PICK 909/808 OR 303", 0);
             break;
         }
         if (ui.view == V_GEN && ui.overlay == O_NONE)  /* the generator; again: its next page */
@@ -2409,6 +2496,10 @@ static void button_tap(int b)
         } else if (steps_view() && is_303() && !ui.rec && ui.held_step >= 0) {   /* a held step: its octave */
             held_note_by(up ? 12 : -12);
         } else if (ui.view == V_GEN) {
+            if (is_drum()) {
+                drum_generate(up);
+                break;
+            }
             bpart_t *bp = &cur_pat()->bass[bidx()];
             if (up) {
                 char t[20];
@@ -2522,7 +2613,7 @@ static void input(void)
         } else {
             int p = ui.part + (e > 0 ? 1 : -1);
             ui.part = (uint8_t)(p < 0 ? 0 : p >= NPARTS ? NPARTS - 1 : p);
-            if (ui.view == V_GEN && !is_303())         /* TB-3PO is a 303's */
+            if (ui.view == V_GEN && ui.part == PART_BRK)
                 set_view(V_PART);
             ui.outline_ok = 0;
             build_pages();
@@ -2546,6 +2637,7 @@ static void input(void)
         else
             seq_cue(&seq, p);
         ui.pbank = (uint8_t)(p / 16);                 /* HOME shows the bank it is in */
+        build_pages();
     }
     for (i = 0; i < 4; i++) {
         if ((e = enc(EN_K1 + (int)i)) == 0)
@@ -2957,7 +3049,7 @@ static void draw_header(void)
         cv_text(6, vc(&FONT_B, 1, 17), &FONT_B, PART_N[ui.part], C_BLACK);
         x = w + 6;
         if (ui.view == V_GEN)
-            x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, "TB-3PO", C_HI) + 6;
+            x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, is_drum() ? "GRIDS" : "TB-3PO", C_HI) + 6;
         else if (ui.view == V_SEQ)
             x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, !kbd_on() ? "SEQ" : ui.rec ? "SEQ KEYS" : "FREE PLAY",
                         kbd_on() ? C_AMB : C_HI) + 6;
@@ -3777,6 +3869,11 @@ static uint16_t footer_text(const char **a, const char **b, const char **c)
         *a = "AGAIN: NEXT PAGE";
         *b = "SEL: ALL AS A LIST";
     } else if (ui.view == V_GEN) {
+        if (is_drum()) {
+            *a = "OCT+: NEW";
+            *b = "OCT-: MUTATE";
+            return C_AMB;
+        }
         *a = ui.gen_stale[bidx()] ? "OCT+: NEW LINE *" : "OCT+: NEW LINE";
         *b = "OCT-: MUTATE";
         return ui.gen_stale[bidx()] ? C_WHITE : C_AMB;

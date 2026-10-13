@@ -11,6 +11,7 @@ CC="${CC:-cc}"
 FAIL=0
 OUT=build/host
 mkdir -p "$OUT" build/scenarios
+python3 tools/gen_grids.py build/gen/x0x_grids_map.h
 run() {
     name="$1"; shift
     if "$@" > "$OUT/$name.log" 2>&1; then
@@ -23,6 +24,9 @@ run() {
 }
 W="-O2 -ffp-contract=off -Wall -Wextra -Wdouble-promotion -Werror"
 run tb3po sh tests/host/run_tb3po.sh
+run drum-generator sh tests/host/run_drum_gen.sh
+run drum-generator-project sh tests/host/run_drum_gen_project.sh
+run drum-generator-ui sh tests/host/run_drum_gen_ui.sh
 run remix sh tests/host/run_remix.sh
 run remix-state sh tests/host/run_remix_state.sh
 run schemes sh tests/host/run_scheme_ui.sh
@@ -76,6 +80,7 @@ if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # 
     mkdir -p build/scenarios/remix_parity
     run remix-emu sh -c "build/host/x0x_host tests/scenarios/remix_parity.x0x build/scenarios/remix_parity && \
         node tests/host/remix_emu_test.mjs build/emu/x0x.wasm build/scenarios/remix_parity/remix_parity.wav"
+    run drum-generator-emu node tests/host/drum_gen_emu_test.mjs build/emu/x0x.wasm
 fi
 for s in tests/scenarios/*.x0x; do
     n=$(basename "$s" .x0x)

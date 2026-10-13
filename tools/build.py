@@ -131,7 +131,8 @@ def generate():
     tools = SRC / "tools"
     cmds = [[tools / "gen_font.py", GEN / "felucca_font.h"],
             [tools / "gen_drum_samples.py", GEN / "x0x_drum_samples.h"],
-            [tools / "gen_remix.py", GEN / "x0x_remix_table.h"]]
+            [tools / "gen_remix.py", GEN / "x0x_remix_table.h"],
+            [tools / "gen_grids.py", GEN / "x0x_grids_map.h"]]
     procs = [subprocess.Popen([sys.executable, *map(str, c)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               text=True) for c in cmds]
     failed = []
@@ -238,10 +239,16 @@ def build_app():
         o = OUT / "o2" / (u.replace("/", "_")[:-2] + ".o")
         units.append(("cc", *o2, "-c", FW / "src" / u, "-o", o))
         objs.append(o)
+    # Offline tool: optimize for size, not render speed.
+    gen_obj = OUT / "drum_gen.o"
+    units.append(("cc", *flags, "-c", FW / "src/seq/drum_gen.c", "-o", gen_obj))
+    objs.append(gen_obj)
     tc_all(*units)
     elf = OUT / "x0x.elf"
     # unreferenced functions (each in its own section: -ffunction-sections) are dropped: the DSP keeps
     # mono reference paths for the host tests that the firmware no longer calls
+    # Real UI callers now retain the core; unused initialization/test APIs can
+    # be collected normally. Session defaults are copied by startup as .data.
     tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", FW / "app.ld", *objs, "-o", elf)
     for sect in ("text.bin", "data.bin", "ramtext.bin", "c1text.bin"):
         (OUT / sect).unlink(missing_ok=True)

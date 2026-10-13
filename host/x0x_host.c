@@ -73,6 +73,21 @@ static int32_t enc_acc[NE];
 static uint32_t lit_btn, lit_keys, dim_keys;
 
 uint32_t plat_ms(void) { return now_ms; }
+#ifdef X0X_TEST_EDIT_HOOK
+static void test_edit_hook(int locked);
+#endif
+void plat_edit_lock(void)
+{
+#ifdef X0X_TEST_EDIT_HOOK
+    test_edit_hook(1);
+#endif
+}
+void plat_edit_unlock(void)
+{
+#ifdef X0X_TEST_EDIT_HOOK
+    test_edit_hook(0);
+#endif
+}
 uint32_t plat_buttons(void) { return held_btn; }
 uint32_t plat_keys(void) { return held_keys; }
 int32_t plat_enc(int role)
@@ -236,6 +251,7 @@ void plat_stalls_enable(int on) { (void)on; }
 
 /* -------------------------------------------------------------- app --- */
 #include "../firmware/src/app/x0x.h"
+#include "../firmware/src/seq/drum_gen.c"  /* also used by standalone app tests */
 #include "../firmware/src/app/project.c"
 #include "../firmware/src/app/ui.c"
 
@@ -390,6 +406,7 @@ static double now_ns(void)
 
 static void boot(void)
 {
+    drum_gen_init(0);                               /* simulated power-on, unlike project load */
     engine_init(proj.pat, &proj.arr.song, proj.arr.lane, &proj.sound);
     if (project_load() != 0)
         project_defaults();

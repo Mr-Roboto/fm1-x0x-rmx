@@ -7,6 +7,7 @@ set -e
 cd "$(dirname "$0")/../.."
 mkdir -p build/gen build/emu
 python3 tools/gen_remix.py build/gen/x0x_remix_table.h
+python3 tools/gen_grids.py build/gen/x0x_grids_map.h
 [ -f build/gen/felucca_font.h ] || python3 tools/gen_font.py build/gen/felucca_font.h >/dev/null
 [ -f build/gen/x0x_drum_samples.h ] || python3 tools/gen_drum_samples.py build/gen/x0x_drum_samples.h >/dev/null
 sh tools/gen_builtin_break.sh build/gen >/dev/null

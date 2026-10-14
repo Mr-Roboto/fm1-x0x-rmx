@@ -222,7 +222,7 @@ static void enter_uboot(const char *why)
 static void safe_main(void)
 {
     char b[24];
-    uint32_t t0, play;
+    uint32_t t0, play, both, t_oct;
     lcd_fill(0, 0, 240, 240, C_BLACK);
     draw_text_box(0, 18, 240, &FONT_B, "X0X SAFE MODE", C_HI, 1);
     draw_text_box(0, 52, 240, &FONT_S, "IT CRASHED TWICE", C_WHITE, 1);
@@ -231,6 +231,7 @@ static void safe_main(void)
     draw_text_box(0, 122, 240, &FONT_S, "REINSTALL FROM THE", C_WHITE, 1);
     draw_text_box(0, 142, 240, &FONT_S, "WEB INSTALLER.", C_WHITE, 1);
     draw_text_box(0, 172, 240, &FONT_S, "PLAY: TRY AGAIN", C_HI, 1);
+    draw_text_box(0, 190, 240, &FONT_S, "HOLD OCT- + OCT+: UPDATE", C_GRAY, 1);
     if (fm1_crash.magic == FM1_CRASH_MAGIC) {
         b[0] = 'P';
         b[1] = 'C';
@@ -245,7 +246,8 @@ static void safe_main(void)
     fm1_guard_lock_top();
     fm1_irq_enable_all();
     play = 1u << panel.btn[B_PLAY];
-    t0 = fm1_ms;
+    both = (1u << panel.btn[B_OCTDN]) | (1u << panel.btn[B_OCTUP]);
+    t0 = t_oct = fm1_ms;
     for (;;) {
         fm1_wdt_feed();
         usb_retry(fm1_ms);
@@ -259,6 +261,11 @@ static void safe_main(void)
             fm1_delay_ms(30);
             fm1_reboot();
         }
+        if ((fm1_in.buttons & both) != both)        /* OCT- + OCT+ held 5 s: the chip's update mode, as in X0X
+                                                     * (fm1-x0x#20: with USB gone, the only way left) */
+            t_oct = fm1_ms;
+        else if (fm1_ms - t_oct > 5000u)
+            enter_uboot("UBOOT");
         ota_service();
         if (usb.ota_req) {
             usb.ota_req = 0;

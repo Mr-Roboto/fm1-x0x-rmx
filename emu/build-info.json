@@ -1,8 +1,8 @@
 {
   "project": "X0X-RMX",
-  "revision": "75c0792919a37bf52d86f0fc4be4787a00c2c6f0",
+  "revision": "e5cf961ccb23f4a8834869b0af6e98c9acde30fb",
   "branch": "orb-remix",
   "working_tree_changes": [],
-  "wasm_sha256": "e3951651ecc4363b01f4575ac817ce994e0a26bb0240a00bd4204cc7ddb72dce",
+  "wasm_sha256": "77853be7f2857a6f967a82b8489542bff785f78e517a4f82f24876cce2da4bfe",
   "compiler": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.69 ()"
 }

@@ -282,3 +282,22 @@ This documentation-only publication reuses the verified P7.4 emulator, including
 original build provenance. WASM SHA-256 remains
 `e3951651ecc4363b01f4575ac817ce994e0a26bb0240a00bd4204cc7ddb72dce`.
 No firmware, memory resources, emulator code or installation/download controls change.
+
+## P8.2c banner and screenshot pairings
+
+The supplied `x0x-rmx-banner-1280x320.png` is tracked under `docs/img/`, unchanged
+from the approved original (SHA-256
+`349b82e67d76fd3968249f9555c47a7fdc75f3ef3856f2b975a01f76ce85874d`).
+It leads the README and the landing page, preserving its 4:1 aspect ratio on desktop
+and mobile. The landing page shares the manual's image directory; its heading uses
+the banner's alternative text without a redundant visible project title below it.
+
+Published device/LCD pairings are Cream & Lilac / WHITE LILAC, Classic Dark / DEFAULT,
+Sunset Orange / SUNSET ORANGE and Pink Lilac / PINK LILAC. The real firmware GLO → SCHEME
+control is used before recapture; no LCD pixels are recolored. Device color and LCD SCHEME
+remain independent. See `docs/img/p82/README.md` for the corrected image inventory and
+preservation limits. Existing video footage and P8.3 preparation are unaffected.
+
+The verified emulator is reused byte-for-byte, with its existing build provenance.
+Firmware installation/downloads remain disabled; publication uses the established
+normal fast-forward commit on `gh-pages` in a separate checkout.

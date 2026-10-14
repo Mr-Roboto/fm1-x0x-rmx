@@ -12,7 +12,8 @@ See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)
 
-Screenshots captioned **X0X-RMX** are real captures of the current browser emulator.
+Screenshots captioned **X0X-RMX** are real captures of the current browser emulator,
+with the Cream & Lilac exterior and WHITE LILAC LCD scheme selected independently.
 The retained hardware drawings and screenshots captioned **Original X0X** describe the
 inherited controls and workflows; their layout and colors may differ from the fork.
 

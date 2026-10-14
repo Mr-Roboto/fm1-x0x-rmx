@@ -82,11 +82,20 @@ for image in assets.glob("*.png"):
     assert image.read_bytes() == (Path("docs/img/p82") / image.name).read_bytes(), image
 assert "Rejection is silent; there is no warning banner." in manual_path.read_text()
 readme = Path("README.md").read_text()
-readme_images = re.findall(r'!\[[^\]]+\]\((docs/img/p82/[^)]+)\)', readme)
+readme_images = re.findall(r'!\[[^\]]+\]\((docs/img/[^)]+)\)', readme)
 readme_images += [img["src"] for img in Links(readme).images]
-assert len(readme_images) == 6
+assert len(readme_images) == 7
 for image in readme_images:
     assert Path(image).is_file(), (image, "missing README image")
 assert "Original X0X – upstream demonstration" in readme
+banner_name = "x0x-rmx-banner-1280x320.png"
+banner = Path("docs/img") / banner_name
+assert (root / "manual/img" / banner_name).read_bytes() == banner.read_bytes()
+assert hashlib.sha256(banner.read_bytes()).hexdigest() == "349b82e67d76fd3968249f9555c47a7fdc75f3ef3856f2b975a01f76ce85874d"
+assert readme.startswith("![X0X-RMX") and readme.splitlines()[0].endswith(banner_name + ")")
+assert pages[landing_path].images[0]["src"].endswith(banner_name)
+assert 'width="1280" height="320"' in landing
+assert '<h1 class="branding">' in landing and '<h1>X0X-RMX</h1>' not in landing
+print("Approved banner bytes, source/Pages paths and first-image placement passed")
 print("Visual documentation: 19 unchanged publication assets, 6 landing images, 17 manual images and descriptive alt text passed")
 print(f"Pages: {len(pages)} pages; relative links/anchors/subpath, identity, credits, release gate and WASM provenance passed")

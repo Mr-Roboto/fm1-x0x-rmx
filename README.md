@@ -1,4 +1,4 @@
-# X0X-RMX for the M-VAVE FM-1
+![X0X-RMX — Orb-inspired Remix for the FM-1](docs/img/x0x-rmx-banner-1280x320.png)
 
 X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x),
 a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
@@ -6,7 +6,7 @@ knob motion, reverb, tape delay and master compression.
 
 ![X0X-RMX browser emulator in Cream & Lilac, with a 909 pattern and Device color selector](docs/img/p82/01-overview-cream.png)
 
-*The current X0X-RMX browser emulator, in its default Cream & Lilac finish.*
+*The default Cream & Lilac exterior, shown with the WHITE LILAC LCD scheme.*
 
 This fork adds:
 
@@ -56,9 +56,9 @@ with the emulator's Device color selector. It changes the exterior immediately a
 that browser preference separately from your project. The firmware's **GLO → SCHEME** setting
 controls LCD colors independently.
 
-![The same X0X-RMX emulator in Cream & Lilac, Classic Dark, Sunset Orange and Pink Lilac](docs/img/p82/01-device-comparison.png)
+![The same 909 pattern with matching device and LCD colors: Cream & Lilac / WHITE LILAC, Classic Dark / DEFAULT, Sunset Orange / SUNSET ORANGE and Pink Lilac / PINK LILAC](docs/img/p82/01-device-comparison.png)
 
-*Four browser device finishes; these are visual interpretations, not color-matched hardware photographs.*
+*Four browser device finishes with coordinated LCD schemes, selected separately in GLO → SCHEME. These are visual interpretations, not color-matched hardware photographs.*
 
 ## What's inside
 

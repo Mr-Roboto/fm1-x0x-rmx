@@ -44,6 +44,8 @@ LANDING = """<!doctype html>
 body { background: var(--ground); color: var(--ink); margin: 0; padding-inline: 16px; padding-block: 48px 64px;
        font: 400 17px/1.6 "Barlow", "Helvetica Neue", Arial, sans-serif; }
 main { max-width: 40rem; margin: 0 auto; }
+.branding { margin-bottom: 1.6rem; }
+.branding img { display: block; width: 100%; height: auto; }
 h1 { font: 700 2.6rem/1.1 "Barlow Semi Condensed", "Barlow", sans-serif; margin: 0 0 .4rem; }
 .lede { color: var(--muted); margin: 0 0 1.6rem; max-width: 34rem; }
 .status { border: 1px solid var(--rule); background: var(--card); border-radius: 8px; padding: 12px 16px; margin: 0 0 2rem; }
@@ -72,7 +74,8 @@ a { color: var(--accent); }
 </head>
 <body>
 <main>
-<h1>X0X-RMX</h1>
+<h1 class="branding"><img src="manual/img/x0x-rmx-banner-1280x320.png" width="1280" height="320"
+  alt="X0X-RMX — Orb-inspired Remix for the FM-1" fetchpriority="high"></h1>
 <p class="lede">Groovebox firmware for the M-VAVE FM-1. A 909, an 808, two 303s with the TB-3PO
 line generator, and a breakbeat player, all running at once, with patterns, a song mode and
 recorded knob moves. This independent fork adds Orb-inspired Remix for 909, 808, 303A and 303B,
@@ -80,8 +83,8 @@ Grids MAP/EUCLID drum generation with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo,
 extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.</p>
 <figure class="hero">
   <a href="emu/"><img src="manual/img/p82/01-overview-cream.png" width="3120" height="2175"
-    alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" fetchpriority="high"></a>
-  <figcaption>The current X0X-RMX emulator in its default Cream &amp; Lilac finish. Play it with mouse, touch or keyboard.</figcaption>
+    alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" loading="lazy"></a>
+  <figcaption>The default Cream &amp; Lilac exterior, shown with the WHITE LILAC LCD scheme. Play it with mouse, touch or keyboard.</figcaption>
 </figure>
 <div class="status">__STATUS__</div>
 <nav class="ways" aria-label="Explore X0X-RMX">
@@ -116,8 +119,8 @@ extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI impro
 browser's Device color selector. Switching is immediate and the visual preference is remembered
 separately from your project. GLO → SCHEME controls LCD colors independently.</p>
 <figure><a href="manual/img/p82/01-device-comparison.png"><img src="manual/img/p82/01-device-comparison.png" width="2140" height="1712" loading="lazy"
-  alt="The same X0X-RMX emulator in Cream &amp; Lilac, Classic Dark, Sunset Orange and Pink Lilac"></a>
-  <figcaption>Four browser device finishes: visual interpretations, not color-matched hardware photographs. Open the image for a closer look.</figcaption></figure>
+  alt="The same 909 pattern with matching device and LCD colors: Cream &amp; Lilac / WHITE LILAC, Classic Dark / DEFAULT, Sunset Orange / SUNSET ORANGE and Pink Lilac / PINK LILAC"></a>
+  <figcaption>Four browser finishes with coordinated LCD schemes, selected separately in GLO → SCHEME. Visual interpretations, not color-matched hardware photographs. Open the image for a closer look.</figcaption></figure>
 </section>
 <section aria-labelledby="upstream-demo">
 <h2 id="upstream-demo">Original X0X – upstream demonstration</h2>

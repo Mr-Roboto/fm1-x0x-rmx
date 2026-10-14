@@ -31,6 +31,7 @@ LANDING = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>X0X-RMX for the FM-1</title>
 <meta name="description" content="Independent X0X fork: Orb Remix, Grids MAP/EUCLID, extended TB-3PO and 303 Morph.">
+<link rel="icon" href="emu/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">

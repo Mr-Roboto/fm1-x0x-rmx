@@ -178,3 +178,54 @@ local and are not added to the public site. The final documentation update repla
 website links with verified public links and preserves local preview navigation.
 No installable package, firmware release, firmware source change, force-push or change to
 `main` was made. Hardware validation and P7.2 visual changes remain deferred.
+
+## P7.3 device palettes and favicon
+
+P7.3 starts after P7.2's `990543c` source revision was finalized and deployed successfully
+(Pages commit `562505c`). The source workspace was clean and matched `origin/orb-remix`.
+P7.2 provides EXTRA EDIT for both 303 voices; earlier references above to planned P7.2
+visual work describe the original P7.1 plan. Device branding is implemented in P7.3.
+
+The emulator's **Device color** selector defaults to **Cream & Lilac**, a visual interpretation
+rather than a photograph-matched finish. **Classic Dark** preserves the original SVG colors,
+including illuminated, dim, held and latched states. Palettes are defined in one configuration
+in `web/emu/index.html`, applied through CSS variables without rebuilding the SVG or controls.
+The display surround stays dark. The separate localStorage key `x0x-emu-device-color` remembers
+only the visual choice; unavailable storage and unknown palette IDs fall back to cream.
+The selector does not send worklet messages or change project/sound storage.
+
+The project SVG favicon uses cream/lilac X0X marks and keys, without fonts or external artwork.
+The Pages landing page links to the same `emu/favicon.svg` asset.
+
+Browser regression command (Playwright and Chromium must be installed separately):
+
+```
+# Serve a freshly generated preview beneath /fm1-x0x-rmx/ as described above.
+# Optional ORIGINAL_HTML is the pre-P7.3 emulator page for exact Classic Dark comparison.
+node tests/host/device_palette_browser_test.mjs \
+  http://127.0.0.1:8000/fm1-x0x-rmx/ build/host/p73-browser [ORIGINAL_HTML]
+```
+
+`X0X_PLAYWRIGHT` can name an installed Playwright module directory; `X0X_CHROMIUM` can name a
+Chromium executable. The test checks geometry, original dark colors/states, button contrast,
+pointer/keyboard controls, native selector input isolation, live audio during switching,
+both EXTRA pages, independent visual storage, mobile layout, favicon rendering and the
+reserved installer. EXTRA comparisons use the fixtures produced by
+`node tests/host/bass303_extra_emu_test.mjs build/emu/x0x.wasm` following its host UI fixtures.
+
+Validation artifacts belong in `build/host/p73-browser/` and `build/host/p73-public-browser/`;
+they are not published. The P7.3 WASM is byte-identical to deployed P7.2:
+SHA-256 `e3951651ecc4363b01f4575ac817ce994e0a26bb0240a00bd4204cc7ddb72dce`.
+Firmware/DSP, sequencing, EXTRA, AudioWorklet, mappings, save/load, build flags and memory
+configuration are unchanged. No firmware build or new hardware capacity measurement is
+required for these browser-only presentation changes. Firmware installation and downloads
+remain disabled; publication uses the normal fast-forward `gh-pages` process above.
+
+Local P7.3 verification passed: Emscripten build (669,765-byte WASM), Pages checks,
+Chromium palettes/controls/audio/EXTRA/storage/mobile/favicon checks (audio peak 0.318;
+no page errors), 303 EXTRA save/reboot regression, host audio parity (168,021 samples,
+maximum difference `3.05e-5`), Grids, six LCD schemes/42 screenshots, break slots and
+browser sample-conversion parity. The latter passed outside the sandbox because its
+Python child process was blocked there. Classic Dark matched the pre-P7.3 page's
+computed SVG colors, geometry and hit targets in seven tested control-state combinations.
+Button labels pass a 4.5:1 contrast check in both normal and illuminated states.

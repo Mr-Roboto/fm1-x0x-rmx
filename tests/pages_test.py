@@ -58,6 +58,7 @@ assert "Original X0X history" in (root / "new/index.html").read_text()
 info = json.loads((root / "emu/build-info.json").read_text())
 assert info["branch"] == "orb-remix"
 assert info["wasm_sha256"] == hashlib.sha256((root / "emu/x0x.wasm").read_bytes()).hexdigest()
+assert '<link rel="icon" href="emu/favicon.svg" type="image/svg+xml">' in (root / "index.html").read_text()
 assert (root / "emu/favicon.svg").read_bytes() == Path("web/emu/favicon.svg").read_bytes()
 assert (root / "emu/worklet.js").read_bytes() == Path("web/emu/worklet.js").read_bytes()
 print(f"Pages: {len(pages)} pages; relative links/anchors/subpath, identity, credits, release gate and WASM provenance passed")

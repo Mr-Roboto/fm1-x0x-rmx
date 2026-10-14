@@ -1,0 +1,34 @@
+# X0X-RMX publication screenshots
+
+These 19 PNGs are the selected P8.2a captures used by the README, manual and landing
+page. They were copied byte-for-byte from `build/host/p82-screenshots/` for P8.2b.
+Total PNG size: 1,469,859 bytes. No displayed parameters or device states were retouched.
+
+Source: `orb-remix`, revision `75c0792919a37bf52d86f0fc4be4787a00c2c6f0`.
+Captured from the real local emulator in Chromium at device scale factor 3.
+LCD crops are 627 × 627; exterior frames are 3120 × 2175. The four-device comparison
+is the only selected contact sheet (2140 × 1712), assembled from the original captures.
+Existing project and component attribution is retained in [LICENSING.md](../../../LICENSING.md).
+The retained upstream illustrations outside this directory are distinct from these captures.
+
+| Image | Contents | Publication use |
+|---|---|---|
+| [01-device-comparison.png](01-device-comparison.png) | Four exterior variants | README and website device comparison |
+| [01-overview-cream.png](01-overview-cream.png) | Cream & Lilac device, generated 909 beat and device selector visible. | README hero; website hero |
+| [05-remix-909-off-a1.png](05-remix-909-off-a1.png) | 909 REMIX at neutral A1/OFF with APPLY BEAT. | Manual |
+| [06-remix-909-on-b3.png](06-remix-909-on-b3.png) | 909 REMIX B3/ON, APPLY BAR; BANK/PATTERN/REMIX/APPLY readable. | README and website feature gallery; manual |
+| [08-grids-map-909.png](08-grids-map-909.png) | 909 MAP: X/Y/CHAOS/MODE, generated rhythm in the grid. | README and website feature gallery; manual |
+| [09-grids-euclid-909.png](09-grids-euclid-909.png) | EUCLID mode: LEN K/S/H and MODE, stored result shown. | Manual |
+| [10-grids-fill-909.png](10-grids-fill-909.png) | FILL K/S/H page at defaults 50/35/65%. | Manual |
+| [12-grids-offset-909.png](12-grids-offset-909.png) | OFFSET K/S/H page at defaults 0/4/2. | Manual |
+| [14-grids-result-909.png](14-grids-result-909.png) | Ordinary SEQUENCE view of the generated 909 beat. | Manual |
+| [15-tb3po-generate-303a.png](15-tb3po-generate-303a.png) | 303A GENERATE: DENS/ACCENT/SLIDE/OCTS and generated motif. | README and website feature gallery; manual |
+| [16-tb3po-scale-mpen.png](16-tb3po-scale-mpen.png) | 303A SCALE page: ROOT A, MPEN, OCTAVE and MUTATE. | Manual |
+| [18-tb3po-result-303a.png](18-tb3po-result-303a.png) | 303A SEQUENCE view of the generated Dorian motif. | Manual |
+| [19-remix-303a-on-c4.png](19-remix-303a-on-c4.png) | 303A REMIX C4/ON, APPLY LOOP; independent bass selection. | Manual |
+| [20-303a-tone.png](20-303a-tone.png) | 303A TONE: CUTOFF/RESO/ENVMOD/DECAY with generated line. | Manual |
+| [21-303a-voice-saw.png](21-303a-voice-saw.png) | 303A VOICE: ACCENT/WAVE/DRIVE/SLIDE, initially Saw. | Manual |
+| [22-303a-extra-morph64.png](22-303a-extra-morph64.png) | 303A EXTRA: MORPH 64/ACCDEC/DRVTYPE/TUNE. | README and website feature gallery; manual |
+| [23-morph-wave-303a.png](23-morph-wave-303a.png) | 303A VOICE with accepted WAVE Morph. | Manual |
+| [32-global-scheme-white-lilac.png](32-global-scheme-white-lilac.png) | GLOBAL SCHEME row set to WHITE LILAC. | Manual |
+| [33-cream-white-lilac-global.png](33-cream-white-lilac-global.png) | Cream exterior, WHITE LILAC LCD SCHEME and exterior selector in one frame. | Manual |

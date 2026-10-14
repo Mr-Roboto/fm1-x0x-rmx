@@ -7,6 +7,25 @@ GLO > SCHEME affects the LCD, not the device illustration; neither selector chan
 
 The tuples below are the exact RGB inputs to `RGB()` in `firmware/src/gfx.c`. The macro truncates these to RGB565. The packed part words are also listed to identify the exact stored colors.
 
+## Factory default and saved-project compatibility (P8.4)
+
+New projects, fresh startup without a valid saved project, and factory reset select
+**WHITE LILAC (ID 1)**. The firmware startup splash and UI default descriptor use the
+same scheme. This does not couple the browser exterior selector to GLO > SCHEME.
+
+Valid saved selections retain all six existing IDs (0–5). **DEFAULT remains ID 0**
+and preserves the original appearance. Historical untagged bytes, invalid scheme
+IDs/tags, and short settings records that omit the scheme byte decode as DEFAULT,
+with their saved legacy palette. Loading does not replace these with WHITE LILAC.
+The tagged-byte encoding, project/storage layouts and format versions are unchanged.
+
+Regression coverage includes `sh tests/host/run_scheme_ui.sh`,
+`node tests/host/scheme_emu_test.mjs build/emu/x0x.wasm`, and
+`node tests/host/factory_scheme_browser_test.mjs SITE_ROOT OUTPUT_DIR` (Chromium,
+with the existing `X0X_PLAYWRIGHT` / `X0X_CHROMIUM` runtime overrides where needed).
+The last check exercises real browser startup, SAVE/reload, both reset controls,
+independent exterior storage and saved DEFAULT/untagged/invalid/short project fixtures.
+
 ## Part colors
 
 | ID / Scheme | 909 | 808 | 303A | 303B | BREAK |
@@ -136,3 +155,12 @@ GLOBAL stores selection and scroll in two session-only UI bytes before changing 
 P5.2 firmware: application flash **576,348 / 581,564 B** (5,216 B free), static RAM **97,244 / 98,304 B** (1,060 B free), pool **334,348 / 344,064 B** (9,716 B free). RAM/pool usage is unchanged. Loader binary: 6,524 B; package: 609,680 B; browser WASM: 660,847 B.
 
 Validation passed: scheme UI/persistence tests, inactive/threshold/active/clamped COMP and GR pixels in all six schemes, GLOBAL cursor and scroll tests across views/menus/actions, 200 original DEFAULT hashes, five active DEFAULT references, and browser selection/storage/color parity/navigation checks. Regenerated 71 host and 42 browser screenshots, plus part, GLOBAL and compressor contact sheets. Firmware and browser builds passed. The full suite passed all available UI, Remix, TB-3PO, sequencing, storage, update and simulator checks; external 9W9, 8W8 and schwung-303 comparisons were unavailable. The browser sample-conversion check passed on an authorized retry after sandbox `spawnSync python3 EPERM`.
+
+## P8.4 measured capacity
+
+The WHITE LILAC factory-default build uses an application image of **579,820 B**
+in the **581,564 B** application slot (**1,744 B free**). Static RAM is
+**97,324 / 98,304 B** (**980 B free**); pool usage is **334,348 / 344,064 B**
+(**9,716 B free**). The development package is **609,680 B**, identity `FM-1_900`;
+the browser WASM is **669,773 B**. These are local build results, not a hardware
+release or physical validation. Firmware installation/downloads remain disabled.

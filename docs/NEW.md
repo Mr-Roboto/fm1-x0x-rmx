@@ -17,7 +17,8 @@ do not establish physical FM-1 timing, listening or installation compatibility.
   motifs with rhythmic answers and restrained mutation. Written notes are retained when
   generator knobs change; older saved scale indices are not automatically migrated.
 - Six saved LCD schemes, coordinated part colors, and retained GLOBAL list position
-  during a session.
+  during a session. WHITE LILAC is the factory default for new projects and reset;
+  saved scheme selections and legacy DEFAULT decoding are preserved.
 - Public X0X-RMX browser emulator and documentation; firmware installation and downloads
   remain unavailable.
 - Both 303s have TONE, VOICE and EXTRA EDIT pages. EXTRA exposes MORPH, ACCDEC, DRVTYPE and

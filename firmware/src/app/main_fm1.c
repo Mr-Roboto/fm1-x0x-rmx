@@ -285,7 +285,7 @@ static void fm1_main(void)
         }
     }
     lcd_init();
-    scheme_set(SCHEME_DEFAULT, 1);
+    scheme_set(SCHEME_WHITE_LILAC, 1);
     draw_text_box(0, 96, 240, &FONT_M, "X0X", C_HI, 1);
     draw_text_box(0, 134, 240, &FONT_S, "909 808 303 303 BREAK", C_GRAY, 1);
     if (x0x_dbg.magic != DBG_MAGIC) {

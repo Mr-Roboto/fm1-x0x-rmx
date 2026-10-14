@@ -20,6 +20,8 @@ static void fixture(int palette)
     memset(enc_acc, 0, sizeof enc_acc);
     held_btn = held_keys = now_ms = 0;
     project_defaults();
+    /* Explicit legacy fixture, independent of the current factory scheme. */
+    settings_set_scheme(&proj.set, SCHEME_DEFAULT);
     drum_gen_init(0);
     proj.set.palette = (uint8_t)palette;
     proj.pat[0].drum[0].hit[DR_BD][0] = 0x1111;
@@ -250,6 +252,21 @@ static void footer_refinement(void)
     puts("Footer: five subtle lifts, unchanged DEFAULT/inactive colors/startup hint/TB-3PO emphasis passed");
 }
 
+static void factory_defaults(void)
+{
+    assert(SCHEME_DEFAULT == 0 && SCHEME_WHITE_LILAC == 1 && SCHEME_PINK_LILAC == 2);
+    assert(SCHEME_SUNSET_ORANGE == 3 && SCHEME_GRAPHITE_MINT == 4 && SCHEME_WHITE_BLUE == 5 && NSCHEMES == 6);
+    assert(SEQ_P[SQ_SCHEME].def == SCHEME_WHITE_LILAC);
+    for (int i = 0; i < OBJ_NOBJ; i++) store_len[i] = -1;
+    boot();
+    assert(settings_scheme(&proj.set) == SCHEME_WHITE_LILAC);
+    assert(scheme == &SCHEMES[SCHEME_WHITE_LILAC]);
+    assert(project_save() == 0);
+    boot();
+    assert(settings_scheme(&proj.set) == SCHEME_WHITE_LILAC);
+    puts("Factory: stable IDs, UI descriptor, empty-storage startup and WHITE LILAC save/reboot passed");
+}
+
 static void persistence(void)
 {
     assert(sizeof(settings_t) == 28 && sizeof(project_t) == 30944);
@@ -366,16 +383,17 @@ static void selection_and_screenshots(void)
     set_view(V_GLO); open_global(); select_global_row(R_ACT, ACT_RESET);
     tap_button(B_SEL); assert(ui.overlay == O_ASK);
     tap_button(B_SEL);
-    assert(settings_scheme(&proj.set) == SCHEME_DEFAULT && proj.set.palette == 1);
-    assert(scheme == &SCHEMES[SCHEME_DEFAULT]);
-    assert(!memcmp(pal, PALETTES[1].c, sizeof pal));
+    assert(settings_scheme(&proj.set) == SCHEME_WHITE_LILAC && proj.set.palette == 1);
+    assert(scheme == &SCHEMES[SCHEME_WHITE_LILAC]);
+    assert(!memcmp(pal, SCHEMES[SCHEME_WHITE_LILAC].lcd, sizeof pal));
     tap_button(B_SAVE); boot();
-    assert(settings_scheme(&proj.set) == SCHEME_DEFAULT);
+    assert(settings_scheme(&proj.set) == SCHEME_WHITE_LILAC);
     puts("GLOBAL: exactly six choices, real selection/save/load/reset, label widths, redraws and 54 LCD screenshots passed");
 }
 
 int main(void)
 {
+    factory_defaults();
     legacy_appearance();
     global_memory();
     compressor_rendering();

@@ -62,7 +62,8 @@ This is a browser-emulator demonstration; physical FM-1 validation remains pendi
 Choose **Cream & Lilac** (default), **Classic Dark**, **Sunset Orange** or **Pink Lilac**
 with the emulator's Device color selector. It changes the exterior immediately and remembers
 that browser preference separately from your project. The firmware's **GLO → SCHEME** setting
-controls LCD colors independently.
+controls LCD colors independently. New projects and factory reset select **WHITE LILAC**;
+existing saved projects keep their selected LCD scheme.
 
 ![The same 909 pattern with matching device and LCD colors: Cream & Lilac / WHITE LILAC, Classic Dark / DEFAULT, Sunset Orange / SUNSET ORANGE and Pink Lilac / PINK LILAC](docs/img/p82/01-device-comparison.png)
 

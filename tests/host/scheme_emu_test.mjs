@@ -75,6 +75,10 @@ fs.mkdirSync(out, {recursive: true});
 const parts = ['909', '808', '303A', '303B', 'BREAK'];
 const schemeFrames = [];
 render(120);
+// Fresh boot uses WHITE LILAC; normalize only this all-schemes fixture.
+tap('SAVE'); assert.equal(settings()[4 + 17], 0xd1);
+ex.web_boot(); render(120); tap('GLO'); turn(0, 11); turn(1, -1); tap('SAVE');
+ex.web_boot(); render(120);
 for (let s = 0; s < 6; s++) {
   tap('GLO'); turn(0, 11); // existing GLOBAL rows; SELECT skips section headers
   turn(1, s);
@@ -109,8 +113,8 @@ assert.equal(new Set(schemeFrames.map(crc32)).size, 6);
 // Factory reset through the confirmation UI and then a save/reboot.
 tap('GLO'); turn(0, 11); turn(1, 5); turn(0, 4);
 tap('SEL'); tap('SEL'); tap('SAVE');
-assert.equal(settings()[4 + 17], 0xd0);
-ex.web_boot(); render(120);
+assert.equal(settings()[4 + 17], 0xd1);
+ex.web_boot(); render(120); tap('SAVE'); assert.equal(settings()[4 + 17], 0xd1);
 // Old short settings keep MONO and default to the original scheme.
 settings()[4 + 8] = 4;
 ex.web_store_set_len(0, 20);
@@ -119,3 +123,15 @@ tap('SAVE');
 assert.equal(settings()[4 + 8], 4);
 assert.equal(settings()[4 + 17], 0xd0);
 console.log('Browser schemes: six real GLOBAL choices, host part-color parity, save/reboot/reset, old settings GLOBAL cursor/scroll across menus and 42 LCD screenshots passed');
+
+// All tagged IDs retain their real colors; every other byte renders DEFAULT.
+for (let byte = 0; byte < 256; byte++) {
+  settings()[4 + 17] = byte;
+  ex.web_store_set_len(0, 32);
+  ex.web_boot(); render(80); tap('SEQ');
+  const expected = byte >= 0xd0 && byte <= 0xd5 ? byte - 0xd0 : 0;
+  assert.equal(fb().readUInt16BE((9 * 240 + 2) * 2), host_chip(`build/host/schemes/${expected}-909.png`));
+  tap('SAVE');
+  assert.equal(settings()[4 + 17], byte); // load/save does not rewrite historical data
+}
+console.log('Browser factory WHITE LILAC and all 256 legacy/tagged/invalid scheme bytes passed');

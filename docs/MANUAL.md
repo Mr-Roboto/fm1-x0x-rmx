@@ -82,6 +82,10 @@ or stopping playback. It is saved separately from patterns and sound. It colors 
 illustration; **GLO > SCHEME** colors the LCD. Cream & Lilac is an interpretation of a hardware
 finish, not a color-matched product photograph.
 
+New projects and factory resets start with the **WHITE LILAC** LCD scheme. Saved projects
+keep their selected scheme; older projects without a valid scheme tag retain the
+original **DEFAULT** colors.
+
 The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI jacks,
 battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
 Successful browser playback does not validate physical FM-1 performance or installation.
@@ -903,11 +907,11 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 | USB AUDIO | FOLLOWS KNOB (the default): USB audio is as loud as the FM-1, MASTER knob and all. FULL: USB audio stays at full level whatever the knob says, so you can record over the cable with the speaker turned down. |
 | LIGHTS | ON: the key lights show the steps, and the unlit buttons glow dimly so they can be read. KEYS: the key lights only. OFF: neither. |
 | KEY SOUND | STOPPED (the default): picking a drum or editing a 303 step is silent while the pattern plays, unless REC is on. ALWAYS: you always hear it. The 303 keyboard always plays either way. |
-| SCHEME | Coordinated LCD and part colours: DEFAULT, WHITE LILAC, PINK LILAC, SUNSET ORANGE, GRAPHITE MINT or WHITE BLUE. DEFAULT preserves the original colours, including the legacy screen palette in an older saved project. All schemes keep the black LCD background and red recording/warning indicators. |
+| SCHEME | Coordinated LCD and part colours: DEFAULT, WHITE LILAC, PINK LILAC, SUNSET ORANGE, GRAPHITE MINT or WHITE BLUE. WHITE LILAC is the factory default for new projects and reset. Saved schemes are retained. DEFAULT preserves the original colours, including the legacy screen palette in an older saved project. All schemes keep the black LCD background and red recording/warning indicators. |
 | SAVE PROJECT | Saves everything. |
 | AUTOSAVE | ON (the default): while the pattern is stopped, changes are saved by themselves once nothing has been touched for four seconds. OFF: only SAVE saves. |
 | CLEAR PATTERN | Clears all five parts of the current pattern. |
-| FACTORY RESET | Goes back to the factory sounds and empty patterns, with no song and no knob motion, and selects DEFAULT with the original amber screen palette. Your saved project is kept until you save over it. |
+| FACTORY RESET | Goes back to the factory sounds and empty patterns, with no song and no knob motion, and selects WHITE LILAC. Your saved project is kept until you save over it. |
 | PERFORMANCE | Opens the performance page (below). |
 | ABOUT X0X | Shows the version, how full the memory for patterns is (MEM), and the audio load. |
 | BATTERY | The battery's charge: FULL, 2/3, 1/3 or EMPTY; USB POWER while a computer powers the FM-1. Read only. |

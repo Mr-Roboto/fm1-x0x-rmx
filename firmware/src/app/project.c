@@ -38,7 +38,7 @@ void project_defaults(void)
     proj.set.rsv[0] = 0;                /* legacy/default APPLY = BEAT */
     proj.set.magic = PROJ_MAGIC;
     proj.set.format = PROJ_FORMAT;
-    settings_set_scheme(&proj.set, SCHEME_DEFAULT);
+    settings_set_scheme(&proj.set, SCHEME_WHITE_LILAC);
     proj.set.palette = 1;                /* amber */
     proj.set.keyled = 1;
     proj.set.keysound = 0;
@@ -127,7 +127,7 @@ static int load_obj(uint32_t obj, void *dst, uint32_t len)
 }
 
 /* the settings may have grown since they were saved: a shorter payload of this format loads into
- * the front of dst, and the rest keeps what dst held (zeros: the new settings' defaults) */
+ * the front of dst; missing fields keep the caller's compatibility defaults. */
 static int load_settings(settings_t *dst)
 {
     int n = plat_store_load(OBJ_SET, io_buf, sizeof io_buf);
@@ -435,6 +435,8 @@ int project_load(void)
     project_defaults();
     packed_len = 0;
     set = proj.set;
+    /* Historical short settings omit the scheme byte: keep their original LCD. */
+    settings_set_scheme(&set, SCHEME_DEFAULT);
     if (load_settings(&set) == 0 && set.magic == PROJ_MAGIC)
         proj.set = set;
     else

@@ -68,6 +68,7 @@ figcaption { color: var(--muted); font-size: .95rem; margin-top: .6rem; }
 @media (max-width: 520px) { .gallery { grid-template-columns: 1fr; } }
 p.small { color: var(--muted); font-size: .9rem; }
 .video { position: relative; aspect-ratio: 16 / 9; max-width: 100%; margin: 1.5rem 0; border-radius: 6px; overflow: hidden; background: #000; }
+.performance-video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; background: #211d29; }
 .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 a { color: var(--accent); }
 </style>
@@ -96,6 +97,19 @@ extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI impro
   __DOWNLOAD__
   <a href="__REPO__"><strong>Source</strong><span>X0X-RMX on GitHub, GPL-3.0.</span></a>
 </nav>
+<section aria-labelledby="demo">
+<h2 id="demo">X0X-RMX musical demonstration</h2>
+<figure>
+  <video class="performance-video" controls playsinline preload="metadata" width="1280" height="720"
+    poster="media/video/x0x-rmx-demo-poster.png" src="media/video/x0x-rmx-demo.mp4"
+    aria-label="X0X-RMX musical browser-emulator demonstration">
+    <a href="media/video/x0x-rmx-demo.mp4">Watch the X0X-RMX demonstration (MP4)</a>
+  </video>
+  <figcaption>84 seconds of Remix, Grids, TB-3PO and Morph with real stereo browser-emulator audio.
+    Browser demonstration; physical FM-1 validation remains pending.
+    <a href="media/video/x0x-rmx-demo.mp4">Open the video (MP4, 6.39 MB)</a>.</figcaption>
+</figure>
+</section>
 <section aria-labelledby="features">
 <h2 id="features">Inside X0X-RMX</h2>
 <div class="gallery">
@@ -231,6 +245,8 @@ def main(out, pkg=None, version=None):
         raise SystemExit("x0x_breaks.html must contain /*LIB*/ once")
     lib = strip_module((SRC / "web" / "x0x_breaks.js").read_text(encoding="utf-8"))
     (out / "breaks" / "index.html").write_text(page.replace("/*LIB*/", lib), encoding="utf-8")
+    # Approved demonstration assets, copied without transcoding or image edits.
+    shutil.copytree(SRC / "docs" / "media" / "video", out / "media" / "video")
     # the manual (a complete page; its images beside it)
     subprocess.run([sys.executable, str(SRC / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"),
                     str(out / "manual" / "index.html")], check=True, capture_output=True)

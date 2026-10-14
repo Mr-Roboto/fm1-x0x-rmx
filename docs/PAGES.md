@@ -59,6 +59,7 @@ This metadata documents provenance, not hardware validation.
 - `new/index.html`, `new/img/new/`: fork development notes and labelled original X0X history.
 - `breaks/index.html`: existing Web MIDI sample uploader; hardware connection requires Chrome/Edge.
 - `install/index.html`: reserved status page, without scripts, package links or installation controls.
+- `media/video/`: approved musical browser-emulator demonstration MP4 and its poster, copied unchanged from `docs/media/video/`.
 - `.nojekyll`: static Pages output.
 
 Preview mode contains no `firmware/` directory or `.fwsc` file. Additional technical Markdown
@@ -301,3 +302,16 @@ preservation limits. Existing video footage and P8.3 preparation are unaffected.
 The verified emulator is reused byte-for-byte, with its existing build provenance.
 Firmware installation/downloads remain disabled; publication uses the established
 normal fast-forward commit on `gh-pages` in a separate checkout.
+
+## P8.3d musical video publication
+
+The landing page includes a compact native HTML5 player at `#demo`, with controls,
+inline mobile playback and metadata-only preloading. It does not autoplay. The README's
+poster thumbnail links to that player. The approved 84-second 720p/25 fps H.264/AAC
+candidate and poster are stored under `docs/media/video/` and copied byte-for-byte to
+`media/video/`; publication does not transcode or edit them.
+
+The video is labelled as a browser-emulator demonstration. Physical FM-1 validation
+remains pending, with firmware installation and downloads still disabled. The existing
+banner, screenshot galleries and secondary upstream demonstration are preserved.
+Publication uses the same package-free preview and fast-forward Pages procedure above.

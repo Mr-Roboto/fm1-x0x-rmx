@@ -16,15 +16,18 @@ class Links(HTMLParser):
         self.links = []
         self.ids = set()
         self.images = []
+        self.videos = []
         self.feed(source)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag == "img":
             self.images.append(attrs)
+        if tag == "video":
+            self.videos.append(attrs)
         if "id" in attrs:
             self.ids.add(attrs["id"])
-        for attr in ("href", "src"):
+        for attr in ("href", "src", "poster"):
             if attr in attrs:
                 self.links.append(attrs[attr])
 
@@ -84,7 +87,7 @@ assert "Rejection is silent; there is no warning banner." in manual_path.read_te
 readme = Path("README.md").read_text()
 readme_images = re.findall(r'!\[[^\]]+\]\((docs/img/[^)]+)\)', readme)
 readme_images += [img["src"] for img in Links(readme).images]
-assert len(readme_images) == 7
+assert len(readme_images) == 8
 for image in readme_images:
     assert Path(image).is_file(), (image, "missing README image")
 assert "Original X0X – upstream demonstration" in readme
@@ -99,3 +102,30 @@ assert '<h1 class="branding">' in landing and '<h1>X0X-RMX</h1>' not in landing
 print("Approved banner bytes, source/Pages paths and first-image placement passed")
 print("Visual documentation: 19 unchanged publication assets, 6 landing images, 17 manual images and descriptive alt text passed")
 print(f"Pages: {len(pages)} pages; relative links/anchors/subpath, identity, credits, release gate and WASM provenance passed")
+
+# Approved musical demonstration: unchanged bytes, accessible native controls,
+# conservative loading, separate from upstream hardware demonstration/release gates.
+video_assets = Path("docs/media/video")
+for name, approved_hash in (
+    ("x0x-rmx-demo.mp4", "84adf956774d1678af3b0b8e3303841e968f01ca5533e98a210d1ce27765960c"),
+    ("x0x-rmx-demo-poster.png", "e66e897da7736ccfd02d77e20094275324e56e3ce775ca0af2375e24411d2811"),
+):
+    source = (video_assets / name).read_bytes()
+    assert hashlib.sha256(source).hexdigest() == approved_hash, name
+    assert (root / "media/video" / name).read_bytes() == source, name
+videos = pages[landing_path].videos
+assert len(videos) == 1
+video = videos[0]
+assert "controls" in video and "playsinline" in video
+assert "autoplay" not in video and "muted" not in video
+assert video["preload"] == "metadata"
+assert video["src"] == "media/video/x0x-rmx-demo.mp4"
+assert video["poster"] == "media/video/x0x-rmx-demo-poster.png"
+assert video["width"] == "1280" and video["height"] == "720"
+assert "browser-emulator" in video["aria-label"]
+assert landing.index('id="demo"') < landing.index('id="upstream-demo"')
+assert "Browser demonstration; physical FM-1 validation remains pending." in landing
+assert 'href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"' in readme
+assert 'src="docs/media/video/x0x-rmx-demo-poster.png"' in readme
+assert "This is a browser-emulator demonstration" in readme
+print("Approved video/poster byte integrity, URLs, player controls and browser-only identification passed")

@@ -39,6 +39,14 @@ validation and release approval. You can also [build and preview the website loc
 - [TB-3PO scale reference (German)](docs/TB3PO_SCALES.md)
 - [TB-303 waveform specification (English summary; German technical record, experimental)](docs/TB303_WAVEFORMS_DESIGN.md)
 
+## Watch X0X-RMX
+
+<a href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"><img src="docs/media/video/x0x-rmx-demo-poster.png" width="480" alt="Watch the X0X-RMX musical browser-emulator demonstration, featuring the Cream &amp; Lilac device"></a>
+
+[Watch the 84-second musical demonstration](https://mr-roboto.github.io/fm1-x0x-rmx/#demo):
+Remix, Grids, TB-3PO and Morph, with real stereo emulator audio.
+This is a browser-emulator demonstration; physical FM-1 validation remains pending.
+
 ## A closer look
 
 | Remix | Grids |

@@ -1,9 +1,11 @@
 # Orb-style Remix Design Specification
 
 This document is the authoritative musical and sequencing specification for the
-Remix feature in `fm1-x0x-rmx`. It records agreed requirements; the persistent
-sequencer integration status is described below. Items explicitly marked unresolved require a decision or repository
-inspection before implementation; they must not be inferred from this document.
+Remix feature in `fm1-x0x-rmx`, implemented on `orb-remix`. Persistent state, Forward
+source mapping, the SEQ REMIX page, APPLY boundaries and mapped Motion playback/recording
+are integrated. The [manual](MANUAL.md#remix) explains operation without storage internals.
+Orb musical reverse and musical ping-pong are not implemented; unresolved requirements
+for those possible extensions must not be inferred as current behavior.
 
 ## Scope
 
@@ -18,12 +20,17 @@ both dimensions are zero-based **0–15**. Together they select one of **256** R
 patterns (`16 × 16`). Each Remix pattern contains **16 source-step selections**.
 
 **A1** is the neutral sequential mapping: source steps `1..16` in user-facing
-notation, or `0..15` internally. A1 remains a valid neutral mapping regardless of
-the eventual Remix ON/OFF design.
+notation, or `0..15` internally. A1 remains a valid neutral mapping with Remix either ON or OFF; new patterns read A1/OFF.
 
 The exact **4096-value** table (`256 × 16`) must come from the project's existing
-historical Kontakt/Luminary implementation. Its contents must be imported and
-validated separately. Do not invent or substitute table contents.
+historical Kontakt/Luminary implementation. The exact import is retained in [assets/remix/remixes.txt](../assets/remix/remixes.txt), with
+pinned digest and nibble-packing documented in [its README](../assets/remix/README.md).
+The project owner **Mr-Roboto** compiled the historical table by recording all 256
+patterns from a physical Future Retro Orb into Cubase, analyzing the MIDI sequences
+and manually constructing the mappings. That transcription/compilation is distinct
+from Future Retro's original patterns and hardware; it does not claim ownership of
+underlying intellectual property or resolve all licensing questions. The existing
+source notice remains unchanged. Do not invent or substitute table contents.
 
 ## Core Playback Model
 
@@ -36,8 +43,7 @@ separate concepts and must remain separate in the implementation.
 - Remix may select any source step within the relevant 16-step block.
 
 The lookup mapping determines source data; timing follows chronological playback
-position. The exact integration with existing X0X sequencer paths requires
-repository inspection before implementation.
+position. The implemented sequencer path is described under Sequencer integration below.
 
 ## Timing and Pattern Length
 
@@ -83,10 +89,9 @@ Existing Orb/Luminary behavior shows that note data belongs to the selected sour
 step. Sustained portions may behave differently when selected without their
 original note-on. This observation does not specify additional X0X behavior.
 
-Preserve existing X0X 303 semantics wherever possible while making chronological
-lookahead Remix-aware. Inspect the current note, TIE, slide, and lookahead paths
-before implementing this integration. Any behavior not determined by these
-requirements and verified existing semantics remains unresolved.
+The implemented Forward path maps both the current event and the next chronological
+slot for lookahead, while previous-slide state belongs to the previously played event.
+It retains existing X0X note/TIE semantics rather than adding a new sustain model.
 
 ## Drum Behavior
 
@@ -114,14 +119,15 @@ The following are **unresolved** and must not be invented:
 - Exact musical ping-pong behavior.
 - Exact musical-reverse behavior for partial lengths and multi-block patterns.
 
-The integration of Remix with existing X0X directions requires inspection and an
-explicit decision wherever the requirements above do not determine behavior.
+The implemented integration preserves conventional X0X bass Reverse, Ping-Pong and
+Random by bypassing Remix in those directions. The unresolved musical-reverse variants
+above are possible extensions, not a missing decision in the current Forward feature.
 
 ## Persistence and Storage
 
-Avoid increasing persistent pattern/project structure sizes if possible. Prefer
-existing reserved bytes for Remix selection and state. Inspect current structures
-and persistence semantics before choosing a layout.
+The implemented layout uses existing reserved bytes for Remix selection and state,
+without enlarging persistent pattern/project structures. Preserve the layout and legacy
+handling below in future changes.
 
 Large Remix lookup data must live in `const`/flash, not writable static RAM.
 Keep the source representation readable during development. Build-time or
@@ -282,41 +288,16 @@ Add focused tests for:
 Import and validate the historical table separately; generated or packed data must
 preserve its exact values.
 
-## Unresolved Before Implementation
+## Implemented checks and unimplemented extensions
 
-Every item below requires an explicit decision, repository inspection, or separate
-validation before implementation:
+The implementation uses `seq/remix.c` / `seq/remix.h`, the imported 4096-value table,
+2048-byte flash packing, the reserved-byte state layout above, chronological timing,
+complete drum columns, mapped bass lookahead, and mapped Motion/Probability. Regression
+coverage is in `tests/host/remix_test.c`, `remix_state_test.c`, `remix_ui_test.c`,
+`remix_motion_test.c` and `motion_test.c`, with corresponding runner scripts.
+These completed integration items are not pending design decisions.
 
-- Locate, import, and validate the exact historical Kontakt/Luminary 4096-value
-  table. Confirm its representation and its agreement with the required neutral
-  A1 mapping and step-1-first behavior; do not invent missing values or silently
-  resolve conflicts.
-- Inspect current sequencer execution paths and determine how to keep
-  chronological playback position separate from mapped source-step position,
-  including swing, pattern length, and 16-step block handling.
-- Inspect existing 303 note, TIE, slide, and lookahead semantics. Determine the
-  integration needed to preserve them while following chronological Remix slots,
-  including sustained portions selected without their original note-on. Any
-  behavior left unspecified requires an explicit decision.
-- Inspect drum step storage and playback to verify that mapping selects the
-  complete column, including all voice hit bits and accent state.
-- Inspect existing X0X directions and reverse behavior. Decide any Remix/direction
-  interaction not specified here while preserving existing directions unless an
-  explicit decision authorizes a change.
-- Decide the naming and UI treatment for conventional X0X reverse and Orb-style
-  musical reverse.
-- Decide exact musical ping-pong behavior.
-- Decide exact musical-reverse behavior for partial lengths and multi-block
-  patterns.
-- Persistent layout and legacy handling are finalized above. Preserve these sizes
-  and marker semantics in later changes.
-- Remix UI and APPLY are finalized above; A1 does not imply ON.
-- Remix controls are not motion-automatable. Source-following Motion playback is
-  specified above; source-following recording is finalized in the recording section.
-- Choose the readable table source and generation/packing approach; verify that
-  the resulting lookup data resides in const/flash rather than writable static
-  RAM.
-- Inspect the current architecture to confirm whether dedicated `seq/remix.c` and
-  `seq/remix.h` fit the lookup/mapping implementation.
-- Inspect existing tests and determine the focused regression coverage and
-  validation paths for the requirements above.
+No Orb musical reverse or musical ping-pong extension is part of the current feature.
+Before adding one, decide its name/UI and behavior for partial lengths and multiple
+16-step blocks explicitly. The existing bass Reverse, Ping-Pong and Random directions
+currently bypass Remix and must remain available. Physical FM-1 validation remains pending.

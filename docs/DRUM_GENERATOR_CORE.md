@@ -1,5 +1,10 @@
 # Offline drum generator (P6.2 core and P6.3 integration)
 
+This technical record describes the implemented `orb-remix` generator and its P6.2/P6.3
+integration. For operation, see [Grids drum generator](MANUAL.md#grids-drum-generator).
+Resource figures below are historical phase measurements; the later
+[P6.4 audit](FLASH_OPTIMIZATION_P64.md) records subsequent optimization, not a hardware test.
+
 The generator writes ordinary drum masks. The core has no playback, interrupt,
 automatic generation or persistence hooks. P6.3 connects explicit UI commands
 and existing Undo storage to the core. Existing persistent layouts, Remix bytes
@@ -164,11 +169,11 @@ warnings remain; the new core compiles cleanly with `-Wall -Wextra -Werror`.
 ## P6.3 UI and final capacity gate
 
 ARP opens GRIDS for either drum machine, TB-3PO for either 303, and rejects BREAK.
-Repeated ARP cycles exactly three drum pages; SELECT moves through the same
+Repeated ARP cycles exactly three drum pages (MAP **or** EUCLID, FILL, OFFSET); SELECT moves through the same
 pages. ALGORITHM retains generator view across supported parts and exits it
 for BREAK. PRESETS continues to cue only the displayed part's pattern.
 
-| Page | Knob 1 | Knob 2 | Knob 3 | Knob 4 |
+| Page (MAP/EUCLID are alternatives) | Knob 1 | Knob 2 | Knob 3 | Knob 4 |
 | --- | --- | --- | --- | --- |
 | MAP | X | Y | CHAOS | MODE |
 | EUCLID | LEN K | LEN S | LEN H | MODE |

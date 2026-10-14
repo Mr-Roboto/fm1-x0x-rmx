@@ -1,6 +1,9 @@
 # P5 LCD color schemes
 
-GLOBAL has one SCHEME selector with six stable IDs. The browser uses the same LCD renderer; its physical device SVG is unchanged. All schemes use a black background. Cream refers to the foreground highlights of WHITE LILAC and WHITE BLUE. Red recording and warning indicators retain their original colors.
+GLOBAL has one SCHEME selector with six stable IDs. The browser uses the same LCD renderer. P5 did not recolor the device SVG; P7.3 now
+provides separate Cream & Lilac / Classic Dark device palettes (see [Pages](PAGES.md)).
+P7.4 adds Sunset Orange and Pink Lilac exterior variants inspired by these LCD palettes.
+GLO > SCHEME affects the LCD, not the device illustration; neither selector changes the other. All schemes use a black background. Cream refers to the foreground highlights of WHITE LILAC and WHITE BLUE. Red recording and warning indicators retain their original colors.
 
 The tuples below are the exact RGB inputs to `RGB()` in `firmware/src/gfx.c`. The macro truncates these to RGB565. The packed part words are also listed to identify the exact stored colors.
 
@@ -79,7 +82,7 @@ Ordinary instructional footers use a dedicated `C_FOOT` role. For the five new s
 
 WHITE LILAC 303B shifts from (144, 192, 240) to (160, 184, 248), a cooler blue-violet distinct from 303A's (184, 160, 240). Their quantized solid contrasts against black are 11.07:1 and 9.67:1 respectively. P5.2 also changes WHITE LILAC 909 to (187, 143, 180); every other part color remains unchanged.
 
-## Measured capacity
+## Historical P5 measured capacity
 
 Initial P5 implementation compared with the current local uncommitted P4 baseline, compiled with the same firmware toolchain and flags:
 

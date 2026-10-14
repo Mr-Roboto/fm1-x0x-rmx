@@ -12,11 +12,14 @@ See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)
 
+The existing illustrations and screenshots use the original X0X layout and colors.
+The fork's additional pages and controls are described in the tables and workflows below.
+
 ---
 
 ## Contents
 
-1. Install
+1. Browser emulator and installation status
 2. Getting started
 3. Controls
 4. The screen
@@ -38,28 +41,66 @@ See [What's new](NEW.md).
 
 ---
 
-## 1. Install
+## 1. Browser emulator and installation status
 
-**Try it first:** build the X0X-RMX browser emulator and site using the
-[local preview instructions](PAGES.md). The emulator runs the current fork's code with sound,
-using mouse, touch or keyboard, including Grids MAP/EUCLID.
+**Try it first:** open the [public X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/)
+and click **Switch on**. It runs the fork's instruments and sequencer with sound; you do not
+need an FM-1 or a local build. For developers, [local preview instructions](PAGES.md) are also available.
+
+### Browser controls and storage
+
+Drag knobs up/down or scroll over them. Click or touch buttons and keys. With a mouse,
+Shift-click or right-click a button to latch it down for a combination; click it again to
+release it. For example, latch HOME, click REC for Undo, then release HOME. Touch screens
+can hold several controls at once.
+
+| Computer key | Device control |
+|---|---|
+| Q W E R T Y U I | White keys 1–8 |
+| A S D F G H J K | White keys 9–16 |
+| 1 2 3 4 5 6 7 8 9 0 - | Black keys 1–11 |
+| Space / Enter | PLAY / REC |
+| Shift / Esc | SEL (held) / HOME |
+| Z / X | OCT- / OCT+ |
+| Up / Down arrow | Turn SELECT |
+
+Use **SAVE** on the illustrated device to keep project data in this browser. Loaded breaks
+are kept separately in browser storage. Storage is local to the site and browser profile;
+it is not an account backup, a hardware transfer or an export file. If storage is unavailable,
+changes last only for the session. Clearing site data can erase saved projects and breaks.
+
+The **Factory reset** button below the device requires a second click, then deletes the saved
+browser project and reloads. This clears Undo history; it does not remove loaded break slots
+or the device color choice. This differs from GLO > FACTORY RESET inside the device, which
+is an undoable project edit until you close or reload the emulator.
+
+**Device color** offers Cream & Lilac (default), Classic Dark, Sunset Orange and Pink Lilac.
+It switches the exterior illustration without restarting
+or stopping playback. It is saved separately from patterns and sound. It colors the device
+illustration; **GLO > SCHEME** colors the LCD. Cream & Lilac is an interpretation of a hardware
+finish, not a color-matched product photograph.
+
+The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI jacks,
+battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
+Successful browser playback does not validate physical FM-1 performance or installation.
 
 **Install/update:** X0X-RMX hardware validation and explicit release approval are still pending.
-The future `/install/` section is reserved and offers no package or installation controls.
+The public [release-status page](https://mr-roboto.github.io/fm1-x0x-rmx/install/) is reserved and offers no package or installation controls.
 Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
 The existing command-line installer, update loader and recovery tools are retained for future
 validated releases. An update normally keeps the project; installing another firmware can
 replace its storage. See [BUILDING.md](../BUILDING.md) for tooling and
-[Recovering an FM-1 that won't start](#recovering-an-fm-1-that-won-t-start) for recovery.
+[Recovering an FM-1 that will not start](#recovering-an-fm-1-that-will-not-start) for recovery.
 These tools do not imply that a tested X0X-RMX release is available.
 
 ---
 
 ## 2. Getting started
 
-A five-minute tour, from switching on to saving your first beat. When X0X starts, the screen
-shows the 909 and every part is empty.
+A five-minute tour, from switching on to saving your first beat. A new project starts on the
+909 with every part empty; a saved project restores its previous contents. In the browser,
+click Switch on first.
 
 1. **Add a kick.** Press black key 1 to pick the bass drum (you'll hear it), then press white
    keys 1, 5, 9 and 13.
@@ -69,13 +110,13 @@ shows the 909 and every part is empty.
 4. **Add open hats.** Press black key 9, then white keys 3, 7, 11 and 15.
 5. **Write a 303 line.** Turn ALGORITHM two clicks clockwise to 303A and press ARP. Press OCT+:
    each press writes a new line. Keep going until you like one.
-6. **Shape the 303.** Press EDIT. The knobs are now the 303's filter: KNOB 1 opens and closes it,
+6. **Shape the 303.** Press EDIT and turn SELECT fully left to TONE. The knobs are the 303's filter: KNOB 1 opens and closes it,
    KNOB 2 sets the resonance.
 7. **Add the break.** Turn ALGORITHM two more clicks to BREAK and press all 16 white keys, so the
    break plays the whole bar.
 8. **Mute a part.** Press HOME, then black key 5 to mute the break. Press it again to bring it
    back.
-9. **Record a filter sweep.** Turn ALGORITHM back to 303A and press EDIT. Press REC, slowly turn
+9. **Record a filter sweep.** Turn ALGORITHM back to 303A, press EDIT and select TONE. Press REC, slowly turn
    KNOB 1 for a bar or two, then press REC again. The sweep now plays every time the pattern
    comes round.
 10. **Save.** Press PLAY to stop, then SAVE. Everything is kept when you switch off. (X0X also
@@ -132,8 +173,9 @@ settings that are on no page. MORE is where the less used settings live, such as
 track's DRIVE and DIST or the compressor's details.
 
 In a list, SELECT moves, ALGORITHM changes the highlighted value, and SEL runs a row with a
-return arrow (an action). HOME goes back. X0X always asks before doing anything that would lose
-notes: SEL for yes, HOME for no.
+return arrow (an action). HOME goes back. Menu actions such as CLEAR PATTERN, FACTORY RESET and pasting over an occupied pattern
+ask for confirmation: SEL for yes, HOME for no. Generator NEW/MUTATE commands act immediately;
+use Undo to take them back.
 
 ![A list](img/screen-list.png)
 ![A question](img/screen-ask.png)
@@ -144,11 +186,12 @@ notes: SEL for yes, HOME for no.
 ### Undo
 
 Hold HOME and press REC to take back your last change; the screen says what it undid, for
-example UNDO 909 P1. HOME + PLAY redoes it. You can go back up to 32 steps (fewer after very big
-changes). A step is whatever you did before pausing for a moment: a few steps tapped in a row,
+example UNDO 909 P1. HOME + PLAY redoes it. You can go back up to 32 edits (fewer after very big
+changes). An edit is whatever you did before pausing for a moment: a few steps tapped in a row,
 one turn of a knob, or a whole recording pass. Undo covers the sounds, patterns, song and knob
-motion, even CLEAR PATTERN and FACTORY RESET, but not the tempo or the settings. The history is
-cleared when you switch off.
+motion, even CLEAR PATTERN and the sound/pattern/song changes from FACTORY RESET, but not the
+tempo or GLOBAL settings. Undoing FACTORY RESET does not restore those settings. The history is
+cleared when you switch off or reload the browser emulator.
 
 <details><summary>What the key lights show</summary>
 
@@ -175,7 +218,7 @@ choose.
 
 The **top line** shows, from left to right:
 
-- the part, in its colour (909 orange, 808 red, 303A green, 303B blue, BREAK violet), and the
+- the part, in its color (with DEFAULT: 909 orange, 808 red, 303A green, 303B blue, BREAK violet), and the
   screen if it isn't the sound: SEQ, TB-3PO, or KEYS while the 303 keyboard is on;
 - the pattern playing, such as P3. P3 >5 means pattern 5 is coming up next. On a part longer
   than 16 steps, the steps the white keys show follow (33-48);
@@ -237,6 +280,10 @@ A pattern can be up to 64 steps long. The white keys show 16 at a time: OCT+ mov
 row turns grey. Track mutes aren't saved, and muting the whole part on HOME leaves them as they
 are.
 
+**Step numbering.** White key 1 is the first step on the visible page: step 1, 17, 33 or 49.
+Key 16 is the last step on that page: step 16, 32, 48 or 64. LENGTH determines how many
+chronological steps play; the keys still address stored steps on the selected page.
+
 **The pages.** EDIT shows the selected track's sound (one page, two for the 909's kick), then KIT
 with ACCENT, how much louder accented steps are. A track's DRIVE and DIST are in SEL's list,
 under MORE. SEQ has the machine's LENGTH and RATE. SWING is on HOME, because it swings every part.
@@ -252,7 +299,8 @@ Pick 909 or 808 and press **ARP**. **OCT+** writes a new Kick, Snare and Closed
 Hi-Hat rhythm into the current pattern; **OCT-** mutates it. The other eight
 instrument rows, length, rate, Remix selection and hidden steps are retained.
 
-ARP again, or SELECT, moves through three pages:
+ARP again, or SELECT, moves through **three pages: MAP or EUCLID, then FILL, then OFFSET**.
+MAP and EUCLID are alternative first pages, selected by MODE; they are not a fourth page:
 
 | Page | Knob 1 | Knob 2 | Knob 3 | Knob 4 |
 | --- | --- | --- | --- | --- |
@@ -263,7 +311,8 @@ ARP again, or SELECT, moves through three pages:
 
 MODE chooses MAP or EUCLID as the first page. MAP blends original Mutable
 Instruments Grids rhythms using X/Y; FILL controls density and CHAOS varies
-successive 16-step bars. CHAOS 0 gives identical full bars and no mutation.
+successive 16-step bars. CHAOS 0 gives identical full MAP bars and makes MAP MUTATE a no-op. CHAOS does not
+control EUCLID mutation.
 EUCLID repeats three independently sized, evenly spaced cycles with an exact
 rounded hit count from FILL. LEN is bounded by 32 and the current pattern length.
 Positive OFFSET rotates later, wrapping within 16 steps for MAP or LEN for EUCLID.
@@ -271,10 +320,17 @@ Positive OFFSET rotates later, wrapping within 16 steps for MAP or LEN for EUCLI
 EUCLID MUTATE shifts only Snare or Hi-Hat by +2 or −2, selecting an effective
 rotation and updating OFFSET. **NO CHANGE** means there was no effective edit.
 **NEW FIRST** means stored Snare/Hi-Hat steps no longer match the current knobs;
-press NEW explicitly to regenerate them before mutating.
+press **OCT+ (NEW)** explicitly to regenerate them before mutating. MAP MUTATE attempts
+a few changes near the chosen density, preserving strong hits; it can also leave the beat unchanged.
 
 909 and 808 keep separate generator settings for the session. Pattern changes
 retain them, shorter patterns clamp LEN/OFFSET, and restart restores defaults.
+To try a rhythm: choose MODE with KNOB 4 on the first page, set X/Y/CHAOS or LEN K/S/H,
+then use FILL and OFFSET to set density and rotation. Press OCT+ to hear the result, OCT-
+for a variation, or HOME + REC to undo it. FILL K/S/H addresses Kick/Snare/Closed Hi-Hat.
+FILL and CHAOS range from 0 to 100%; MAP X/Y from 0 to 255. MAP OFFSET is 0–15; EUCLID
+OFFSET is 0–LEN−1. NEW writes stored steps, so an enabled Remix can reorder what you hear.
+
 Turning generator knobs changes the next operation, leaves current steps alone,
 and is not saved or recorded as motion.
 
@@ -329,7 +385,9 @@ TONE and EXTRA). Each voice remembers its own page.
 
 WAVE offers **Saw, Square and Morph**. EXTRA uses the existing Morph, accent decay,
 drive type (off, soft or RAT) and tuning controls, with unchanged ranges and defaults.
-SEL lists these with the page parameters in the same order; only VOLUME remains under
+ACCDEC sets accented-note decay (30–3000 ms). DRVTYPE chooses Off, Soft or RAT;
+DRIVE on VOICE sets the amount (0–127), with 0 bypassing drive. TUNE sets the reference pitch,
+not the pattern transpose. SEL lists these with the page parameters in the same order; only VOLUME remains under
 **MORE**. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION (forward, reverse,
 ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
 
@@ -343,7 +401,8 @@ MORPH also remains available in SEL's normal sound parameter list.
 | 64 | Trapezoid: two plateaus joined by sloping edges |
 | 127 | Notch-Trapezoid: a trapezoid with a triangular notch in the upper plateau |
 
-Intermediate values blend continuously. The default is 64. Each 303 stores its own Morph
+Intermediate values blend continuously. New sounds default to 64. Older saved sounds with a zero in the previously unused Morph
+byte load as 0; they are not automatically reset to 64. Each 303 stores its own Morph
 value, including while Saw or Square is selected; Morph only affects the Morph waveform.
 While Morph is sounding, changes slew over at most about 5 ms. Setting it while the voice is
 idle settles immediately.
@@ -382,8 +441,10 @@ TB-3PO has two pages (press ARP again, or turn SELECT):
 - SCALE: ROOT, SCALE (22 scales; new generator configurations default to Minor Pentatonic / MPEN),
   OCTAVE, and MUTATE, which mutates the line by itself every 1–16 bars (or never).
 
-These knobs don't change the line you're hearing. They set up the next OCT+ or OCT-, so your
-line stays exactly as it is, hand edits included, until you press one. When the knobs no longer
+DENS, ACCENT, SLIDE, OCTS, ROOT, SCALE and OCTAVE do not immediately rewrite the line.
+They set up the next OCT+ or OCT-; the written line, including hand edits, stays unchanged
+until a generation/mutation command or an enabled automatic mutation runs. MUTATE schedules
+that automatic mutation independently. When the knobs no longer
 match the line, the screen shows NEW LINE with a star. The same settings and seed always give
 the same line. Historical Schwung generator output is no longer identical.
 
@@ -418,9 +479,38 @@ retained unless that step changes; mutation does not quantize the whole line. Au
 mutation uses the same rules. OCT+ and OCT- show the resulting line immediately, including
 after a recent knob edit.
 
-Scale selection follows this order: MPEN, PMAJ, EGYP, HIRA, MIN, MAJ, DOR, PHRY,
-LYD, MIXO, LOCR, HARM, MELM, HMAJ, ALTR, GYPS, ROMN, BHAI, MARV, PURV, TODI, ARAB.
-The [German scale reference](TB3PO_SCALES.md) lists all intervals and musical usage ideas.
+### Scale names
+
+Intervals are semitone offsets from ROOT in twelve-tone equal temperament. Melodic Minor
+uses its ascending form. These names identify the implemented note sets; the Thaat labels
+are not a complete model of raga performance.
+
+| Display | Scale | Intervals |
+|---|---|---|
+| MPEN | Minor Pentatonic | 0 3 5 7 10 |
+| PMAJ | Major Pentatonic | 0 2 4 7 9 |
+| EGYP | Egyptian Pentatonic | 0 2 5 7 10 |
+| HIRA | Hirajoshi | 0 2 3 7 8 |
+| MIN | Natural Minor | 0 2 3 5 7 8 10 |
+| MAJ | Major | 0 2 4 5 7 9 11 |
+| DOR | Dorian | 0 2 3 5 7 9 10 |
+| PHRY | Phrygian | 0 1 3 5 7 8 10 |
+| LYD | Lydian | 0 2 4 6 7 9 11 |
+| MIXO | Mixolydian | 0 2 4 5 7 9 10 |
+| LOCR | Locrian | 0 1 3 5 6 8 10 |
+| HARM | Harmonic Minor | 0 2 3 5 7 8 11 |
+| MELM | Melodic Minor | 0 2 3 5 7 9 11 |
+| HMAJ | Harmonic Major | 0 2 4 5 7 8 11 |
+| ALTR | Altered | 0 1 3 4 6 8 10 |
+| GYPS | Hungarian Minor | 0 2 3 6 7 8 11 |
+| ROMN | Romanian Minor | 0 2 3 6 7 9 10 |
+| BHAI | Bhairav Thaat | 0 1 4 5 7 8 11 |
+| MARV | Marva Thaat | 0 1 4 6 7 9 11 |
+| PURV | Purvi Thaat | 0 1 4 6 7 8 11 |
+| TODI | Todi Thaat | 0 1 3 6 7 8 11 |
+| ARAB | Arabic | 0 2 4 5 6 8 10 |
+
+The [supplementary German scale reference](TB3PO_SCALES.md) retains musical usage ideas.
 The numeric indices deliberately changed: older saved scale selections may now resolve to
 different scales. Projects and their written notes are retained, without automatic index migration.
 The MPEN initialization default does not change existing saved scale selections.
@@ -436,7 +526,8 @@ The break is a drum loop cut into eight slices, which X0X rearranges as it plays
 
 ![The break, slice 5 playing](img/screen-break.png)
 
-**Steps.** The white keys are the bar's 16 steps: press one to let the break play there, tap it
+**Steps.** BREAK always uses 16 steps at 1/16 rate; it has no adjustable LENGTH/RATE or Remix.
+The white keys are those 16 steps: press one to let the break play there, tap it
 again to stop it.
 
 **Playing slices.** Hold black keys 1–8 to play those slices yourself; let go and the generator
@@ -471,8 +562,10 @@ and sends are on the mixer's PARTS page (LFO, black key 5).
 
 ### Your own breaks
 
-Load your own loops with the [locally generated break loops page](PAGES.md), in
-Chrome or Edge with the FM-1 connected. They appear after X0X's own loops as BR1, BR2 and so on.
+In the emulator, load files into **Your breaks** below the device; no hardware connection is
+needed. The separate [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) is the
+retained Web MIDI uploader for a compatible FM-1 in Chrome/Edge; it does not install firmware.
+Physical X0X-RMX validation is still pending. They appear after X0X's own loops as BR1, BR2 and so on.
 There's room for about 21 seconds in all: around nine one-bar loops.
 
 <details><summary>From the command line</summary>
@@ -485,8 +578,8 @@ python3 tools/upload_breaks.py --bars amen.wav think.wav funky.wav ...
 
 `--bars` keeps one bar of each file; without it, each file is sent whole. This replaces all your
 loops. `--dry-run FOLDER` shows what would fit without the FM-1. If you have schwung-breakbeat next
-to X0X, `--bbgen` sends BB Gen's classic breaks. To build loops into the firmware itself, see
-BUILDING.md.
+to X0X, `--bbgen` sends BB Gen's classic breaks. To build loops into a development firmware image, see
+[BUILDING.md](../BUILDING.md).
 
 </details>
 
@@ -496,7 +589,8 @@ BUILDING.md.
 
 ![HOME](img/screen-home.png)
 
-There are 32 patterns. A pattern holds each part's steps, length and rate, the break's settings,
+There are 32 patterns. A pattern holds each part's steps, the drums' and 303s' length/rate,
+their Remix selections, the break's settings,
 the swing, and any knob motion, p-locks and probabilities. Sounds, effects and master settings
 are not part of a pattern and don't change when the pattern does.
 
@@ -530,9 +624,58 @@ a song.
 
 **Lengths and swing.** Parts can have different lengths, so they drift against each other. The
 909's length sets the length of a bar, and the 909's pattern holds the swing, which applies to
-every part. Swing delays every second 16th note: 50% is straight, 75% the most.
+every part. Swing delays every second step at 1/16 or 1/32 rate: 50% is straight, 75% the most.
+The triplet rates remain straight.
 
 HOME's knobs are for playing live: TEMPO, SWING, and the master's FILTER and PUMP.
+
+### Remix
+
+Remix reorders playback without rewriting the stored notes. Each of **909, 808, 303A and
+303B** has its own selection in each project pattern. **BREAK is unaffected**. A Remix
+selection such as B3 is not project pattern P3: project patterns are P1–P32, while the 256
+Remix mappings are Bank A–P / Pattern 1–16.
+
+1. Choose a part with ALGORITHM and a project pattern with PRESETS.
+2. Press SEQ, then turn SELECT to the last page, **REMIX** (after SEQUENCE on drums;
+   after KEYS on the 303s).
+3. Set **KNOB 1 BANK** and **KNOB 2 PATTERN**, then **KNOB 3 REMIX = ON**.
+4. Set **KNOB 4 APPLY** to choose when a change becomes audible during playback.
+   Stopped changes apply immediately. Start playback to hear the chosen mapping.
+
+**A1** is the neutral sequential mapping, even with REMIX ON. New patterns default to
+A1/OFF. On a 303, Remix acts only with DIRECTION = Forward. Reverse, Ping-Pong and Random
+retain their existing playback; the Remix selection remains stored. Orb-style musical
+reverse is not implemented.
+
+| APPLY | When a pending selection or ON/OFF change becomes audible |
+|---|---|
+| STEP | Next chronological step |
+| BEAT (default) | Next incoming position 1, 5, 9, 13… |
+| BAR | Next incoming position 1, 17, 33, 49 |
+| LOOP | Next wrap of that part's pattern |
+
+These boundaries follow the part's chronological step positions, regardless of which source
+step Remix selects. APPLY is a saved global preference shared by the four parts, not part of
+pattern Undo. BANK, PATTERN and ON/OFF are stored immediately and are undoable with the pattern;
+the sound waits for APPLY. The latest edit replaces any pending selection. Stopping resolves
+pending changes; switching project patterns adopts the new pattern's stored Remix state.
+
+The same 16-slot mapping repeats within each 16-step block. A partial final block plays only
+its required number of slots, but can still read any stored source step in that block. For
+example, LENGTH 8 can read source steps 9–16; LENGTH 24 can read steps 25–32. The source data
+is retained even when outside the currently playing length. Remix step 1 reads source step 1.
+
+A drum mapping moves the whole column, including all drums and its accent. A 303 mapping
+reads the selected note/rest/tie, accent and slide; tie lookahead follows the next mapped
+slot. Motion, p-locks and probability follow the selected source too. Timing and swing stay
+chronological. The lit playhead shows the mapped source when it is on the visible step page;
+Remix does not move the page you are editing. Keys edit the stored steps, not a rendered Remix.
+
+Copy/paste includes each part's Remix state. Clearing a part's steps preserves its Remix
+selection and ON/OFF, as it preserves length and rate. Remix knobs cannot record motion or
+p-locks. For recording sound motion while Remix is active, see section 11; for the sequencing
+rules and storage layout, see the [Remix specification](REMIX_DESIGN.md).
 
 ---
 
@@ -619,7 +762,7 @@ Each part counts its own passes, from 1 again whenever you press PLAY or it chan
 
 - Steps with p-locks or a chance below 100% have a small notch on the step grid.
 - P-locks and probabilities are stored like recorded motion, one "knob" per locked setting per
-  part pattern. There's room for 160 across all patterns; when it's full, the top line says
+  part pattern. There's room for 160 lanes across all patterns (each lane holds multiple steps); when it's full, the top line says
   MOTION FULL.
 - Two locked steps next to each other glide from one value to the other, like a recording.
 
@@ -741,6 +884,18 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 | ABOUT X0X | Shows the version, how full the memory for patterns is (MEM), and the audio load. |
 | BATTERY | The battery's charge: FULL, 2/3, 1/3 or EMPTY; USB POWER while a computer powers the FM-1. Read only. |
 
+### What is remembered
+
+| Item | Lifetime |
+|---|---|
+| Steps, length/rate, Remix selection and ON/OFF, TB-3PO settings, break settings, motion/p-lock/probability lanes | Saved with the project patterns; included in pattern copy and Undo |
+| Sounds (including both Morph values), mix, effects and song | Saved with the project; undoable |
+| Tempo, GLOBAL settings, LCD SCHEME and Remix APPLY | Saved with the project; outside Undo |
+| Grids knobs and random state | Session only; separate for 909/808; outside project saving and Undo |
+| Undo/Redo history, free-play switches and live mutes | Session only; song-bar mutes are saved in the song |
+| Browser Device color | Saved separately as a browser visual preference |
+| Browser break slots | Saved separately in browser storage |
+
 ### Saving
 
 **SAVE** saves the sounds, all 32 patterns, the song, the knob motion, the tempo and the
@@ -764,8 +919,8 @@ nothing has been touched for four seconds, X0X saves and says AUTOSAVED.
 X0X packs the patterns, the song and the knob motion to fit them in the FM-1's memory; empty
 steps take almost no room, so a typical project uses a small part of it (GLO > ABOUT X0X shows
 how much, as MEM). If a project ever grows too big to fit, X0X says MEMORY FULL: NOT SAVED and
-keeps what was saved before; clearing patterns you don't need makes room. Projects saved by
-earlier versions load as they were, with their steps on 1–32 and their patterns on 1–16.
+keeps what was saved before; clearing patterns you don't need makes room. Projects from the older 32-step/16-pattern format retain their written steps and patterns
+when migrated. The TB-3PO scale-index and Morph-default caveats above still apply.
 
 </details>
 
@@ -778,10 +933,12 @@ For a proper measurement, press SEL and choose RUN PERF TEST. X0X plays three pa
 own for about 15 seconds, from a simple loop up to everything as busy as it gets, then puts your
 project back exactly as it was and shows the results. HOME or PLAY stops the test early.
 
-X0X uses both of the FM-1's processor cores: the 808 and the break run on the second, so the 808's
+The physical-device implementation uses both of the FM-1's processor cores: the 808 and the break run on the second, so the 808's
 share on the performance page is the time the first core waits for them, and the whole load is lower: on
-one FM-1 the test's three patterns went from 43%, 83% and 115% on one core to 39%, 54% and 68%,
-and the busiest moment of the worst case from over the limit to 84%.
+an upstream X0X FM-1 the test's three patterns went from 43%, 83% and 115% on one core to 39%, 54% and 68%,
+and the busiest moment of the worst case from over the limit to 84%. These are historical
+upstream measurements, not timing results for X0X-RMX, Grids or Morph. Physical fork validation
+is pending; browser load figures measure the computer, not the FM-1.
 
 The top right of the performance page says 2 CORES. On some FM-1s the second core reads its work
 wrongly; X0X notices the first time and carries on with one core, and the page says 1 CORE: BAD
@@ -804,6 +961,9 @@ on, switch it off and on again.
 ---
 
 ## 16. MIDI and USB audio
+
+This section describes the retained physical-device interfaces. They are not exposed by the
+browser emulator, and X0X-RMX hardware validation is pending.
 
 When connected over USB, the FM-1 shows up as a MIDI device called "X0X FM-1".
 
@@ -841,6 +1001,13 @@ app opens the input can click while the FM-1 settles.
 
 ## 17. Troubleshooting
 
+For browser audio, click Switch on, check the site/tab is not muted and raise MASTER.
+Reloading starts a new session and loses unsaved edits. For persistent startup trouble, note
+the browser version and the displayed error before reporting an issue.
+
+The hardware procedures below are retained from original X0X. Version numbers in them refer
+to upstream history, not X0X-RMX releases. No public X0X-RMX installer or package is available.
+
 **Update mode:** hold OCT- and OCT+ together for five seconds. A countdown appears; let go
 before it ends to cancel.
 
@@ -852,21 +1019,21 @@ next start shows RESTARTED AFTER A CRASH and an address (PC ...) for a moment. I
 problem, include that address and what you were doing.
 
 **Safe mode:** if X0X crashes twice in a row while starting, it starts in SAFE MODE instead. There's
-no sound, but USB works, so the web installer can reach it: reinstall X0X, or put the stock
-firmware back from the same page. Press PLAY to try starting X0X normally again. If even safe
+no sound, but USB works, so compatible upstream installation/recovery tooling can reach it. The reserved X0X-RMX
+release-status page cannot reinstall firmware or restore stock firmware. Press PLAY to try starting X0X normally again. If even safe
 mode fails twice, the FM-1 drops into the chip's own update mode, and only the rescue below can
 reach it.
 
 <details><summary>Stuck on the start screen after changing BRIGHTNESS (0.9-beta and earlier)</summary>
 
 Versions up to 0.9-beta had a brightness setting that could freeze the FM-1, and because the
-setting was saved, it stayed frozen at every start, even after reinstalling. Install 0.10-beta or
-later from the web installer: the setting is gone, the saved value is ignored, and the FM-1 starts
+setting was saved, it stayed frozen at every start, even after reinstalling. The upstream fix was to install original X0X 0.10-beta or
+later using its installer: the setting is gone, the saved value is ignored, and the FM-1 starts
 normally.
 
 </details>
 
-### Recovering an FM-1 that won't start
+### Recovering an FM-1 that will not start
 
 Since 0.5-beta, an FM-1 that keeps crashing starts in safe mode (above), where the web installer
 can fix it. Older versions instead dropped into the chip's own update mode after two crashes (0.2-
@@ -887,11 +1054,12 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/charlesvestal/fm1-x0x/ma
    the script catches it. It checks the chip, saves a backup of the FM-1's memory in the
    `fm1-rescue` folder in your home folder, and asks before it writes anything.
 4. Type **yes** and press Return. Don't unplug anything until it says it's restarting the FM-1.
-   The FM-1 then starts into its original firmware, and you can install X0X again from there.
+   The FM-1 then starts into its original firmware. A later installation of original X0X
+   uses upstream tooling; there is no validated X0X-RMX package to install.
 
 The script downloads M-VAVE's FM-1 V15 firmware and JieLi's flash loader, and checks both against
 known fingerprints. It writes only the firmware area of the memory, never the bootloader or the
-FM-1's own settings, and checks everything it writes. Running it again is always safe. If it fails,
+FM-1's own settings, and checks everything it writes. This is the retained upstream recovery procedure, not an X0X-RMX hardware-validation result. If it fails,
 copy everything in the Terminal window and
 [open an X0X-RMX issue](https://github.com/Mr-Roboto/fm1-x0x-rmx/issues). If the FM-1 never shows up at
 all, Felucca's [FM-1-transporter](https://github.com/kurogedelic/FM-1-transporter) (a small
@@ -946,9 +1114,10 @@ in SEL's list; the rest are its sound pages.
 | Accent | 0–127 |
 | Wave | Saw, Square or Morph; only one 303 may use Morph at a time |
 | Morph (EXTRA) | 0–127; 0 Sharkfin, 64 Trapezoid, 127 Notch-Trapezoid; default 64 |
-| Tune | A from 400 to 480 Hz; the middle is 440 Hz |
+| Tune | A4 from 400 to 479.375 Hz; pot 64 is 440 Hz |
 | Volume | 0–127 |
-| Drive, Drive type | Off, soft or RAT |
+| Drive | 0–127; 0 bypasses drive |
+| Drive type (DRVTYPE) | Off, Soft or RAT |
 | Slide | 2–360 ms |
 | Accent decay | 30–3000 ms |
 
@@ -987,22 +1156,45 @@ second play in the middle instead.
 
 ## 19. Credits
 
-X0X is free software under the GNU General Public License, version 3. If you share the
-firmware, you must also share its source code.
+X0X-RMX is distributed under **GPL-3.0-only**. Preserve the component notices and provide
+complete corresponding source when distributing it. See [LICENSING.md](../LICENSING.md)
+and the [GPLv3 text](https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/orb-remix/LICENSE) for the full project notices and terms.
 
 - **X0X-RMX** is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
 - The platform (hardware layer, USB, update loader, installer and storage) is from
-  **Felucca** by Leo Kuroshita, Hügelton Instruments.
-- The 909 is from **9W9** by athousanddetails, which is based on **ER-99** by Matthew
-  Cieplak. Its hat and cymbal samples are ER-99's.
-- The 808 is from **8W8** by athousanddetails.
-- The 303 is from **schwung-303**, built on Open303 by Robin Schmidt (MIT licence), with
-  extensions based on jc303 and dm-Rat.
-- TB-3PO is from **schwung-tb3po**, which comes from the Phazerville Hemisphere Suite.
-- Grids rhythm maps and MAP arithmetic are by **Emilie Gillet / Mutable Instruments**;
-  the C arithmetic was cross-checked against **DEADACTIVE's Hortator** port.
-- The break generator is from **BB Gen** by mestela, used with permission.
-- The fonts are Barlow Semi Condensed and Terminus (SIL Open Font License).
+  [**Felucca**](https://github.com/hugelton/Felucca) by Leo Kuroshita (@kurogedelic), Hügelton Instruments.
+- The 909 is ported from [**9W9**](https://github.com/athousanddetails/schwung-9W9)
+  (athousanddetails), based on [**ER-99**](https://github.com/matthewcieplak/er-99) by Matthew
+  Cieplak. Its hi-hat, ride and crash samples are ER-99's (GPL-3.0).
+- The 808 is ported from [**8W8**](https://github.com/athousanddetails/schwung-8W8)
+  (athousanddetails), with circuit-model references to Werner / Abel / Smith and rim-shot
+  lineage from sc808 (Yoshinosuke Horiuchi / Sam Aaron).
+- The 303 is ported from [**schwung-303**](https://github.com/charlesvestal/schwung-303)
+  by Charles Vestal, built on **Open303** by Robin Schmidt (MIT), with Devilfish extensions
+  from **jc303** (midilab) and RAT drive from **dm-Rat** (Dave Mollen). The port notices also
+  credit mystran & kunn for the TeeBee-filter coefficients.
+- TB-3PO is ported from [**schwung-tb3po**](https://github.com/charlesvestal/schwung-tb3po)
+  by Charles Vestal, from the **Phazerville Hemisphere Suite TB_3PO** applet by djphazer
+  and contributors. X0X-RMX adds its scale-aware phrasing and mutation behavior.
+- Grids rhythm maps and MAP arithmetic are by **Emilie Gillet / Mutable Instruments**
+  (GPL-3.0-or-later). **DEADACTIVE's Hortator** is the C-arithmetic reference used for
+  cross-checking, not the original author of Grids. Pinned sources and adaptation differences
+  are recorded in [Grids attribution](../assets/grids/README.md).
+- The break generator is ported from [**BB Gen / schwung-breakbeat**](https://github.com/mestela/schwung-breakbeat)
+  by mestela, used with the author's permission as recorded in the project notices. Built-in
+  loops are rendered by X0X's own 909; recordings you load retain their own copyright.
+- The firmware fonts are **Barlow Semi Condensed** (The Barlow Project Authors) and
+  **Terminus** (Dimitar Toshkov Zhekov), SIL OFL 1.1. Web typography also uses Barlow;
+  the retained **Fukiai** web icon font (Hügelton Instruments) is MIT-licensed.
+- [**Groove OS**](https://www.groove-os.com/) by Peter Gombos inspired running FM-1 firmware
+  in a browser; no code from it is used.
+- Remix lookup data was transcribed, analyzed and manually compiled by project owner
+  **Mr-Roboto**, from his Cubase MIDI recordings of all 256 physical Future Retro Orb
+  patterns. That table became the historical **Kontakt/Luminary** source. His compilation
+  credit is separate from Future Retro's original patterns and hardware, without claiming
+  underlying intellectual-property ownership or resolution of all licensing questions. See
+  [Remix provenance](../assets/remix/README.md). **Future Retro Orb** describes the musical
+  inspiration, not an affiliation, an endorsement or a claim that Orb firmware is included.
 
 M-VAVE and FM-1 are trademarks of their owners, and TR-808, TR-909 and TB-303 are Roland
 trademarks. X0X-RMX does not imply endorsement by Charles Vestal and is not connected with M-VAVE, Roland or Hügelton Instruments.

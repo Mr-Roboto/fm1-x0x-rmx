@@ -2,17 +2,33 @@
 
 X0X-RMX development changes come first. Physical FM-1 validation is pending; the
 installer is reserved and no tested fork release is offered. See the [manual](MANUAL.md)
-and [local website preview](PAGES.md).
+and the [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
+The current `orb-remix` source is the implementation reference; browser/host tests and builds
+do not establish physical FM-1 timing, listening or installation compatibility.
 
 ## Unreleased · orb-remix
 
 - Independent Orb-inspired Remix for 909, 808, 303A and 303B; BREAK is unaffected.
+  SEQ > REMIX exposes Bank A–P, Pattern 1–16, ON/OFF and STEP/BEAT/BAR/LOOP APPLY.
+  Forward playback and sound-motion recording follow mapped source steps; bass Reverse,
+  Ping-Pong and Random retain their existing behavior.
 - Grids MAP/EUCLID drum generators with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo integration.
-- Extended TB-3PO scales, phrasing and mutation controls.
-- Additional color schemes and UI improvements.
-- Dedicated X0X-RMX website preparation and browser emulator, without public installation.
+- Extended TB-3PO: 22 scales, Minor Pentatonic defaults for new configurations, short
+  motifs with rhythmic answers and restrained mutation. Written notes are retained when
+  generator knobs change; older saved scale indices are not automatically migrated.
+- Six saved LCD schemes, coordinated part colors, and retained GLOBAL list position
+  during a session.
+- Public X0X-RMX browser emulator and documentation; firmware installation and downloads
+  remain unavailable.
+- Both 303s have TONE, VOICE and EXTRA EDIT pages. EXTRA exposes MORPH, ACCDEC, DRVTYPE and
+  TUNE; only VOLUME remains under MORE.
+- Browser-only Device color selector: Cream & Lilac by default, Classic Dark with the
+  original appearance, plus Sunset Orange and Pink Lilac exterior variants inspired by
+  the existing LCD palettes. Device appearance and GLO > SCHEME remain independent.
+  The emulator and landing page share the project SVG favicon.
+  The visual choice is stored separately and can change during playback.
 
-## Unreleased · Morph waveform in orb-remix
+### Experimental Morph waveform
 
 - **Experimental Wave 3:** the 303 WAVE choices are Saw, Square and Morph. On EDIT's **EXTRA** page,
   **KNOB 1 (MORPH)** moves continuously through 0 = Sharkfin, 64 = Trapezoid and
@@ -24,7 +40,7 @@ and [local website preview](PAGES.md).
   A conflicting loaded pair keeps A on Morph and loads B as Saw.
 - The implementation uses cubic four-box BLEP/BLAMP, replacing the original triangular
   correction proposal for Wave 3. Saw/Square, the 2× default and overload guard are unchanged.
-  **FM1 hardware validation is pending.** These branch changes are not a claim about the
+  **FM-1 hardware validation is pending.** These branch changes are not a claim about the
   upstream releases or hosted installer. See the [local manual](MANUAL.md#6-303a-and-303b) and
   [waveform specification](TB303_WAVEFORMS_DESIGN.md).
 
@@ -32,6 +48,8 @@ and [local website preview](PAGES.md).
 
 The numbered entries below are retained upstream history. Their release, installer and
 hosted emulator links refer to original X0X, not X0X-RMX or a validated fork release.
+Hardware performance figures and release claims below are the original author's historical
+reports; they are not new measurements or release claims for this fork.
 
 ## 1.0.6 · 11 October 2026
 
@@ -83,7 +101,7 @@ hosted emulator links refer to original X0X, not X0X-RMX or a validated fork rel
 - Up to 64 steps per part and 32 patterns
 - Per-step p-locks (on EDIT, hold a step and turn a knob) and probability (hold a step and turn SELECT)
 - A drum mixer with per-track mutes, sends and hit meters
-- A new [break tool](../breaks/): load and manage your own loops from the browser (BR1, BR2…)
+- A new [break tool (original X0X)](https://charlesvestal.github.io/fm1-x0x/breaks/): load and manage your own loops from the browser (BR1, BR2…)
 
 ![HOME: a line per part in every pattern with notes](img/new/1.0-home.png)
 ![The 303's steps on SEQ, two ties as one long note](img/new/1.0-303-steps.png)

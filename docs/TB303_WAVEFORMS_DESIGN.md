@@ -1,9 +1,31 @@
 <!-- SPDX-License-Identifier: GPL-3.0-only -->
 # FM1-X0X-RMX – TB-303 Waveform Design & Mathematics
 
+## Current implementation (English summary)
+
+Morph is implemented on `orb-remix` and remains experimental: physical FM-1 timing,
+listening and installation validation are pending. This document preserves the original
+German technical analysis and mathematics; the [English manual](MANUAL.md#6-303a-and-303b)
+is the user-facing control reference.
+
+- Both 303 voices have TONE, VOICE and EXTRA EDIT pages. WAVE is KNOB 2 on VOICE;
+  MORPH is KNOB 1 on EXTRA, alongside ACCDEC, DRVTYPE and TUNE. Only VOLUME remains
+  under MORE in SEL's list.
+- WAVE selects Saw, Square or Morph. Morph 0/64/127 selects Sharkfin/Trapezoid/
+  Notch-Trapezoid. Each voice keeps its own value; new defaults are 64. Older zeroed
+  sound bytes load as 0, without an automatic Morph-default migration.
+- Only one voice may use Morph at once. Conflicting UI/command/motion requests keep
+  the previous accepted Wave; releasing the owner does not activate a rejected request.
+  A conflicting loaded pair resolves to A = Morph, B = Saw.
+- Changes while Morph sounds use a finite slew of approximately 5 ms, with coefficients
+  held for a control chunk. Idle changes settle immediately.
+- The implemented oscillator uses cubic four-box BLEP/BLAMP. The triangular kernel
+  section is retained design history, not the current correction. Neither build success
+  nor the one-voice restriction establishes universal audio quality or hardware headroom.
+
 ## Status und verständlicher Einstieg
 
-Wave 3 ist auf `waveform-prototype` in Produktions-DSP, UI und Projekt-Sound
+Wave 3 ist auf `orb-remix` in Produktions-DSP, UI und Projekt-Sound
 integriert, bleibt aber **experimentell: FM1-Hardwarevalidierung steht aus**.
 Dieses bestehende Dokument enthält die aktuelle Spezifikation sowie die
 historische Machbarkeitsanalyse und ursprüngliche Dreieckskern-Mathematik.
@@ -84,7 +106,7 @@ weiterer kleiner, ausdrücklich zu prüfender Bedarf.
 Firmware-Arithmetik bleibt single precision; keine per-sample transcendental
 functions. `-ffp-contract=off` ist zu erhalten. Bestehende Funktionen dürfen nicht
 zur Freigabe von Kapazität reduziert werden. Kapazitätsprobleme müssen berichtet
-werden. Diese experimentelle Implementierung liegt auf `waveform-prototype`; `main` bleibt davon unberührt.
+werden. Diese experimentelle Implementierung liegt auf `orb-remix`; `main` bleibt davon unberührt.
 
 ## Bestehende Architektur: Saw, Square und Render-Pfad
 
@@ -769,7 +791,8 @@ und Notch-Trapezoid (127). Beide Stimmen haben unabhängige Morph-Werte.
 - `sound_t`, Projektobjekte, Pattern-/Arrangement-Stream und gespeicherte
   Motion-Lanes wachsen nicht. `pot[13]` ist ausschließlich Runtime-Zustand.
 - VOICE behält Accent, Wave, Drive und Slide. In EDITs SEL-Liste liegt Morph
-  unter MORE, nach Tune, Volume, Drive Type und Accent Decay. SELECT navigiert,
+  auf EXTRA nach TONE und VOICE: Morph, Accent Decay, Drive Type und Tune; nur
+  Volume bleibt unter MORE. SELECT navigiert,
   ALGORITHM ändert den markierten Wert. Morph bleibt bei Saw/Square gespeichert,
   beeinflusst aber nur die Morph-Familie; es ist nicht aus der Liste ausgeblendet.
 - UI und direkte Parameterkommandos gehen über die vorhandene Command Queue.
@@ -852,7 +875,7 @@ zusätzlicher MIDI-CC-Parameterpfad gehören nicht zu dieser Implementierung.
   und CTRL1/4. Zwei-Morph-DSP-Fälle prüfen den Helper ohne Anwendungsexklusivität.
 - [`bass303_ui_test.c`](../tests/host/bass303_ui_test.c) und
   [`run_bass303_ui.sh`](../tests/host/run_bass303_ui.sh): echte UI-Referenzen,
-  MORE, Queue-Akzeptanz/Ablehnung, Freigabe, volle Queue, Motion-Rückmeldung,
+  TONE/VOICE/EXTRA und SEL/MORE, Queue-Akzeptanz/Ablehnung, Freigabe, volle Queue, Motion-Rückmeldung,
   Recording, Save vor Command-Verarbeitung, Round-trip, A-Priorität bei
   widersprüchlichem Load und temporärer PERF-Sound.
 - [`bass303_test.c`](../tests/host/bass303_test.c): Open303-Referenzvergleich,
@@ -994,7 +1017,7 @@ Firmware und Browser-Emulator zu bauen; in dieser Dokumentationsphase nicht.
 
 ## Implementierungsstand und nächste Validierung
 
-Geometrien, Level-Policy, Default 64, MORE-Navigation, finiter 5-ms-Slew,
+Geometrien, Level-Policy, Default 64, TONE/VOICE/EXTRA-Navigation, finiter 5-ms-Slew,
 kubischer Kern und zentrale Ein-Morph-Stimmen-Regel sind umgesetzt. Die
 ursprüngliche Geometrie wurde beibehalten; der Dreieckskern wurde ausdrücklich
 ersetzt. Historische Wave-3-Storage-Migrationen wurden bewusst nicht eingeführt.
@@ -1055,7 +1078,7 @@ Auswahl in dieser Minimalimplementierung.
 - [`engine.h`](../firmware/src/app/engine.h) und [`engine.c`](../firmware/src/app/engine.c): `sound_t`, zwei Stimmen, Command Queue, Motion und Guard.
 - [`x0x.h`](../firmware/src/app/x0x.h), [`project.c`](../firmware/src/app/project.c) und [`storage.c`](../firmware/src/storage.c): persistente Daten und Revision/Migration.
 - [`motion.h`](../firmware/src/seq/motion.h) und [`motion.c`](../firmware/src/seq/motion.c): Parameter-Automation.
-- [`ui.c`](../firmware/src/app/ui.c): VOICE/MORE, Page-Kapazitäten und PERF TEST.
+- [`ui.c`](../firmware/src/app/ui.c): TONE/VOICE/EXTRA und SEL/MORE, Page-Kapazitäten und PERF TEST.
 - [`main_fm1.c`](../firmware/src/app/main_fm1.c): DMA-Deadline, Render-Blöcke und Load-/Dropout-Messung.
 - [`fm1_perf.h`](../firmware/hal/fm1_perf.h): Performance-Counter und deren Einschränkungen.
 - [`tools/build.py`](../tools/build.py): Image-/RAM-/Pool-Gates und Soft-double-Prüfung.

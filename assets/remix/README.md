@@ -24,3 +24,18 @@ the helpers, its existing section garbage collection can discard them.
 `seq/remix.h` exposes only lookup and forward source mapping. Bank/pattern are
 0–15; forward chronological slots are 0–63. Pattern length belongs to the caller
 and does not clamp source selections within a partial 16-step block.
+
+## Attribution record
+
+The project owner, **Mr-Roboto**, created/compiled this step-mapping table. According to
+his account, he recorded all 256 patterns from a physical **Future Retro Orb** sequencer
+into Cubase one by one, analyzed the resulting MIDI sequences, and manually constructed
+the complete mappings. His independently compiled table became the historical
+Kontakt/Luminary data source later imported into X0X-RMX.
+
+This credits his transcription, analysis and compilation work separately from the
+original Future Retro Orb patterns and hardware. It does not assert ownership of Future
+Retro's underlying intellectual property or settle all licensing questions. The imported
+file retains its existing `GPL-3.0-only` notice; no new grant is created by this provenance
+clarification. The digest verifies table identity, not legal rights.
+See [LICENSING.md](../../LICENSING.md).

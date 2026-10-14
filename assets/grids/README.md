@@ -2,7 +2,7 @@
 
 `resources.cc` is the unmodified Mutable Instruments eurorack file at commit
 `08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4`, the revision also pinned by
-DEADACTIVE Hortator's Grids fidelity tests.
+[DEADACTIVE Hortator](https://github.com/DeadActive/hortator)'s Grids fidelity tests.
 
 - Source: https://github.com/pichenettes/eurorack/blob/08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4/grids/resources.cc
 - Copyright 2012 Emilie Gillet; GPL-3.0-or-later. Original notices are retained;
@@ -21,3 +21,8 @@ DEADACTIVE's 2026 GPL-3.0-or-later Hortator port at
 X0X's offline RNG draw schedule intentionally differs from live Grids clocking.
 Euclidean exact-percentage FILL, arithmetic phase, and hit-attached accents are
 deliberate adaptations, not claims of bit-identical Grids playback.
+
+The original authorship remains Emilie Gillet / Mutable Instruments. Hortator is a
+reference port used for C-arithmetic cross-checking, not the origin of the Grids maps.
+For musician-facing controls see the [manual](../../docs/MANUAL.md#grids-drum-generator);
+for adaptation and integration details see [the core record](../../docs/DRUM_GENERATOR_CORE.md).

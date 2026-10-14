@@ -1,10 +1,29 @@
-# X0X-RMX website preparation (P7.1)
+# X0X-RMX website, local previews and deployment records
 
 The browser-only website is live at [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/),
 with the [emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation.
 Firmware installation and downloads remain disabled. Source:
 [Mr-Roboto/fm1-x0x-rmx](https://github.com/Mr-Roboto/fm1-x0x-rmx), development branch `orb-remix`.
 Keep `main` aligned with [original X0X](https://github.com/charlesvestal/fm1-x0x).
+
+## Current public state
+
+The public emulator includes Remix, Grids MAP/EUCLID, 22 TB-3PO scales, Morph and the
+TONE/VOICE/EXTRA pages for both 303 voices. Its Device color selector defaults to Cream &
+Lilac and also offers Classic Dark, Sunset Orange and Pink Lilac; this visual preference is independent of GLO > SCHEME.
+Firmware installation and public downloads remain unavailable.
+
+P7.3 source `c5d828379a329d4b67dd4547d94429ee07e1c116` was pushed to `orb-remix` and
+site commit `ed341db8a52741da490debac6c392303f6e0551b` to `gh-pages`, both without force.
+The [P7.3 deployment](https://github.com/Mr-Roboto/fm1-x0x-rmx/actions/runs/38526717747)
+succeeded. Public Chromium checks verified both palettes, audio during switching,
+both EXTRA pages, storage/mobile/favicon behavior and the disabled installer/download routes.
+The public WASM matched P7.2 byte-for-byte. `main` was unchanged.
+
+Documentation-only previews can reuse an existing verified `build/emu/` without compiling
+firmware or WASM. Its `build-info.json` continues to identify the binary's source revision;
+it does not claim that uncommitted documentation has been published. Choose a fresh output
+and run the generator and Pages test below. Publication requires separate authorization.
 
 ## Build and preview without a release
 
@@ -24,9 +43,10 @@ The output must be separate from `build/emu`, which is its emulator input.
 `tools/publish_pages.sh build/OUTPUT_DIR` is an alternative local build/preparation wrapper;
 it performs no Git mutations, network writes or deployment.
 
-The emulator compiles current working-tree sources, including Remix and Grids, with the
-existing `web/emu/build.sh`; no prebuilt upstream binary is downloaded. Its browser interface,
-AudioWorklet, controls, keyboard mapping, LCD, device graphic and favicon are preserved.
+The emulator compiles current working-tree sources, including Remix, Grids and both 303 EXTRA
+pages, with the existing `web/emu/build.sh`; no prebuilt upstream binary is downloaded. Its browser interface,
+AudioWorklet, controls, keyboard mapping, LCD and device geometry are preserved; P7.3 adds
+selectable device palettes and a project favicon.
 The emulator build records the source revision, working-tree changes and WASM SHA-256 in
 `emu/build-info.json`. An uncommitted preview correctly reports that its sources are dirty.
 This metadata documents provenance, not hardware validation.
@@ -34,7 +54,7 @@ This metadata documents provenance, not hardware validation.
 ## Generated structure
 
 - `index.html`: X0X-RMX landing page, credits and release status.
-- `emu/`: `index.html`, `worklet.js`, `x0x.wasm`, unchanged `favicon.svg`, `build-info.json`.
+- `emu/`: `index.html`, `worklet.js`, `x0x.wasm`, shared project `favicon.svg`, `build-info.json`.
 - `manual/index.html`, `manual/img/`: current manual and images.
 - `new/index.html`, `new/img/new/`: fork development notes and labelled original X0X history.
 - `breaks/index.html`: existing Web MIDI sample uploader; hardware connection requires Chrome/Edge.
@@ -94,7 +114,7 @@ and `id-token: write` on the deployment job. Configure the `github-pages` enviro
 activation after approval; do not add automatic deployment to upstream-aligned `main`.
 No active deployment workflow is added in P7.1.
 
-## Deferred installation and P7.2
+## Deferred hardware installation
 
 Real FM-1 timing/listening/update validation and explicit approval are required before any
 release package, download, public installer or release version. The future
@@ -102,8 +122,8 @@ release package, download, public installer or release version. The future
 checks; it is not a validation test and must not be used to bypass the release gate.
 Installer libraries, package names, protocol and hardware identifiers are retained.
 
-P7.2 can address the device illustration, favicon and visual branding after approval.
-P7.1 changes page identity and text only; it does not recolor or replace those assets.
+P7.1 changed page identity and text only. P7.2 added EXTRA EDIT for both 303 voices;
+P7.3 added the device palettes and favicon. Their completed deployments are recorded below.
 
 ## Initial P7.1 preparation verification record
 
@@ -177,7 +197,7 @@ Browser screenshots and results are in `build/host/p71-browser/`; build/test art
 local and are not added to the public site. The final documentation update replaces planned
 website links with verified public links and preserves local preview navigation.
 No installable package, firmware release, firmware source change, force-push or change to
-`main` was made. Hardware validation and P7.2 visual changes remain deferred.
+`main` was made. At the time of that P7.1 deployment, hardware validation and later visual work were deferred.
 
 ## P7.3 device palettes and favicon
 
@@ -229,3 +249,18 @@ browser sample-conversion parity. The latter passed outside the sandbox because 
 Python child process was blocked there. Classic Dark matched the pre-P7.3 page's
 computed SVG colors, geometry and hit targets in seven tested control-state combinations.
 Button labels pass a 4.5:1 contrast check in both normal and illuminated states.
+
+## P7.4 exterior variants
+
+Sunset Orange and Pink Lilac extend the existing palette configuration with exterior
+finishes inspired by the warm amber/sand and rose/violet LCD definitions in `gfx.c`.
+Cream & Lilac remains the default and Classic Dark retains its original colors. Existing
+`cream`/`dark` selections and the separate visual localStorage key remain compatible.
+Device color and GLO > SCHEME are independent: neither selector changes the other.
+Firmware palettes, SVG geometry, input mappings, AudioWorklet and favicon are unchanged.
+
+The palette browser regression now exercises all four finishes, existing-palette parity,
+label/knob contrast, normal/lit/dim/held/latched controls, mouse/touch/keyboard input,
+mobile layouts, reload persistence, live audio, both EXTRA pages, Grids and Remix.
+P8.1 documentation finalization is published with these browser presentation changes;
+firmware feature freeze and the disabled public installer/downloads remain in effect.

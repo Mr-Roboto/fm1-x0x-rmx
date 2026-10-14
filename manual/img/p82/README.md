@@ -1,14 +1,30 @@
 # X0X-RMX publication screenshots
 
-These 19 PNGs are the selected P8.2a captures used by the README, manual and landing
-page. They were copied byte-for-byte from `build/host/p82-screenshots/` for P8.2b.
-Total PNG size: 1,469,859 bytes. No displayed parameters or device states were retouched.
+These 19 PNGs are used by the README, manual and landing page. P8.2c recaptured
+17 images from the real Chromium emulator; the already matching Global Settings
+images `32-global-scheme-white-lilac.png` and `33-cream-white-lilac-global.png`
+remain byte-identical to the P8.2a originals.
 
-Source: `orb-remix`, revision `75c0792919a37bf52d86f0fc4be4787a00c2c6f0`.
-Captured from the real local emulator in Chromium at device scale factor 3.
-LCD crops are 627 × 627; exterior frames are 3120 × 2175. The four-device comparison
-is the only selected contact sheet (2140 × 1712), assembled from the original captures.
-Existing project and component attribution is retained in [LICENSING.md](../../../LICENSING.md).
+Matching publication pairings: **Cream & Lilac / WHITE LILAC**, **Classic Dark / DEFAULT**,
+**Sunset Orange / SUNSET ORANGE**, **Pink Lilac / PINK LILAC**. Each LCD scheme is
+selected through the actual GLO → SCHEME control, independently of the browser exterior.
+No displayed UI pixels or parameters were recolored or retouched. The comparison
+resizes four genuine captures and adds explanatory captions outside the device UI.
+
+Source for the recapture: `orb-remix`, `d5d52e5620f3b65d0a897fb10679575cfdba54eb`;
+unchanged emulator binary source: `75c0792919a37bf52d86f0fc4be4787a00c2c6f0`.
+Chromium framing stays at 1280 × 1080 CSS pixels, device scale factor 3.
+LCD crops are 627 × 627; exterior frames are 3120 × 2175; the comparison is 2140 × 1712.
+The original generation and editing workflow is repeated, preserving pages, knob values
+and framing. Drum sequences are reproducible. TB-3PO NEW uses time-based seeds and
+original per-scene projects were not retained; the recaptures use fresh generated bass
+motifs with the same settings. Their seed identifiers and note layouts consequently differ.
+
+The approved [project banner](../x0x-rmx-banner-1280x320.png) is supplied artwork,
+copied unchanged at 1280 × 320. SHA-256:
+`349b82e67d76fd3968249f9555c47a7fdc75f3ef3856f2b975a01f76ce85874d`.
+Existing project/component attribution remains in [LICENSING.md](../../../LICENSING.md).
+Capture helpers, source originals and validation artifacts stay under `build/host/`.
 The retained upstream illustrations outside this directory are distinct from these captures.
 
 | Image | Contents | Publication use |

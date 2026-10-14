@@ -57,6 +57,13 @@ h1 { font: 700 2.6rem/1.1 "Barlow Semi Condensed", "Barlow", sans-serif; margin:
 .ways .card a.new { font: 400 .95rem "Barlow", sans-serif; margin-left: .5rem; }
 .ways strong { font: 600 1.25rem "Barlow Semi Condensed", "Barlow", sans-serif; color: var(--accent); display: block; }
 .ways span { color: var(--muted); font-size: .95rem; }
+figure { margin: 0 0 1.6rem; }
+figure img { display: block; width: 100%; height: auto; border-radius: 8px; }
+figcaption { color: var(--muted); font-size: .95rem; margin-top: .6rem; }
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gallery figure img { image-rendering: pixelated; }
+.gallery strong { color: var(--ink); }
+@media (max-width: 520px) { .gallery { grid-template-columns: 1fr; } }
 p.small { color: var(--muted); font-size: .9rem; }
 .video { position: relative; aspect-ratio: 16 / 9; max-width: 100%; margin: 1.5rem 0; border-radius: 6px; overflow: hidden; background: #000; }
 .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
@@ -71,9 +78,11 @@ line generator, and a breakbeat player, all running at once, with patterns, a so
 recorded knob moves. This independent fork adds Orb-inspired Remix for 909, 808, 303A and 303B,
 Grids MAP/EUCLID drum generation with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo,
 extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.</p>
-<p class="small">Original X0X demonstration by Charles Vestal; it does not demonstrate the fork additions.</p>
-<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/cZLYrZaLDUk" title="X0X running on the FM-1"
-  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>
+<figure class="hero">
+  <a href="emu/"><img src="manual/img/p82/01-overview-cream.png" width="3120" height="2175"
+    alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" fetchpriority="high"></a>
+  <figcaption>The current X0X-RMX emulator in its default Cream &amp; Lilac finish. Play it with mouse, touch or keyboard.</figcaption>
+</figure>
 <div class="status">__STATUS__</div>
 <nav class="ways" aria-label="Explore X0X-RMX">
   <a href="emu/"><strong>Try it in the browser</strong><span>The current X0X-RMX sources compiled for the browser, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
@@ -84,6 +93,38 @@ extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI impro
   __DOWNLOAD__
   <a href="__REPO__"><strong>Source</strong><span>X0X-RMX on GitHub, GPL-3.0.</span></a>
 </nav>
+<section aria-labelledby="features">
+<h2 id="features">Inside X0X-RMX</h2>
+<div class="gallery">
+  <figure><a href="manual/#remix"><img src="manual/img/p82/06-remix-909-on-b3.png" width="627" height="627" loading="lazy"
+    alt="909 Remix with Bank B, Pattern 3, Remix ON and APPLY BAR"></a>
+    <figcaption><strong>Remix.</strong> Reorder playback while keeping the stored steps.</figcaption></figure>
+  <figure><a href="manual/#grids-drum-generator"><img src="manual/img/p82/08-grids-map-909.png" width="627" height="627" loading="lazy"
+    alt="909 Grids MAP page with X, Y, CHAOS and MODE controls"></a>
+    <figcaption><strong>Grids.</strong> Generate and mutate kick, snare and closed-hat rhythms.</figcaption></figure>
+  <figure><a href="manual/#s7"><img src="manual/img/p82/15-tb3po-generate-303a.png" width="627" height="627" loading="lazy"
+    alt="303A TB-3PO GENERATE page with density, accent, slide and octave controls"></a>
+    <figcaption><strong>TB-3PO.</strong> Generate bass lines with 22 scales and phrasing controls.</figcaption></figure>
+  <figure><a href="manual/#s6"><img src="manual/img/p82/22-303a-extra-morph64.png" width="627" height="627" loading="lazy"
+    alt="303A EXTRA page with MORPH 64, ACCDEC, DRVTYPE and TUNE"></a>
+    <figcaption><strong>Morph.</strong> Shape the experimental waveform on the EXTRA page. One Morph voice at a time.</figcaption></figure>
+</div>
+</section>
+<section aria-labelledby="device-colors">
+<h2 id="device-colors">Four emulator device colors</h2>
+<p>Choose Cream &amp; Lilac (default), Classic Dark, Sunset Orange or Pink Lilac with the
+browser's Device color selector. Switching is immediate and the visual preference is remembered
+separately from your project. GLO → SCHEME controls LCD colors independently.</p>
+<figure><a href="manual/img/p82/01-device-comparison.png"><img src="manual/img/p82/01-device-comparison.png" width="2140" height="1712" loading="lazy"
+  alt="The same X0X-RMX emulator in Cream &amp; Lilac, Classic Dark, Sunset Orange and Pink Lilac"></a>
+  <figcaption>Four browser device finishes: visual interpretations, not color-matched hardware photographs. Open the image for a closer look.</figcaption></figure>
+</section>
+<section aria-labelledby="upstream-demo">
+<h2 id="upstream-demo">Original X0X – upstream demonstration</h2>
+<p class="small">Original X0X demonstration by Charles Vestal; it does not demonstrate the fork additions.</p>
+<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/cZLYrZaLDUk" title="Original X0X by Charles Vestal running on the FM-1"
+  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>
+</section>
 <p class="small">Based on <a href="__UPSTREAM__">Charles Vestal's original X0X</a> and
 <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita and contributors,
 Hügelton Instruments. Grids by Emilie Gillet / Mutable Instruments; MAP arithmetic cross-checked

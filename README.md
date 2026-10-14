@@ -4,6 +4,10 @@ X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/char
 a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
 knob motion, reverb, tape delay and master compression.
 
+![X0X-RMX browser emulator in Cream & Lilac, with a 909 pattern and Device color selector](docs/img/p82/01-overview-cream.png)
+
+*The current X0X-RMX browser emulator, in its default Cream & Lilac finish.*
+
 This fork adds:
 
 - **Orb-inspired Remix:** independent Bank A–P / Pattern 1–16 selections for 909, 808,
@@ -35,8 +39,26 @@ validation and release approval. You can also [build and preview the website loc
 - [TB-3PO scale reference (German)](docs/TB3PO_SCALES.md)
 - [TB-303 waveform specification (English summary; German technical record, experimental)](docs/TB303_WAVEFORMS_DESIGN.md)
 
-[Original X0X demonstration by Charles Vestal (YouTube)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
-shows upstream X0X, not the X0X-RMX additions.
+## A closer look
+
+| Remix | Grids |
+|---|---|
+| <img src="docs/img/p82/06-remix-909-on-b3.png" width="300" alt="909 Remix with Bank B, Pattern 3, Remix ON and APPLY BAR"> | <img src="docs/img/p82/08-grids-map-909.png" width="300" alt="909 Grids MAP page with X, Y, CHAOS and MODE controls"> |
+| Reorder playback while keeping the stored steps. | Generate kick, snare and closed-hat rhythms. |
+| **TB-3PO** | **303 Morph** |
+| <img src="docs/img/p82/15-tb3po-generate-303a.png" width="300" alt="303A TB-3PO GENERATE page with density, accent, slide and octave controls"> | <img src="docs/img/p82/22-303a-extra-morph64.png" width="300" alt="303A EXTRA page with MORPH 64, ACCDEC, DRVTYPE and TUNE"> |
+| Generate and mutate bass lines. | Shape the experimental waveform on the EXTRA page. |
+
+### Four emulator device colors
+
+Choose **Cream & Lilac** (default), **Classic Dark**, **Sunset Orange** or **Pink Lilac**
+with the emulator's Device color selector. It changes the exterior immediately and remembers
+that browser preference separately from your project. The firmware's **GLO → SCHEME** setting
+controls LCD colors independently.
+
+![The same X0X-RMX emulator in Cream & Lilac, Classic Dark, Sunset Orange and Pink Lilac](docs/img/p82/01-device-comparison.png)
+
+*Four browser device finishes; these are visual interpretations, not color-matched hardware photographs.*
 
 ## What's inside
 
@@ -99,6 +121,12 @@ tests/run_tests.sh      # the maths, the sequencer, every engine against its ori
 `build/host/x0x_host` runs the whole app on a computer from a script (`tests/scenarios/*.x0x`). Button
 presses, keys, knob turns and MIDI go in; audio and screenshots come out. That's how most of
 X0X is tested before it reaches the FM-1.
+
+## Original X0X – upstream demonstration
+
+[Charles Vestal’s original X0X video (YouTube)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
+shows the upstream project on an FM-1. It is a reference for the inherited foundations;
+the X0X-RMX features shown above are demonstrated by our browser emulator.
 
 ## Licence and credits
 

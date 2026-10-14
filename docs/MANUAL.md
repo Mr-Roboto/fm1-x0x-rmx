@@ -12,8 +12,9 @@ See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)
 
-The existing illustrations and screenshots use the original X0X layout and colors.
-The fork's additional pages and controls are described in the tables and workflows below.
+Screenshots captioned **X0X-RMX** are real captures of the current browser emulator.
+The retained hardware drawings and screenshots captioned **Original X0X** describe the
+inherited controls and workflows; their layout and colors may differ from the fork.
 
 ---
 
@@ -177,8 +178,8 @@ return arrow (an action). HOME goes back. Menu actions such as CLEAR PATTERN, FA
 ask for confirmation: SEL for yes, HOME for no. Generator NEW/MUTATE commands act immediately;
 use Undo to take them back.
 
-![A list](img/screen-list.png)
-![A question](img/screen-ask.png)
+![Original X0X: A list](img/screen-list.png)
+![Original X0X: A question](img/screen-ask.png)
 
 > **Not sure what a button does?** Hold it for a second on its own: a card says what it does on
 > the screen you're on, with its combinations. Let go and nothing happens.
@@ -214,7 +215,7 @@ choose.
 
 ## 4. The screen
 
-![The 909](img/screen-909.png)
+![Original X0X: The 909](img/screen-909.png)
 
 The **top line** shows, from left to right:
 
@@ -243,7 +244,7 @@ pattern does, and are copied with it; the sound stays the same whatever pattern 
 The **footer** at the very bottom says what the keys do on this screen (BLACK: TRACK, WHITE:
 STEP). Until you first press a button it says HOLD ANY BUTTON: WHAT IT DOES.
 
-![Turning a knob](img/screen-readout.png)
+![Original X0X: Turning a knob](img/screen-readout.png)
 
 ---
 
@@ -309,6 +310,9 @@ MAP and EUCLID are alternative first pages, selected by MODE; they are not a fou
 | FILL | FILL K | FILL S | FILL H | Unused |
 | OFFSET | OFF K | OFF S | OFF H | Unused |
 
+![X0X-RMX: 909 MAP, with X/Y, CHAOS and MODE](img/p82/08-grids-map-909.png)
+![X0X-RMX: 909 EUCLID, with independent Kick, Snare and Hi-Hat cycle lengths](img/p82/09-grids-euclid-909.png)
+
 MODE chooses MAP or EUCLID as the first page. MAP blends original Mutable
 Instruments Grids rhythms using X/Y; FILL controls density and CHAOS varies
 successive 16-step bars. CHAOS 0 gives identical full MAP bars and makes MAP MUTATE a no-op. CHAOS does not
@@ -331,8 +335,13 @@ for a variation, or HOME + REC to undo it. FILL K/S/H addresses Kick/Snare/Close
 FILL and CHAOS range from 0 to 100%; MAP X/Y from 0 to 255. MAP OFFSET is 0–15; EUCLID
 OFFSET is 0–LEN−1. NEW writes stored steps, so an enabled Remix can reorder what you hear.
 
+![X0X-RMX: 909 FILL controls the three drum densities](img/p82/10-grids-fill-909.png)
+![X0X-RMX: 909 OFFSET rotates the three drum rows](img/p82/12-grids-offset-909.png)
+
 Turning generator knobs changes the next operation, leaves current steps alone,
 and is not saved or recorded as motion.
+
+![X0X-RMX: the generated 909 beat is visible as editable stored steps on SEQUENCE](img/p82/14-grids-result-909.png)
 
 Generated accents use the shared accent row, so other drums on the same column
 sound accented too. Existing accents coincident with unrelated instrument hits
@@ -349,7 +358,7 @@ make EUCLID MUTATE show NEW FIRST. A no-change command adds no Undo entry.
 
 There are two identical 303s. Each has its own sound and its own line.
 
-![303A](img/screen-303.png)
+![Original X0X: 303A](img/screen-303.png)
 
 **Steps.** Press a white key to turn that step on; tap it again to turn it off. To edit a step,
 press SEQ, hold the step's key and turn the knobs: KNOB 1 sets the note, KNOB 2 the gate (REST,
@@ -383,6 +392,10 @@ TONE and EXTRA). Each voice remembers its own page.
 | VOICE | ACCENT | WAVE | DRIVE | SLIDE |
 | EXTRA | MORPH | ACCDEC | DRVTYPE | TUNE |
 
+![X0X-RMX: 303A TONE controls CUTOFF, RESO, ENVMOD and DECAY](img/p82/20-303a-tone.png)
+![X0X-RMX: 303A VOICE controls ACCENT, WAVE, DRIVE and SLIDE; Saw is selected](img/p82/21-303a-voice-saw.png)
+![X0X-RMX: 303A EXTRA controls MORPH, ACCDEC, DRVTYPE and TUNE; Morph is selected at 64](img/p82/22-303a-extra-morph64.png)
+
 WAVE offers **Saw, Square and Morph**. EXTRA uses the existing Morph, accent decay,
 drive type (off, soft or RAT) and tuning controls, with unchanged ranges and defaults.
 ACCDEC sets accented-note decay (30–3000 ms). DRVTYPE chooses Off, Soft or RAT;
@@ -394,6 +407,8 @@ ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the m
 **Morph (experimental Wave 3).** Pick 303A or 303B with ALGORITHM, press EDIT and turn SELECT
 to VOICE. Set WAVE to Morph with KNOB 2, then move to EXTRA and use KNOB 1 to change MORPH.
 MORPH also remains available in SEL's normal sound parameter list.
+
+![X0X-RMX: selecting Morph with WAVE on the 303A VOICE page](img/p82/23-morph-wave-303a.png)
 
 | Morph | Shape |
 |---|---|
@@ -408,7 +423,8 @@ While Morph is sounding, changes slew over at most about 5 ms. Setting it while 
 idle settles immediately.
 
 **One Morph voice at a time.** If 303A uses Morph, a Morph selection on 303B is rejected and B
-keeps its prior accepted Wave. The same applies with A and B reversed. The other voice is not
+keeps its prior accepted Wave. Rejection is silent; there is no warning banner.
+The same applies with A and B reversed. The other voice is not
 forced to change. Set the current owner to Saw or Square before selecting Morph on the other
 voice. A rejected choice does not become active later when the owner releases it; make a new
 selection. Direct parameter changes and Wave motion obey the same rule.
@@ -429,7 +445,7 @@ realtime performance or a universal audio-quality pass. The
 
 TB-3PO writes 303 lines for you. Pick a 303 with ALGORITHM and press ARP.
 
-![TB-3PO](img/screen-tb3po.png)
+![X0X-RMX: 303A GENERATE, with density, accent, slide and octave-range controls](img/p82/15-tb3po-generate-303a.png)
 
 Press **OCT+** to write a completely new line, or **OCT-** to mutate the current one
 (a few small edits that retain the melodic anchors).
@@ -440,6 +456,8 @@ TB-3PO has two pages (press ARP again, or turn SELECT):
   the range, from 1 to 3 octaves.
 - SCALE: ROOT, SCALE (22 scales; new generator configurations default to Minor Pentatonic / MPEN),
   OCTAVE, and MUTATE, which mutates the line by itself every 1–16 bars (or never).
+
+![X0X-RMX: 303A SCALE, with ROOT A and Minor Pentatonic (MPEN) selected](img/p82/16-tb3po-scale-mpen.png)
 
 DENS, ACCENT, SLIDE, OCTS, ROOT, SCALE and OCTAVE do not immediately rewrite the line.
 They set up the next OCT+ or OCT-; the written line, including hand edits, stays unchanged
@@ -478,6 +496,10 @@ leave the line unchanged. Existing hand edits or notes from a previously selecte
 retained unless that step changes; mutation does not quantize the whole line. Automatic
 mutation uses the same rules. OCT+ and OCT- show the resulting line immediately, including
 after a recent knob edit.
+
+![X0X-RMX: a generated 303A line on SEQUENCE, after choosing Dorian and generating again](img/p82/18-tb3po-result-303a.png)
+
+The generated notes remain editable with the normal step controls (section 6).
 
 ### Scale names
 
@@ -524,7 +546,7 @@ To edit the line by hand, press SEQ; to shape its sound, EDIT.
 
 The break is a drum loop cut into eight slices, which X0X rearranges as it plays.
 
-![The break, slice 5 playing](img/screen-break.png)
+![Original X0X: The break, slice 5 playing](img/screen-break.png)
 
 **Steps.** BREAK always uses 16 steps at 1/16 rate; it has no adjustable LENGTH/RATE or Remix.
 The white keys are those 16 steps: press one to let the break play there, tap it
@@ -587,7 +609,7 @@ to X0X, `--bbgen` sends BB Gen's classic breaks. To build loops into a developme
 
 ## 9. Patterns
 
-![HOME](img/screen-home.png)
+![Original X0X: HOME](img/screen-home.png)
 
 There are 32 patterns. A pattern holds each part's steps, the drums' and 303s' length/rate,
 their Remix selections, the break's settings,
@@ -648,6 +670,9 @@ A1/OFF. On a 303, Remix acts only with DIRECTION = Forward. Reverse, Ping-Pong a
 retain their existing playback; the Remix selection remains stored. Orb-style musical
 reverse is not implemented.
 
+![X0X-RMX: 909 Remix at neutral A1/OFF, with APPLY BEAT](img/p82/05-remix-909-off-a1.png)
+![X0X-RMX: 909 Remix at B3/ON, with APPLY BAR](img/p82/06-remix-909-on-b3.png)
+
 | APPLY | When a pending selection or ON/OFF change becomes audible |
 |---|---|
 | STEP | Next chronological step |
@@ -671,6 +696,8 @@ reads the selected note/rest/tie, accent and slide; tie lookahead follows the ne
 slot. Motion, p-locks and probability follow the selected source too. Timing and swing stay
 chronological. The lit playhead shows the mapped source when it is on the visible step page;
 Remix does not move the page you are editing. Keys edit the stored steps, not a rendered Remix.
+
+![X0X-RMX: 303A has its own Remix selection, here C4/ON with APPLY LOOP](img/p82/19-remix-303a-on-c4.png)
 
 Copy/paste includes each part's Remix state. Clearing a part's steps preserves its Remix
 selection and ON/OFF, as it preserves length and rate. Remix knobs cannot record motion or
@@ -700,7 +727,7 @@ All three give steps values of their own, and all three are saved with the patte
 
 ### Knob motion
 
-![A recorded cutoff sweep playing](img/screen-motion.png)
+![Original X0X: A recorded cutoff sweep playing](img/screen-motion.png)
 
 Turn on REC, press PLAY and turn any sound knob. X0X records the knob on the steps where you moved
 it, fills in short pauses so a slow sweep has no gaps, and on playback glides from step to step.
@@ -770,7 +797,7 @@ Each part counts its own passes, from 1 again whenever you press PLAY or it chan
 
 ## 12. Song
 
-![SONG](img/screen-song.png)
+![Original X0X: SONG](img/screen-song.png)
 
 A song is a list of up to 192 bars. Each bar says which pattern each part plays and which
 parts are muted. To open the song, press HOME twice (HOME again comes back to the pattern).
@@ -798,7 +825,7 @@ Press SEL on the SONG screen for LENGTH, INSERT BAR, DELETE BAR and CLEAR SONG.
 
 ## 13. Effects
 
-![FX](img/screen-fx.png)
+![Original X0X: FX](img/screen-fx.png)
 
 There is one reverb and one delay, and every part can send to both: each part's sends are on the
 mixer's PARTS page (LFO), each drum track's on 909 MIX and 808 MIX. FX shows how much every part
@@ -816,7 +843,7 @@ the echoes between left and right.
 
 ## 14. Mix and master
 
-![MIX, with the compressor pumping](img/screen-mix.png)
+![Original X0X: MIX, with the compressor pumping](img/screen-mix.png)
 
 Press LFO to open the mixer; press it again (or turn SELECT) for its four pages. The red bar on
 the right is the compressor's gain reduction.
@@ -862,7 +889,7 @@ GLUE compressor and VOLUME. Turning COMP or FILTER sets their details again.
 
 ## 15. Settings and saving
 
-![GLOBAL](img/screen-global.png)
+![X0X-RMX: GLOBAL, with the LCD SCHEME set to WHITE LILAC](img/p82/32-global-scheme-white-lilac.png)
 
 Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PROJECT, SYSTEM):
 
@@ -883,6 +910,12 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 | PERFORMANCE | Opens the performance page (below). |
 | ABOUT X0X | Shows the version, how full the memory for patterns is (MEM), and the audio load. |
 | BATTERY | The battery's charge: FULL, 2/3, 1/3 or EMPTY; USB POWER while a computer powers the FM-1. Read only. |
+
+![X0X-RMX: Cream & Lilac exterior selected in the browser, with WHITE LILAC selected separately in GLOBAL](img/p82/33-cream-white-lilac-global.png)
+
+The browser **Device color** selector changes only the exterior illustration. **GLO → SCHEME**
+changes the LCD and part colors. Neither control changes the other; the exterior preference
+is stored separately from the saved project.
 
 ### What is remembered
 

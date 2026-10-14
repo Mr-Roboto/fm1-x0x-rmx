@@ -15,10 +15,13 @@ class Links(HTMLParser):
         super().__init__()
         self.links = []
         self.ids = set()
+        self.images = []
         self.feed(source)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == "img":
+            self.images.append(attrs)
         if "id" in attrs:
             self.ids.add(attrs["id"])
         for attr in ("href", "src"):
@@ -61,4 +64,29 @@ assert info["wasm_sha256"] == hashlib.sha256((root / "emu/x0x.wasm").read_bytes(
 assert '<link rel="icon" href="emu/favicon.svg" type="image/svg+xml">' in (root / "index.html").read_text()
 assert (root / "emu/favicon.svg").read_bytes() == Path("web/emu/favicon.svg").read_bytes()
 assert (root / "emu/worklet.js").read_bytes() == Path("web/emu/worklet.js").read_bytes()
+# Publication assets are shared by the landing page and manual, with useful alt text.
+landing_path = root / "index.html"
+manual_path = root / "manual/index.html"
+landing_images = [img for img in pages[landing_path].images if "/p82/" in img.get("src", "")]
+manual_images = [img for img in pages[manual_path].images if "/p82/" in img.get("src", "")]
+assert len(landing_images) == 6 and len(manual_images) == 17
+for img in landing_images + manual_images:
+    assert len(img.get("alt", "").strip()) > 20, (img, "missing descriptive alternative text")
+assert landing_images[0]["src"].endswith("01-overview-cream.png")
+landing = landing_path.read_text()
+assert landing.index("01-overview-cream.png") < landing.index('<nav class="ways"') < landing.index("upstream-demo")
+assert "Original X0X – upstream demonstration" in landing
+assets = root / "manual/img/p82"
+assert len(list(assets.glob("*.png"))) == 19
+for image in assets.glob("*.png"):
+    assert image.read_bytes() == (Path("docs/img/p82") / image.name).read_bytes(), image
+assert "Rejection is silent; there is no warning banner." in manual_path.read_text()
+readme = Path("README.md").read_text()
+readme_images = re.findall(r'!\[[^\]]+\]\((docs/img/p82/[^)]+)\)', readme)
+readme_images += [img["src"] for img in Links(readme).images]
+assert len(readme_images) == 6
+for image in readme_images:
+    assert Path(image).is_file(), (image, "missing README image")
+assert "Original X0X – upstream demonstration" in readme
+print("Visual documentation: 19 unchanged publication assets, 6 landing images, 17 manual images and descriptive alt text passed")
 print(f"Pages: {len(pages)} pages; relative links/anchors/subpath, identity, credits, release gate and WASM provenance passed")

@@ -264,3 +264,21 @@ label/knob contrast, normal/lit/dim/held/latched controls, mouse/touch/keyboard 
 mobile layouts, reload persistence, live audio, both EXTRA pages, Grids and Remix.
 P8.1 documentation finalization is published with these browser presentation changes;
 firmware feature freeze and the disabled public installer/downloads remain in effect.
+
+## P8.2b visual documentation
+
+The README, manual and landing page use 19 selected P8.2a PNG captures in
+`docs/img/p82/`. They are copied unchanged from real Chromium captures of source
+`75c0792919a37bf52d86f0fc4be4787a00c2c6f0`. The four-device comparison is the only
+published contact sheet; individual full-resolution LCD crops illustrate the manual.
+Capture helpers, logs and the complete review gallery stay under `build/host/`.
+
+The landing page shares the manual's `manual/img/p82/` assets. Its Cream & Lilac hero
+precedes the project links; the four-feature gallery and device comparison follow them.
+Charles Vestal's original video is retained in a secondary upstream demonstration section.
+The manual distinguishes current X0X-RMX captures from inherited X0X illustrations.
+
+This documentation-only publication reuses the verified P7.4 emulator, including its
+original build provenance. WASM SHA-256 remains
+`e3951651ecc4363b01f4575ac817ce994e0a26bb0240a00bd4204cc7ddb72dce`.
+No firmware, memory resources, emulator code or installation/download controls change.

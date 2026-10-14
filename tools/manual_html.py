@@ -117,7 +117,7 @@ def figure(caption, src):
         url = f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode()
     else:
         url = src
-    cls = "wide" if src.endswith(".svg") else "shot"
+    cls = "wide" if src.endswith(".svg") or src == "img/p82/33-cream-white-lilac-global.png" else "shot"
     return (f'<figure class="{cls}"><img src="{url}" alt="{html.escape(caption)}" loading="lazy">'
             f"<figcaption>{inline(caption)}</figcaption></figure>")
 

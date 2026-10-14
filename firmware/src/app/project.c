@@ -5,7 +5,8 @@
  * the lanes (~30 KB, mostly empty steps) are one stream packed with lz.c across the four objects
  * OBJ_PAT0, OBJ_PAT1, OBJ_SONG, OBJ_MOTION (PROJ_STREAM). The first carries the raw length and a
  * CRC of the raw bytes, so a stream torn by a power cut between two objects, or one that does not
- * unpack, loads as the defaults rather than as garbage. A save packs once to measure (nothing is
+ * unpack, is never loaded as garbage: the objects' previous copies (storage.c keeps two) are tried
+ * instead, which give the save before; only when no mix of copies checks out, the defaults. A save packs once to measure (nothing is
  * written if it would not fit: "MEMORY FULL") and once to write; an object whose bytes did not
  * change is not written again.
  *
@@ -236,8 +237,14 @@ static int save_stream(void)
 /* the reader: the objects in turn, from io_buf */
 typedef struct {
     int k, n;
-    uint32_t pos, left;
+    uint32_t pos, left, prev;                         /* prev: bit k, object k from its previous copy */
 } st_in_t;
+
+static int stream_obj_load(int k, uint32_t prev)      /* object k of the stream into io_buf, its copy per prev */
+{
+    return (prev >> k) & 1u ? plat_store_load_prev(STREAM_OBJ[k], io_buf, sizeof io_buf)
+                            : plat_store_load(STREAM_OBJ[k], io_buf, sizeof io_buf);
+}
 
 static int st_get(void *ctx)
 {
@@ -247,10 +254,10 @@ static int st_get(void *ctx)
     while (s->pos >= (uint32_t)s->n) {
         if (++s->k >= NSTREAM)
             return -1;
-        s->n = plat_store_load(STREAM_OBJ[s->k], io_buf, sizeof io_buf);
+        s->n = stream_obj_load(s->k, s->prev);
         if (s->n < 4 || get32(io_buf) != PROJ_STREAM)
             return -1;
-        stored_known[STREAM_OBJ[s->k]] = 1;
+        stored_known[STREAM_OBJ[s->k]] = !((s->prev >> s->k) & 1u);   /* a previous copy: written again next save */
         stored_hash[STREAM_OBJ[s->k]] = hash_of(io_buf, (uint32_t)s->n);
         s->pos = 4u;
     }
@@ -259,15 +266,15 @@ static int st_get(void *ctx)
 }
 
 /* 0 = loaded; -1 = not there or not good (proj's patterns and arrangement then hold garbage) */
-static int load_stream(int n)
+static int load_stream(int n, uint32_t prev)
 {
     uint8_t *raw = (uint8_t *)&proj + RAW_OFF;
     uint32_t crc = get32(io_buf + 8), plen = get32(io_buf + 12);
-    st_in_t s = {0, n, STREAM_HDR, plen};
+    st_in_t s = {0, n, STREAM_HDR, plen, prev};
     lz_src_t src = {st_get, &s};
     if (n < (int)STREAM_HDR || get32(io_buf + 4) != RAW_LEN || plen > STREAM_CAP)
         return -1;
-    stored_known[STREAM_OBJ[0]] = 1;
+    stored_known[STREAM_OBJ[0]] = !(prev & 1u);
     stored_hash[STREAM_OBJ[0]] = hash_of(io_buf, (uint32_t)n);
     if (lz_decompress(&src, raw, RAW_LEN) || crc32_of(raw, RAW_LEN) != crc)
         return -1;
@@ -469,10 +476,22 @@ int project_load(void)
     proj.set.stereo = PROJ_STEREO;
     n = plat_store_load(OBJ_PAT0, io_buf, sizeof io_buf);
     if (n >= 4 && get32(io_buf) == PROJ_STREAM) {
-        if (load_stream(n)) {                         /* torn or broken: the defaults, not garbage */
-            patterns_defaults();
-            arrange_defaults();
-            bad = 1;
+        if (load_stream(n, 0)) {                      /* torn (a power cut mid-save) or broken: the previous
+                                                       * copies, fewest first (the newest save that checks out) */
+            uint32_t prev = 0;
+            int ok = 0, b;
+            for (b = 1; b <= NSTREAM && !ok; b++)
+                for (prev = 1; prev < (1u << NSTREAM) && !ok; prev++) {
+                    if ((uint32_t)__builtin_popcount(prev) != (uint32_t)b)
+                        continue;
+                    n = stream_obj_load(0, prev);
+                    ok = n >= 4 && get32(io_buf) == PROJ_STREAM && load_stream(n, prev) == 0;
+                }
+            if (!ok) {                                /* nothing checks out: the defaults, not garbage */
+                patterns_defaults();
+                arrange_defaults();
+                bad = 1;
+            }
         }
     } else {
         if (load_patterns1()) {                       /* half a set is no set: the defaults */

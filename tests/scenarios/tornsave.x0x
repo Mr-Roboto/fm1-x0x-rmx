@@ -1,0 +1,26 @@
+# a power cut in the middle of a save (fm1-x0x#17, #20): the next start loads the save before, from the
+# objects' previous copies, not the defaults. Random hits pack badly, so the stream spans several objects
+# and the cut leaves its first object new and the rest old.
+wait 300
+fillrandom 1
+tap SAVE
+wait 300
+snapproj
+reboot
+wait 300
+expect projsame 1
+fillrandom 2
+tearsave 1
+tap SAVE
+wait 300
+reboot
+wait 300
+expect projsame 1
+expect mempct >30
+fillrandom 3
+tap SAVE
+wait 300
+snapproj
+reboot
+wait 300
+expect projsame 1

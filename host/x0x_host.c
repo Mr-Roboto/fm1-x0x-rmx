@@ -130,10 +130,12 @@ void plat_midi_out(uint32_t pkt)
         fprintf(midi_log, "%u ms: %02X %02X %02X\n", now_ms, (pkt >> 8) & 0xFF, (pkt >> 16) & 0xFF, (pkt >> 24) & 0xFF);
 }
 
-/* flash: one buffer per object, kept across a simulated reboot */
-static uint8_t store[OBJ_NOBJ][PLAT_STORE_MAX];
-static int store_len[OBJ_NOBJ] = {-1, -1, -1, -1, -1, -1, -1};
+/* flash: one buffer per object and the one before (storage.c's A/B copies), kept across a simulated
+ * reboot; "tearsave N": the next save stops after N more object writes (a power cut mid-save) */
+static uint8_t store[OBJ_NOBJ][PLAT_STORE_MAX], store_prev[OBJ_NOBJ][PLAT_STORE_MAX];
+static int store_len[OBJ_NOBJ] = {-1, -1, -1, -1, -1, -1, -1}, store_prev_len[OBJ_NOBJ] = {-1, -1, -1, -1, -1, -1, -1};
 static uint32_t store_writes;
+static int store_tear = -1;                          /* object writes left before the cut; -1 none */
 int plat_store_load(uint32_t obj, void *dst, uint32_t max)
 {
     int n = store_len[obj];
@@ -148,10 +150,26 @@ int plat_store_save(uint32_t obj, const void *src, uint32_t len)
 {
     if (obj >= OBJ_NOBJ || len > PLAT_STORE_MAX)
         return -1;
+    if (store_tear == 0)
+        return -1;                                   /* the power is off: nothing more is written */
+    if (store_tear > 0)
+        store_tear--;
+    memcpy(store_prev[obj], store[obj], PLAT_STORE_MAX);
+    store_prev_len[obj] = store_len[obj];
     memcpy(store[obj], src, len);
     store_len[obj] = (int)len;
     store_writes++;
     return 0;
+}
+int plat_store_load_prev(uint32_t obj, void *dst, uint32_t max)
+{
+    int n = obj < OBJ_NOBJ ? store_prev_len[obj] : -1;
+    if (n < 0)
+        return -1;
+    if ((uint32_t)n > max)
+        n = (int)max;
+    memcpy(dst, store_prev[obj], (size_t)n);
+    return n;
 }
 
 /* sample slots, two ways in:
@@ -629,6 +647,7 @@ static int load_slot(int k, int z, const char *path)
 }
 
 static bpart_t line_snap[NBASS];                  /* "snapline" */
+static pattern_t pat_snap[NPAT];                  /* "snapproj": the patterns, for "expect projsame" */
 static int expect(const char *what, const char *val)
 {
     int got;
@@ -705,7 +724,9 @@ static int expect(const char *what, const char *val)
         pref_t r = pg.r[cur_page()][(atoi(what + 7) - 1) & 3];
         const x0x_param_t *d = pref_desc(r);
         got = d && pref_get(r) == d->def;
-    } else if (!strcmp(what, "view"))
+    } else if (!strcmp(what, "projsame"))           /* 1: the patterns are as at the last snapproj */
+        got = memcmp(proj.pat, pat_snap, sizeof pat_snap) == 0;
+    else if (!strcmp(what, "view"))
         got = ui.view;
     else if (!strcmp(what, "tempo"))
         got = (int)(seq.bpm + 0.5f);
@@ -1000,7 +1021,23 @@ int main(int argc, char **argv)
                 proj.arr.lane[i].used = 0;
         } else if (!strcmp(cmd, "cpu2")) {              /* cpu2 0|1: the simulated second core */
             plat_cpu2_set(atoi(a));
+        } else if (!strcmp(cmd, "fillrandom")) {        /* fillrandom SEED: every pattern's drum hits at random
+                                                         * (they pack badly: the stream spans several objects) */
+            uint32_t r = (uint32_t)atoi(a) * 2654435761u + 1u, p, k, v, w;
+            for (p = 0; p < NPAT; p++)
+                for (k = 0; k < NKIT; k++)
+                    for (v = 0; v < NDRUM; v++)
+                        for (w = 0; w < NSW; w++) {
+                            r ^= r << 13, r ^= r >> 17, r ^= r << 5;
+                            proj.pat[p].drum[k].hit[v][w] = r;
+                        }
+            mark_dirty();
+        } else if (!strcmp(cmd, "snapproj")) {
+            memcpy(pat_snap, proj.pat, sizeof pat_snap);
+        } else if (!strcmp(cmd, "tearsave")) {          /* tearsave N: the next save stops after N object writes */
+            store_tear = atoi(a);
         } else if (!strcmp(cmd, "reboot")) {
+            store_tear = -1;                            /* the power back */
             memset(&proj, 0, sizeof proj);
             boot();
         } else if (!strcmp(cmd, "echo"))

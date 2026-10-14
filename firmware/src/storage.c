@@ -118,6 +118,22 @@ static int st_load(uint32_t obj, void *dst, uint32_t max)
     return (int)h.len;
 }
 
+/* the copy before the current one, if it is valid too: its length, or -1 (a stream torn across
+ * objects falls back to the copies of the save before: project.c load_stream) */
+static int st_load_prev(uint32_t obj, void *dst, uint32_t max)
+{
+    uint32_t i;
+    st_hdr_t h;
+    int cur = st_current(obj, &h);
+    if (cur < 0 || st_head(obj, (uint32_t)!cur, &h) || st_body(obj, (uint32_t)!cur, &h))
+        return -1;
+    if (h.len > max)
+        h.len = max;
+    for (i = 0; i < h.len; i++)
+        ((uint8_t *)dst)[i] = st_buf[i];
+    return (int)h.len;
+}
+
 static int st_save(uint32_t obj, const void *src, uint32_t len)
 {
     uint32_t seq, base, off;

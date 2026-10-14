@@ -66,6 +66,9 @@ int main(void)
     bad += check("save A again", st_save(OBJ_PROJECT0, a, sizeof a) == 0);
     n = st_load(OBJ_PROJECT0, got, sizeof got);
     bad += check("load returns A", n == (int)sizeof a && !memcmp(got, a, sizeof a));
+    n = st_load_prev(OBJ_PROJECT0, got, sizeof got);
+    bad += check("the copy before A is B", n == (int)sizeof b && !memcmp(got, b, sizeof b));
+    bad += check("no copy before on an empty object", st_load_prev(OBJ_MOTION, got, sizeof got) < 0);
     nor[st_sector(OBJ_PROJECT0, 0) + ST_PAYLOAD_OFF + 10] ^= 0x01;   /* bit rot in one copy */
     nor[st_sector(OBJ_PROJECT0, 1) + ST_PAYLOAD_OFF + 10] ^= 0x01;
     n = st_load(OBJ_PROJECT0, got, sizeof got);

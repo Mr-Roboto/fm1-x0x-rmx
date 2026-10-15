@@ -3694,16 +3694,28 @@ static void draw_perf(int band)
         put_pct10(t, perf.stage[k]);
         text_r(x + 108, y, &FONT_XS, t, C_WHITE);
     }
-    if (perf.cps) {
-        q = put_s(t, "RENDER ");
-        q = put_i(q, perf.cps);
-        put_s(q, " CYCLES / SAMPLE");
-        cv_text(4, 44, &FONT_XS, t, C_GRAY);
+    {
+        uint32_t c[5];
+        if (plat_last_crash(c)) {                     /* a crash since power-on: its red screen's numbers, to photograph */
+            q = put_hex(put_s(t, "CRASH  PC "), c[1], 8);
+            put_hex(put_s(q, "  RA "), c[4], 8);
+            cv_text(4, 46, &FONT_XS, t, RGB(255, 80, 60));
+            q = put_hex(put_s(t, "EMU "), c[2], 8);
+            put_hex(put_s(q, "  DBG "), c[3], 8);
+            cv_text(4, 56, &FONT_XS, t, RGB(255, 80, 60));
+        } else {
+            if (perf.cps) {
+                q = put_s(t, "RENDER ");
+                q = put_i(q, perf.cps);
+                put_s(q, " CYCLES / SAMPLE");
+                cv_text(4, 44, &FONT_XS, t, C_GRAY);
+            }
+            cv_text(4, 55, &FONT_XS, "SEL: RUN PERF TEST", C_DIM);
+        }
     }
     q = put_s(t, engine_guard_active() ? "GUARD ON  " : "GUARD ");   /* the overload guard: engaged, times */
     put_s(put_i(q, (int)eng_guard_count), "x");
     text_r(236, 55, &FONT_XS, t, engine_guard_active() ? C_AMB : C_DIM);
-    cv_text(4, 55, &FONT_XS, "SEL: RUN PERF TEST", C_DIM);
 }
 
 /* the readout: the knob being turned, large, across the bottom band */

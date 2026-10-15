@@ -1,0 +1,8 @@
+# PERF keeps the last crash's numbers (its red screen's) until power-off, to photograph (fm1-x0x#17)
+wait 300
+fakecrash
+tap GLO
+turn SELECT 16
+tap SEL
+wait 1200
+shot crash_on_perf.png

@@ -1054,6 +1054,10 @@ has kicked in (GUARD 3x).
 If X0X drops out on one of your patterns, a photo of the test results and of the pattern is the
 most useful thing you can send.
 
+If X0X crashes, it shows a red screen for a few seconds and starts again. Until you switch the FM-1
+off, the performance page keeps that crash's numbers in red at the bottom (CRASH PC … RA …, EMU …
+DBG …). A photo of them is the most useful thing to send with a crash report.
+
 KNOB 1 turns on some extra counters (STALLS). They're experimental: if the FM-1 acts up with them
 on, switch it off and on again.
 

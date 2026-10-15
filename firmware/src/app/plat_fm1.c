@@ -146,6 +146,16 @@ int plat_cpu2_run(void (*fn)(uint32_t), uint32_t arg) { return fm1_cpu1_run(fn, 
 int plat_cpu2_wait(void) { return fm1_cpu1_wait(); }
 int plat_cpu2_gave_up(void) { return fm1_c1_gave_up; }
 uint32_t plat_cpu2_bad(void) { return fm1_c1_mb.bad; }
+uint8_t plat_vdc14_level;                       /* main_fm1.c, at start */
+int plat_vdc14_mv(void) { return 1250 + 50 * plat_vdc14_level; }
+int plat_last_crash(uint32_t v[5])                   /* fm1_crash (.noinit): a warm reset keeps it, power-off clears it */
+{
+    if (fm1_crash.magic != FM1_CRASH_MAGIC)
+        return 0;
+    v[0] = fm1_crash.vec, v[1] = fm1_crash.pc, v[2] = fm1_crash.emu, v[3] = fm1_crash.dbg, v[4] = fm1_crash.rets;
+    return 1;
+}
+int plat_cpu2_barred(void) { return fm1_c1_bar.magic == FM1_C1_BAR_MAGIC && fm1_c1_bar.barred == 1u; }
 uint32_t plat_xruns(void) { return audio_xruns; }
 
 static int perf_cyc_ok, perf_stalls_on;

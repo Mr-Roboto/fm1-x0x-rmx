@@ -1,8 +1,14 @@
 {
   "project": "X0X-RMX",
-  "revision": "e5cf961ccb23f4a8834869b0af6e98c9acde30fb",
+  "version": "1.0.0",
+  "revision": "4694051a499aeaceb84692a0d195463029bf94b0",
   "branch": "orb-remix",
-  "working_tree_changes": [],
-  "wasm_sha256": "77853be7f2857a6f967a82b8489542bff785f78e517a4f82f24876cce2da4bfe",
+  "working_tree_changes": [
+    "?? docs/P82_SCREENSHOT_REVIEW.md",
+    "?? docs/P83_VIDEO_PLAN.md",
+    "?? x0x-rmx-banner-1280x320.png",
+    "?? x0x-rmx-banner-1280x320.png:Zone.Identifier"
+  ],
+  "wasm_sha256": "1e11309b6e47bd1081cc1af798ee31a99af37e67f9f60d0a8747b17ebf43e030",
   "compiler": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.69 ()"
 }

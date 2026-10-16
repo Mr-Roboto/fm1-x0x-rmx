@@ -315,3 +315,26 @@ The video is labelled as a browser-emulator demonstration. Physical FM-1 validat
 remains pending, with firmware installation and downloads still disabled. The existing
 banner, screenshot galleries and secondary upstream demonstration are preserved.
 Publication uses the same package-free preview and fast-forward Pages procedure above.
+
+
+## P9 — stable 1.0.0 preparation, publication blocked
+
+The local final sources prepare **X0X-RMX v1.0.0 Stable**, product `FM-1_9010000`, package
+`x0x-1.0.0.fwsc`. Initial P9 FM1 observations exist on FM-1_900. Final device tests and
+explicit release approval are still required. The package-free preview retains the reserved
+installer and contains no firmware. No tag, upload, release, Pages push or installer activation
+is authorized by this preparation.
+
+The prepared installer template accepts the eventual version/product/package metadata; its
+existing loader and package identity checks remain intact. Publication instructions and planned
+links are in [RELEASE_1.0.0.md](RELEASE_1.0.0.md); final device checks are in
+[P9_FM1_TEST.md](P9_FM1_TEST.md). Use a normal history-preserving Pages commit after approval;
+never force-push or modify main.
+
+Three Remix screenshots were refreshed from real local Chromium, matching the final controls.
+The demonstration video and poster remain byte-identical. The caption now states that this is
+an emulator recording from before P9: the closing “Physical FM-1 Validation Pending” card
+reflects that earlier stage. Initial observations are now available; final 1.0.0 validation is
+still open. A future video recut should say “Final v1.0.0 hardware validation pending” while
+keeping “Browser emulator recording”; a recut is not needed to correct the surrounding context.
+The existing video is never presented as FM1 footage or proof of completed validation.

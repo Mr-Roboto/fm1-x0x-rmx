@@ -32,11 +32,15 @@ expect hit0.0.1 1
 tap SAVE
 reboot
 wait 100
+expect pattern 16
+# P9 restores the last manual pattern; select P1 to inspect the migrated source again.
+tap HOME
+tapkey w0
+wait 50
 expect pattern 1
 expect hit0.0.31 1
 expect hit0.0.1 0
 expect laneval0.1.4.5 105
-tap HOME
 tapkey w15
 wait 50
 expect hit0.0.1 1

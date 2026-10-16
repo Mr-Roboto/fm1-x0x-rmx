@@ -4,15 +4,16 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This manual covers the X0X-RMX fork of Charles Vestal's X0X. Physical FM-1 validation
-is pending; the public installer and firmware downloads remain reserved. The
+This manual covers the X0X-RMX fork of Charles Vestal's X0X. P9 hardware observations have been collected on development firmware FM-1_900.
+Final validation of the prepared stable version 1.0.0 is still open; the public installer and firmware downloads remain reserved. The
 [public browser emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation
 are available. See [website details](PAGES.md).
 See [What's new](NEW.md).
 
 ![The FM-1 (a drawing), running X0X, each control labelled](img/fm1-panel.svg)
 
-Screenshots captioned **X0X-RMX** are real captures of the current browser emulator,
+Screenshots captioned **X0X-RMX** are real browser-emulator captures (the three Remix
+images were refreshed for P9; other captures predate 1.0.0),
 with the Cream & Lilac exterior and WHITE LILAC LCD scheme selected independently.
 The retained hardware drawings and screenshots captioned **Original X0X** describe the
 inherited controls and workflows; their layout and colors may differ from the fork.
@@ -90,7 +91,7 @@ The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI
 battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
 Successful browser playback does not validate physical FM-1 performance or installation.
 
-**Install/update:** X0X-RMX hardware validation and explicit release approval are still pending.
+**Install/update:** Final X0X-RMX v1.0.0 hardware validation and explicit release approval are still pending.
 The public [release-status page](https://mr-roboto.github.io/fm1-x0x-rmx/install/) is reserved and offers no package or installation controls.
 Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
@@ -381,7 +382,7 @@ notes you play are written: step by step while the pattern is stopped, live whil
 OCT- and OCT+ change the octave. Play a key while still holding another and the 303 slides
 between them. Press REC again to go back to steps.
 
-**Free play.** To play the 303 without writing anything, press SEQ, turn SELECT to the KEYS page
+**Free play.** To play the 303 without writing anything, press SEQ, turn SELECT to the third page, KEYS
 and set FREE PLAY to ON. The keys then play the 303 on every 303 screen, stopped or playing, so
 you can try lines and turn EDIT's knobs as you go; the top line says FREE PLAY. Nothing is
 written until you press REC, which records as above. Set FREE PLAY back to OFF for the steps.
@@ -581,7 +582,8 @@ LENGTH, how often a new slice is chosen (every 1/4 bar to every 8 bars).
 **The loops.** EDIT has LOOP A, LOOP B, B CHANCE (the chance of switching to loop B in the last
 bar of a phrase; with PHRASE off, in any bar) and PITCH; LEVEL is in SEL's list. Loops follow the
 tempo by playing faster or slower, so their pitch follows it too, as on a sampler; PITCH shifts it
-on top. X0X comes with two loops of its own, 909 GR and 909 FL, played by its 909; loops you
+on top. X0X comes with two loops of its own, 909 GR and 808 GR, rendered by its own 909 and 808 engines at build time
+(two bars each, 96 BPM, mono 22,050 Hz, 4-bit IMA ADPCM); loops you
 upload come after them.
 
 All of these, the steps, slices and loops, are saved with the pattern. The break's level, pan
@@ -592,7 +594,7 @@ and sends are on the mixer's PARTS page (LFO, black key 5).
 In the emulator, load files into **Your breaks** below the device; no hardware connection is
 needed. The separate [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) is the
 retained Web MIDI uploader for a compatible FM-1 in Chrome/Edge; it does not install firmware.
-Physical X0X-RMX validation is still pending. They appear after X0X's own loops as BR1, BR2 and so on.
+Final X0X-RMX v1.0.0 hardware validation is still pending. They appear after X0X's own loops as BR1, BR2 and so on.
 There's room for about 21 seconds in all: around nine one-bar loops.
 
 <details><summary>From the command line</summary>
@@ -664,10 +666,10 @@ selection such as B3 is not project pattern P3: project patterns are P1–P32, w
 Remix mappings are Bank A–P / Pattern 1–16.
 
 1. Choose a part with ALGORITHM and a project pattern with PRESETS.
-2. Press SEQ, then turn SELECT to the last page, **REMIX** (after SEQUENCE on drums;
-   after KEYS on the 303s).
-3. Set **KNOB 1 BANK** and **KNOB 2 PATTERN**, then **KNOB 3 REMIX = ON**.
-4. Set **KNOB 4 APPLY** to choose when a change becomes audible during playback.
+2. Press SEQ, then turn SELECT to the second page, **REMIX**. Both 303s use
+   **SEQUENCE → REMIX → KEYS**; KEYS still contains only FREE PLAY ON/OFF.
+3. Set **KNOB 2 BANK** and **KNOB 3 PATTERN**, then **KNOB 4 REMIX = ON**.
+4. Set **KNOB 1 APPLY** to choose when a change becomes audible during playback.
    Stopped changes apply immediately. Start playback to hear the chosen mapping.
 
 **A1** is the neutral sequential mapping, even with REMIX ON. New patterns default to
@@ -904,7 +906,7 @@ Press GLO for these settings, in five sections (MIDI, AUDIO, KEYS AND SCREEN, PR
 | NOTES OUT | Sends the patterns out as MIDI notes. |
 | 909 … BREAK MIDI CH | Each part's MIDI channel, for notes in and out: 1–16, or OFF to ignore incoming notes for that part (and send none). |
 | OUTPUT | NORMAL, or LOUD: 6 dB more at the headphones and line out (and USB audio), for headphones that need it. The master's LIMIT (on by default) keeps it from clipping. |
-| USB AUDIO | FOLLOWS KNOB (the default): USB audio is as loud as the FM-1, MASTER knob and all. FULL: USB audio stays at full level whatever the knob says, so you can record over the cable with the speaker turned down. |
+| USB AUDIO | FULL (default for new projects and Factory Reset): USB audio stays at full level independently of the hardware MASTER knob. FOLLOWS KNOB remains selectable and follows MASTER. Saved settings are retained on update. |
 | LIGHTS | ON: the key lights show the steps, and the unlit buttons glow dimly so they can be read. KEYS: the key lights only. OFF: neither. |
 | KEY SOUND | STOPPED (the default): picking a drum or editing a 303 step is silent while the pattern plays, unless REC is on. ALWAYS: you always hear it. The 303 keyboard always plays either way. |
 | SCHEME | Coordinated LCD and part colours: DEFAULT, WHITE LILAC, PINK LILAC, SUNSET ORANGE, GRAPHITE MINT or WHITE BLUE. WHITE LILAC is the factory default for new projects and reset. Saved schemes are retained. DEFAULT preserves the original colours, including the legacy screen palette in an older saved project. All schemes keep the black LCD background and red recording/warning indicators. |
@@ -928,6 +930,7 @@ is stored separately from the saved project.
 |---|---|
 | Steps, length/rate, Remix selection and ON/OFF, TB-3PO settings, break settings, motion/p-lock/probability lanes | Saved with the project patterns; included in pattern copy and Undo |
 | Sounds (including both Morph values), mix, effects and song | Saved with the project; undoable |
+| Manual startup pattern combination for 909/808/303A/303B/BREAK | Saved by SAVE/AUTOSAVE; restored at power-on; automatic Song/Chain changes do not replace it |
 | Tempo, GLOBAL settings, LCD SCHEME and Remix APPLY | Saved with the project; outside Undo |
 | Grids knobs and random state | Session only; separate for 909/808; outside project saving and Undo |
 | Undo/Redo history, free-play switches and live mutes | Session only; song-bar mutes are saved in the song |
@@ -935,6 +938,15 @@ is stored separately from the saved project.
 | Browser break slots | Saved separately in browser storage |
 
 ### Saving
+
+SAVE and AUTOSAVE remember the last **manually chosen combination** of project patterns
+for all five parts, including BREAK. PRESETS on a part changes that part; PRESETS on HOME
+and HOME white pattern keys choose all five. A queued manual selection is remembered even
+before it becomes audible. Song playback and automatic chain advancement never replace
+this startup combination. Defining a chain remembers its first manually selected pattern;
+its automatic advances do not become the startup pattern. Older projects without startup
+fields begin at P1 on all parts. Pattern selections cause no immediate flash writes.
+
 
 **SAVE** saves the sounds, all 32 patterns, the song, the knob motion, the tempo and the
 settings. A small grey dot at the top right of the screen means there are unsaved changes, and

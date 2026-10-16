@@ -24,12 +24,14 @@ cp web/emu/index.html web/emu/worklet.js web/emu/favicon.svg build/emu/
 python3 - <<'PROVENANCE'
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 
 wasm = Path("build/emu/x0x.wasm")
 info = {
     "project": "X0X-RMX",
+    "version": os.environ.get("X0X_VERSION", "DEV").upper(),
     "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
     "branch": subprocess.check_output(["git", "branch", "--show-current"], text=True).strip(),
     "working_tree_changes": subprocess.check_output(["git", "status", "--porcelain"], text=True).splitlines(),

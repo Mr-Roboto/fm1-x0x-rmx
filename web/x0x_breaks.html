@@ -57,7 +57,7 @@
   <h1>Break loops</h1>
   <p>Your own loops for X0X-RMX's BREAK part. They appear on the FM-1 as BR1, BR2 and so on, after X0X's own
     loops, when you turn LOOP A or LOOP B (BREAK, then EDIT).</p>
-  <p class="small">X0X-RMX physical FM-1 validation is pending; this retained uploader requires compatible firmware.</p>
+  <p class="small">X0X-RMX final v1.0.0 FM-1 validation and release approval are pending; this retained uploader requires compatible firmware.</p>
   <p class="small">Connect the FM-1 by USB with X0X running, and use Chrome or Edge.</p>
 
   <div class="bar">
@@ -255,7 +255,7 @@ async function connect() {
   const midi = await navigator.requestMIDIAccess({ sysex: true });
   const outs = [...midi.outputs.values()];
   for (const input of midi.inputs.values()) {
-    if (input.state === "disconnected" || !/x0x|felucca/i.test(input.name || "")) continue;
+    if (input.state === "disconnected" || !/x0x|felucca|^FM-1(?:\s+Midi(?:\s+\d+)?)?$/i.test(input.name || "")) continue;
     const output = outs.find((o) => o.name === input.name);
     if (!output) continue;
     await input.open();

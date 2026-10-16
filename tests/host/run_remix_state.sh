@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 set -e
 cd "$(dirname "$0")/../.."
-mkdir -p build/host
-for test in remix_state remix_ui remix_motion; do
+mkdir -p build/host build/host/p9
+for test in remix_state remix_ui remix_motion p9; do
     engine_src=firmware/src/app/engine.c
     # This test includes engine.c to exercise its private ISR callbacks/runtime.
     if [ "$test" = remix_motion ]; then engine_src=; fi

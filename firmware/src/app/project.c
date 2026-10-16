@@ -35,6 +35,9 @@ static uint32_t packed_len;             /* the last save's (or load's) packed st
 void project_defaults(void)
 {
     int i;
+    proj.set.usb_full = 1;
+    for (i = 0; i < 5; i++)
+        proj.set.start_pat[i] = 0;
     proj.set.rsv[0] = 0;                /* legacy/default APPLY = BEAT */
     proj.set.magic = PROJ_MAGIC;
     proj.set.format = PROJ_FORMAT;
@@ -441,6 +444,9 @@ int project_load(void)
         proj.set = set;
     else
         bad = 1;
+    for (i = 0; i < 5; i++)
+        if (proj.set.start_pat[i] >= NPAT)
+            proj.set.start_pat[i] = 0;
     sound_ok = load_obj(OBJ_SOUND, &proj.sound, sizeof proj.sound) == 0;
     if (!sound_ok)
         bad = 1;
@@ -491,6 +497,7 @@ void project_apply_io(void)
     seq.send_notes = proj.set.notes_out;
     for (p = 0; p < 5; p++) {
         int v = proj.set.midi_ch[p];
+        seq_cue_part(&seq, p, proj.set.start_pat[p]);
         seq.ch[p] = (uint8_t)(!v ? DEF[p] : v > 16 ? SEQ_CH_OFF : v - 1);
     }
     engine_out_loud(proj.set.out_loud);

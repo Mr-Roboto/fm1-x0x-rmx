@@ -237,7 +237,7 @@ static const x0x_param_t MIDICH_P[NPARTS] = {   /* 0 = OFF (no notes in or out),
 static const char *const OUT_N[] = {"NORMAL", "LOUD"};
 static const x0x_param_t OUT_P = {"OUTPUT", 1, 0, OUT_N};
 static const char *const USBA_N[] = {"FOLLOWS KNOB", "FULL"};
-static const x0x_param_t USBA_P = {"USB AUDIO", 1, 0, USBA_N};
+static const x0x_param_t USBA_P = {"USB AUDIO", 1, 1, USBA_N};
 static const x0x_param_t FREEPLAY_P = {"FREE PLAY", 1, 0, ONOFF_N};
 static const x0x_param_t SREP_P = {"REPEAT", 7, 0, 0};    /* the bar plays 1-8 times */
 static const char *const BATT_N[] = {"EMPTY", "1/3", "2/3", "FULL", "USB POWER", "..."};
@@ -845,8 +845,6 @@ static void build_pages(void)
         else if (is_303())
         {
             add_page("SEQUENCE", PR(R_BLEN, b, 0, 0), PR(R_BRATE, b, 0, 0), PR(R_BDIR, b, 0, 0), PR(R_BTRANS, b, 0, 0));
-            pg_grp = GR_NONE;                          /* (not the pattern's: no P1 in its name) */
-            add_page("KEYS", PR(R_FREEPLAY, b, 0, 0), NONE, NONE, NONE);
         }
         else {
             add_page("GROOVE", PR(R_BRKSET, 0, 0, BRK_COMPLEX), PR(R_BRKSET, 0, 0, BRK_ANCHOR),
@@ -859,8 +857,12 @@ static void build_pages(void)
         }
         if (is_drum() || is_303()) {
             pg_grp = GR_PAT;
-            add_page("REMIX", PR(R_RBANK, p, 0, 0), PR(R_RPAT, p, 0, 0),
-                     PR(R_RENABLE, p, 0, 0), PR(R_RAPPLY, 0, 0, 0));
+            add_page("REMIX", PR(R_RAPPLY, 0, 0, 0), PR(R_RBANK, p, 0, 0),
+                     PR(R_RPAT, p, 0, 0), PR(R_RENABLE, p, 0, 0));
+        }
+        if (is_303()) {
+            pg_grp = GR_NONE;
+            add_page("KEYS", PR(R_FREEPLAY, b, 0, 0), NONE, NONE, NONE);
         }
         break;
     case V_PART:                                       /* the part's sound */
@@ -1723,6 +1725,7 @@ static void run_action(int act, int arg)
         break;
     case ACT_RESET:
         project_defaults();
+        project_apply_io();
         engine_apply_sound(&proj.sound);
         engine_brk_loops();
         scheme_set((uint32_t)settings_scheme(&proj.set), proj.set.palette);
@@ -2144,6 +2147,22 @@ static void bass_step_key(int white, int down)
     }
 }
 
+/* Only panel selection updates startup state. Song, chains and performance tests use
+ * the sequencer directly. Remember requests even before a playing cue takes effect. */
+static void manual_pattern(int part, int pat)
+{
+    int p;
+    for (p = 0; p < NPARTS; p++) {
+        if (part >= 0 && part != p)
+            continue;
+        if (proj.set.start_pat[p] != pat) {
+            proj.set.start_pat[p] = (uint8_t)pat;
+            mark_dirty();
+        }
+        seq_cue_part(&seq, p, pat);
+    }
+}
+
 static int all_on(int w)                               /* every part plays pattern w */
 {
     int p;
@@ -2241,7 +2260,7 @@ static void key_event(int k, int down)
             } else {
                 ui.chain_first = (int8_t)wp;
                 seq_chain(&seq, 0, 0);
-                seq_cue(&seq, wp);
+                manual_pattern(-1, wp);
             }
         } else if (ui.chain_first == wp) {
             ui.chain_first = -1;
@@ -2632,10 +2651,7 @@ static void input(void)
         int p = (c >= 0 ? c : seq.ppat[part]) + (e > 0 ? 1 : -1);
         p = p < 0 ? 0 : p >= NPAT ? NPAT - 1 : p;
         seq_chain(&seq, 0, 0);
-        if (part_view())
-            seq_cue_part(&seq, part, p);
-        else
-            seq_cue(&seq, p);
+        manual_pattern(part_view() ? part : -1, p);
         ui.pbank = (uint8_t)(p / 16);                 /* HOME shows the bank it is in */
         build_pages();
     }

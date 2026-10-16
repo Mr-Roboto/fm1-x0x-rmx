@@ -4,7 +4,7 @@ wait 300
 turn ALGO 2
 expect part 2
 tap SEQ
-turn SELECT 1
+turn SELECT 2
 turn K1 1
 key w4 down
 wait 100

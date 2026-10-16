@@ -184,7 +184,7 @@ int main(void)
     project_defaults();
     seq_init(&seq, proj.pat);
     ui_init();
-    assert(sizeof(tb3po_cfg_t) == 12 && sizeof(project_t) == 30944);
+    assert(sizeof(tb3po_cfg_t) == 12 && sizeof(project_t) == 30952);
     for (int b = 0; b < 2; b++) {
         ui.part = PART_303A + b;
         ui.view = V_GEN;

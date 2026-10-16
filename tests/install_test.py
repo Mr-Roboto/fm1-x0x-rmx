@@ -8,6 +8,7 @@ then "device asks, host answers" reads of the logical image. Run from the repo r
 Also checks logical_image/product_of against web/fm1pkg.js (needs node and
 build/x0x.fwsc, skipped otherwise)."""
 import io
+import os
 import queue
 import shutil
 import subprocess
@@ -198,6 +199,12 @@ def installs():
     ok(rc == 0 and dev.bad == 0 and "done: the FM-1 runs FM-1_9001000" in out,
        "install: 0.9 (FM-1_909) -> 0.10 (FM-1_9001000), the longer identity verified after")
 
+    stable = package("FM-1_9010000")
+    dev = FakeFM1(I.logical_image(stable), identity="FM-1_900", after_write="FM-1_9010000")
+    rc, out, err = cli([pkgfile("x0x-1.0.0.fwsc", stable), "--yes"], dev)
+    ok(rc == 0 and dev.bad == 0 and "done: the FM-1 runs FM-1_9010000" in out,
+       "install: development FM-1_900 -> stable FM-1_9010000, identity verified")
+
     dev = FakeFM1(image, identity="ota-FM-1_900", name="Felucca Update")
     rc, out, err = cli([p, "--yes"], dev)
     ok(rc == 0 and dev.bad == 0 and dev.upgrades == 1 and "update mode" in out, "install: device already in update mode -> finishes the write")
@@ -269,7 +276,7 @@ def errors():
 
 
 def against_js():
-    clean = ROOT / "build/x0x.fwsc"
+    clean = ROOT / os.environ.get("X0X_TEST_PACKAGE", "build/x0x.fwsc")
     if not shutil.which("node") or not clean.exists():
         print("logical image vs fm1pkg.js: skipped (needs node and build/x0x.fwsc)")
         return

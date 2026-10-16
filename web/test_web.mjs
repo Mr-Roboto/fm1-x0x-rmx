@@ -25,13 +25,13 @@ const py = (code, ...args) => execFileSync("python3", ["-c", code, ...args], { m
 const HERE = new URL(".", import.meta.url).pathname;
 
 /* ------------------------------------------------------------ editor protocol --- */
-const html = readFileSync(join(HERE, "editor.html"), "utf8");
+const html = existsSync(join(HERE, "editor.html")) ? readFileSync(join(HERE, "editor.html"), "utf8") : "";
 const proto = html.slice(html.indexOf("/*PROTO-BEGIN*/"), html.indexOf("/*PROTO-END*/"));
-const E = vm.runInNewContext(proto + `
+const E = html ? vm.runInNewContext(proto + `
 ;({ frame, unframe, parse, req, Link, parseWav, resample, normalize, rootFromName, buildSlot, makeMockDevice, CMD, SMP,
    UP, bank, capturePatch, auditionPatch, startWatch, libraryFile, readLibraryFile, paramKeys, patternFromSteps, stepsFromPattern, upName,
    mixer, GM_DRUM, drumName, parseNotes })`,
-{ setTimeout, clearTimeout, setInterval, clearInterval, console });
+{ setTimeout, clearTimeout, setInterval, clearInterval, console }) : null;
 
 async function editorMock() {
   const m = E.makeMockDevice();
@@ -507,7 +507,7 @@ function samplesMatch() {
 
 /* ------------------------------------------------------- packages: JS == Python --- */
 async function packages() {
-  const pkg = join(HERE, "../build/felucca.fwsc");
+  const pkg = process.env.X0X_TEST_PACKAGE || join(HERE, "../build/x0x.fwsc");
   if (!existsSync(pkg)) {
     console.log("packages: skipped (run ./build.sh first)");
     return;
@@ -516,7 +516,7 @@ async function packages() {
   const logical = py(`import sys; raw = open(sys.argv[1], "rb").read()
 sys.stdout.buffer.write(b"".join(raw[i * 48:i * 48 + 47] for i in range(20)) + raw[960:])`, pkg);
   ok(eq(logicalImage(raw), logical), "fm1pkg.js logicalImage");
-  ok(/^FM-1_9\d\d$/.test(productOf(raw)), "fm1pkg.js productOf");
+  ok(/^FM-1_9(?:\d\d|\d{6})$/.test(productOf(raw)), "fm1pkg.js productOf");
 }
 
 /* ------------------------------------------------- update protocol (fm1ota.js) --- */
@@ -601,6 +601,7 @@ async function updater() {
   ok(e2 && e2.code === "notfound", "fm1ota.js: no device -> error code 'notfound'");
 }
 
+if (html) {
 await editorMock();
 await editorLibrarian();
 await editorLive();
@@ -610,6 +611,7 @@ await editorTrackParam();
 editorTabs();
 editorIcons();
 samplesMatch();
+} else console.log("editor: skipped (Felucca editor.html is not part of X0X)");
 await packages();
 await updater();
 console.log(failed ? `WEB TESTS FAILED (${failed})` : "web tests passed");

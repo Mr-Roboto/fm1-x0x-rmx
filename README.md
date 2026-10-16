@@ -21,8 +21,8 @@ This fork adds:
 - **Six LCD color schemes**, plus **Cream & Lilac**, **Classic Dark**, **Sunset Orange** and **Pink Lilac** device finishes
   in the browser emulator.
 
-**Physical FM-1 validation is pending.** Development builds are not advertised as tested
-hardware releases. No X0X-RMX public installer or firmware download is enabled in this phase.
+**Stable v1.0.0 is prepared locally.** Initial P9 hardware observations were collected
+on development firmware FM-1_900; final v1.0.0 hardware validation and release approval remain open. No X0X-RMX public installer or firmware download is enabled in this phase.
 Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
 
 - **Project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
@@ -45,7 +45,8 @@ validation and release approval. You can also [build and preview the website loc
 
 [Watch the 84-second musical demonstration](https://mr-roboto.github.io/fm1-x0x-rmx/#demo):
 Remix, Grids, TB-3PO and Morph, with real stereo emulator audio.
-This is a browser-emulator demonstration; physical FM-1 validation remains pending.
+This is a browser-emulator recording from before P9. The closing validation card reflects
+that earlier state: initial FM-1 observations now exist, while final v1.0.0 tests remain open.
 
 ## A closer look
 

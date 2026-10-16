@@ -124,8 +124,9 @@ assert video["poster"] == "media/video/x0x-rmx-demo-poster.png"
 assert video["width"] == "1280" and video["height"] == "720"
 assert "browser-emulator" in video["aria-label"]
 assert landing.index('id="demo"') < landing.index('id="upstream-demo"')
-assert "Browser demonstration; physical FM-1 validation remains pending." in landing
+assert "Emulator recording from before P9" in landing
+assert "Final v1.0.0 validation remains open" in landing
 assert 'href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"' in readme
 assert 'src="docs/media/video/x0x-rmx-demo-poster.png"' in readme
-assert "This is a browser-emulator demonstration" in readme
+assert "This is a browser-emulator recording from before P9" in readme
 print("Approved video/poster byte integrity, URLs, player controls and browser-only identification passed")

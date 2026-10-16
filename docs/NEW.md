@@ -1,12 +1,30 @@
 # X0X-RMX version history
 
-X0X-RMX development changes come first. Physical FM-1 validation is pending; the
-installer is reserved and no tested fork release is offered. See the [manual](MANUAL.md)
+X0X-RMX stable version 1.0.0 is prepared locally. Initial P9 hardware observations
+were collected on FM-1_900; final 1.0.0 hardware validation and release approval remain open.
+The public installer and downloads remain reserved. See the [manual](MANUAL.md)
 and the [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 The current `orb-remix` source is the implementation reference; browser/host tests and builds
 do not establish physical FM-1 timing, listening or installation compatibility.
 
-## Unreleased · orb-remix
+## 1.0.0 · Stable · prepared, not yet published
+
+- USB AUDIO defaults to FULL for new projects and Factory Reset; saved choices remain intact.
+- SAVE/AUTOSAVE remember the last manual startup pattern combination for all five parts.
+  PRESETS and HOME pattern keys are supported; automatic Song/Chain changes do not replace it.
+  Older projects start at P1 on all parts; the packed pattern/song/motion format is unchanged.
+- Two built-in loops: 909 GR and 808 GR, distinct two-bar grooves at 96 BPM, rendered during
+  the build. Their 110,250-byte combined ADPCM payload is unchanged in size. The three user
+  slots, their addresses and upload protocol are unchanged; ordinary OTA preserves them.
+- Both 303 SEQ pages now follow SEQUENCE → REMIX → KEYS. KEYS retains only FREE PLAY.
+- All four Remix parts use KNOB 1 APPLY, KNOB 2 BANK, KNOB 3 PATTERN, KNOB 4 REMIX ON/OFF.
+  The musical mapping, saved Remix values and APPLY timing are unchanged.
+- Browser break uploader recognizes Windows names such as FM-1 Midi 2 and still requires
+  the X0X protocol handshake on an identically named input/output pair.
+- Official package: x0x-1.0.0.fwsc; product FM-1_9010000; planned Git tag v1.0.0.
+  Publication and installer activation wait for final device tests and explicit approval.
+
+### Included fork changes
 
 - Independent Orb-inspired Remix for 909, 808, 303A and 303B; BREAK is unaffected.
   SEQ > REMIX exposes Bank A–P, Pattern 1–16, ON/OFF and STEP/BEAT/BAR/LOOP APPLY.

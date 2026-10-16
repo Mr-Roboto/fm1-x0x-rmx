@@ -190,6 +190,8 @@ static void transient_checks(void)
     proj.pat[1].drum[0].len = 8;
     turn(EN_PRESET, 1); run_ms(10); ui_input_only();
     assert(seq.ppat[0] == 1 && seq.ppat[1] == 0);
+    assert(ui.dirty && proj.set.start_pat[0] == 1);
+    ui.dirty = 0; /* P9 manual startup selection is saved; generator knobs remain transient. */
     assert(g->x == 77 && g->fill[1] == 41 && g->mode == DG_EUCLID);
     assert(g->len[0] == 8 && g->offset[0] < 8);
     assert(pref_desc(pg.r[0][0])->max == 7);

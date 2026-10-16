@@ -41,7 +41,10 @@ On Linux x86-64 the toolchain runs natively and Docker is not needed.
 `JIELI_TOOLCHAIN` and `AC79_SDK` override the default locations
 (`~/.jieli/toolchain`, `~/fw-AC79_AIoT_SDK`).
 
-`./build.sh --release 0.1-beta` makes a release build; the package is `build/x0x-0.1-beta.fwsc`.
+`./build.sh --release 1.0.0` builds the stable package `build/x0x-1.0.0.fwsc`,
+with display version `1.0.0` and product identity `FM-1_9010000`. Unsuffixed versions stay
+unsuffixed; an explicitly supplied legacy suffix remains explicit. All image, RAM, pool,
+loader and SDK checks still run. A local build does not publish or authorize installation.
 
 On macOS with podman instead of Docker, put a `docker` script that runs `exec podman "$@"` first
 on your PATH. `X0X_JOBS` (default 4) limits parallel compiles: a podman machine drops
@@ -51,7 +54,7 @@ Build option: `X0X_CDC=1` adds Felucca's USB serial function (off by default: on
 MIDI interface).
 
 The build also generates `build/gen/`: the font, the 909's samples and tables
-(`tools/gen_drum_samples.py`), and the built-in break loops, rendered by the 909 port on the
+(`tools/gen_drum_samples.py`), and the built-in break loops, rendered by the 909 and 808 ports on the
 host (`tools/gen_builtin_break.sh`, needs a host `cc`). Opt-in, `X0X_BREAK_BANK=DIR` builds
 the break bank from one-bar WAVs instead (`tools/import_breaks.py` makes such a folder from
 BB Gen's samples, in `build/breaks/`); see README.md, Breaks. It fails if a soft-double routine is
@@ -88,7 +91,7 @@ script (the command list is at the top of `host/x0x_host.c`).
 
 ## Installation tooling
 
-Physical FM-1 validation of X0X-RMX is pending. No public fork installer, firmware download
+Initial P9 FM-1 observations exist on FM-1_900; final v1.0.0 device validation is pending. No public fork installer, firmware download
 or tested release is enabled. Charles Vestal's installer installs original X0X, not this fork.
 The existing package format, hardware identities, loader and command-line tools are retained.
 For a future validated and approved package, the command-line installer accepts a local file

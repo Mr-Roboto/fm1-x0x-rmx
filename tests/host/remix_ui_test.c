@@ -329,8 +329,8 @@ static void preferences(void)
     assert(pref_desc(PR(R_RAPPLY, 0, 0, 0))->def == REMIX_BEAT);
     assert(settings_remix_apply(&proj.set) == REMIX_BEAT);
     ui.view = V_SEQ;
-    const int kinds[] = {R_RBANK, R_RPAT, R_RENABLE, R_RAPPLY};
-    const char *names[] = {"BANK", "PATTERN", "REMIX", "APPLY"};
+    const int kinds[] = {R_RAPPLY, R_RBANK, R_RPAT, R_RENABLE};
+    const char *names[] = {"APPLY", "BANK", "PATTERN", "REMIX"};
     for (int t = 0; t < 5; t++) {
         ui.part = t;
         build_pages();
@@ -338,9 +338,9 @@ static void preferences(void)
         for (int k = 0; k < pg.n; k++)
             if (!strcmp(pg.title[k], "REMIX")) found = k;
         if (t == TRK_BRK) { assert(found == -1); continue; }
-        assert(found == (t < 2 ? 1 : 2));
+        assert(found == 1);
         assert(!strcmp(pg.title[0], "SEQUENCE"));
-        if (t >= 2) assert(!strcmp(pg.title[1], "KEYS"));
+        if (t >= 2) assert(!strcmp(pg.title[2], "KEYS"));
         *page_of(V_SEQ) = found;
         for (int k = 0; k < 4; k++) {
             pref_t r = pg.r[found][k];
@@ -354,15 +354,15 @@ static void preferences(void)
             motion_forget(r);
             assert(!memcmp(before, proj.arr.lane, sizeof before));
             seq.playing = ui.rec = 0;
-            assert(in_pattern(r) == (k != 3));
+            assert(in_pattern(r) == (k != 0));
             for (int v = 0; v <= pref_desc(r)->max; v++) {
                 char num[24], unit[24], expected[24];
                 pref_set(r, v);
                 assert(pref_get(r) == v && ui_dirty());
                 pref_value_of(r, v, num, unit);
-                if (k == 0) { expected[0] = 'A' + v; expected[1] = 0; }
-                else if (k == 1) snprintf(expected, sizeof expected, "%d", v + 1);
-                else strcpy(expected, k == 2 ? ONOFF_N[v] : APPLY_N[v]);
+                if (k == 1) { expected[0] = 'A' + v; expected[1] = 0; }
+                else if (k == 2) snprintf(expected, sizeof expected, "%d", v + 1);
+                else strcpy(expected, k == 3 ? ONOFF_N[v] : APPLY_N[v]);
                 assert(!strcmp(num, expected) && !unit[0]);
             }
         }
@@ -385,8 +385,8 @@ static void preferences(void)
     assert(strstr(ui.msg, "303") && !strstr(ui.msg, "BREAK"));
     do_undo(1);
     assert(pref_get(PR(R_RBANK, 2, 0, 0)) == 2);
-    /* Settings/project layout stays unchanged. */
-    assert(sizeof(settings_t) == 28 && sizeof(project_t) == 30944);
+    /* Legacy settings offsets and packed pattern stream stay unchanged. */
+    assert(sizeof(settings_t) == 36 && sizeof(project_t) == 30952);
     for (int byte = 0; byte < 256; byte++) {
         proj.set.rsv[0] = byte;
         assert(settings_remix_apply(&proj.set) == ((byte & 0xFC) == 0xB4 ? byte & 3 : REMIX_BEAT));

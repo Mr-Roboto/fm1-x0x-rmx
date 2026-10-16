@@ -300,4 +300,4 @@ These completed integration items are not pending design decisions.
 No Orb musical reverse or musical ping-pong extension is part of the current feature.
 Before adding one, decide its name/UI and behavior for partial lengths and multiple
 16-step blocks explicitly. The existing bass Reverse, Ping-Pong and Random directions
-currently bypass Remix and must remain available. Physical FM-1 validation remains pending.
+currently bypass Remix and must remain available. Initial P9 observations exist on FM-1_900; final v1.0.0 hardware validation remains open.

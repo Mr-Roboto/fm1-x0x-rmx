@@ -39,6 +39,7 @@ typedef struct {
     uint8_t out_loud;                    /* 1: the output 6 dB hotter (the codec's full scale) */
     uint8_t usb_full;                    /* 1: USB audio at full level, the MASTER knob for the FM-1's own outputs */
     uint8_t rsv[1];                      /* Remix APPLY: 0xB4..0xB7, invalid = BEAT */
+    uint8_t start_pat[5];                /* manual startup combination, zero-based; absent = P1 */
 } settings_t;
 
 static inline int settings_scheme(const settings_t *s)

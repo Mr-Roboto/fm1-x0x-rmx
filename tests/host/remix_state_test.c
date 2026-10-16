@@ -24,7 +24,7 @@ int main(void)
     assert(sizeof(dpart_t) == 100);
     assert(sizeof(bpart_t) == 144);
     assert(sizeof(pattern_t) == 528);
-    assert(sizeof(project_t) == 30944);
+    assert(sizeof(project_t) == 30952);
     assert(RAW_LEN == 29572);
     project_defaults();
     seq_init(&seq, proj.pat);

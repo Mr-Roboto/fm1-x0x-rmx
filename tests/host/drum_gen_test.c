@@ -86,7 +86,7 @@ static void test_state(void)
     assert(sizeof(drum_gen_map) == 1200 && sizeof(drum_gen_cfg_t) == 16);
     assert(sizeof(drum_gen_edit_t) == 48);
     assert(sizeof(dpart_t) == 100 && sizeof(bpart_t) == 144);
-    assert(sizeof(pattern_t) == 528 && sizeof(project_t) == 30944);
+    assert(sizeof(pattern_t) == 528 && sizeof(project_t) == 30952);
     assert(DR_BD == 0 && DR_SD == 1 && DR_CH == 7);
     assert(D8_BD == 0 && D8_SD == 1 && D8_CH == 10);
     drum_gen_init(0x1234);

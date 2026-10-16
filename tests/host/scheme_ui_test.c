@@ -1,10 +1,19 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Shared LCD renderer, real GLOBAL input, legacy appearance and project storage. */
 #define engine_gr_db scheme_test_gr_db
+#define engine_brk_slot_names scheme_test_brk_slot_names
 #define main simulator_main
 #include "../../host/x0x_host.c"
 #undef main
 #undef engine_gr_db
+#undef engine_brk_slot_names
+const char *const *engine_brk_slot_names(void);
+static int legacy_loop_names;
+const char *const *scheme_test_brk_slot_names(void)
+{
+    static const char *const old_names[] = {"909 GR", "909 FL"};
+    return legacy_loop_names ? old_names : engine_brk_slot_names();
+}
 static float test_gr;
 float scheme_test_gr_db(void) { return test_gr; }
 #include <assert.h>
@@ -109,6 +118,8 @@ static void select_global_row(int kind, int action)
 
 static void legacy_appearance(void)
 {
+    /* Normalize only the intentionally renamed P9 loop in historical pixel checks. */
+    legacy_loop_names = 1;
     for (int p = 0; p < 5; p++)
         for (int part = 0; part < 5; part++)
             for (int v = 0; v < 8; v++) {
@@ -127,7 +138,11 @@ static void legacy_appearance(void)
                     pg.n = 2;
                     draw_knobs();
                     assert(screen_hash() == original_lcd[p][part][v]);
-                } else assert(screen_hash() == original_lcd[p][part][v]);
+                } else {
+                    if (screen_hash() != original_lcd[p][part][v])
+                        fprintf(stderr, "LCD mismatch palette=%d part=%d view=%d\n", p, part, appearance_views[v]);
+                    assert(screen_hash() == original_lcd[p][part][v]);
+                }
             }
     for (int p = 0; p < 5; p++) {
         fixture(p); test_gr = 12.0f; render_scene(PART_909, V_MIX);
@@ -135,6 +150,7 @@ static void legacy_appearance(void)
         char path[96]; snprintf(path, sizeof path, "build/host/schemes/default-%d-comp-active.png", p);
         png_write(path);
     }
+    legacy_loop_names = 0;
     puts("DEFAULT: legacy pixels (303 page dots normalized), Grids replacements and five active COMP/GR references passed");
 }
 
@@ -269,7 +285,7 @@ static void factory_defaults(void)
 
 static void persistence(void)
 {
-    assert(sizeof(settings_t) == 28 && sizeof(project_t) == 30944);
+    assert(sizeof(settings_t) == 36 && sizeof(project_t) == 30952);
     assert(__builtin_offsetof(settings_t, palette) == 8);
     assert(__builtin_offsetof(settings_t, rsv_bright) == 17);
     assert(__builtin_offsetof(settings_t, rsv) == 27);

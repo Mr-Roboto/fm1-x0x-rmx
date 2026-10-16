@@ -1,5 +1,11 @@
 # X0X-RMX publication screenshots
 
+P9 refreshed `05-remix-909-off-a1.png`, `06-remix-909-on-b3.png` and
+`19-remix-303a-on-c4.png` from the final local 1.0.0 emulator in Chromium. All UI state was
+reached through ordinary panel inputs. They show APPLY/BANK/PATTERN/REMIX in the new order,
+with 303 Remix on page 2; the 303 example leaves its underlying notes empty. The other
+16 images retain their P8.2 provenance below. No displayed pixels were retouched.
+
 These 19 PNGs are used by the README, manual and landing page. P8.2c recaptured
 17 images from the real Chromium emulator; the already matching Global Settings
 images `32-global-scheme-white-lilac.png` and `33-cream-white-lilac-global.png`

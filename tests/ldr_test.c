@@ -146,6 +146,9 @@ int main(int argc, char **argv)
     memset(nor, 0xFF, sizeof nor);
     memcpy(nor, old + ofo, 0x93000);
     memcpy(head, nor, sizeof head);
+    /* All three user slots, including headers, must survive ordinary OTA. */
+    for (uint32_t a = 0xA0000; a < 0xDC000; a++)
+        nor[a] = (uint8_t)((a * 37u + (a >> 8)) & 255u);
     {
         uint8_t r[112] = {0};
         r[2] = 0x0D; r[3] = 0x5A; r[4] = 0x01; r[5] = 0x5A; r[6] = 0x41; r[7] = 0x54;
@@ -160,6 +163,12 @@ int main(int argc, char **argv)
     bad += check("finish asked (0xF0000000)", f0_asked >= 1);
     bad += check("update record cleared (RAM + flash)", record_cleared && nor[0xE4F06] == 0xFF);
     bad += check("no write outside the allowed windows", bad_range == 0);
+    for (uint32_t a = 0xA0000; a < 0xDC000; a++)
+        if (nor[a] != (uint8_t)((a * 37u + (a >> 8)) & 255u)) {
+            bad += check("all three user sample slots untouched", 0);
+            break;
+        }
+    if (!bad) check("all three user sample slots untouched", 1);
     /* same package again: nothing to erase */
     erases = 0; requests = 0;
     rc = ldr_session();

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* The BREAK part's default built-in loops, played by this firmware's own 909
- * (dsp/drum909.c) on the host at build time: two bars each at 96 BPM, a groove and a busier
- * fill. No recording ships: the loops are this code's output. Written as the break bank
+/* The BREAK part's default built-in loops, played by this firmware's own 909 and 808
+ * (dsp/drum909.c, dsp/drum808.c) on the host at build time: two bars each at 96 BPM, two distinct
+ * grooves. No recording ships: the loops are this code's output. Written as the break bank
  * header (the same format tools/gen_break_bank.py writes for an opt-in bank of WAVs):
  * IMA ADPCM, mono, 22050 Hz, the format of the user sample slots.
  *   gen_builtin_break OUT.h */
@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dsp/drum909.h"
+#include "dsp/drum808.h"
 
 #define BPM 96.0
 #define RATE 44100
@@ -20,56 +21,72 @@ typedef struct { int voice; const char *s; } lane_t;
 static const lane_t GROOVE[] = {
     {DR_BD, "X.....x...x.....X.....x..x......"},
     {DR_SD, "....X..g.g..X..g....X..g.g..X.g."},
-    {DR_CH, "x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x."},
-    {DR_OH, "...............x...............x"},
-    {DR_RD, "................................"},
+    {DR_CH, "x.x.x.x.x.x.x.x.x.x.x.xxx.x.x.x."},
+    {DR_OH, ".......x.......x.......x.......x"},
+    {DR_RS, "..........g...............g....."},
 };
-static const lane_t FILL[] = {
-    {DR_BD, "X.....x...x.x...X..x..x...x.x..."},
-    {DR_SD, "....X..g.g.gX.gg....X.gX.gX.XgXX"},
-    {DR_CH, "x.x.x.xxx.x.x.x.x.xxx.x.x.x....."},
-    {DR_OH, ".......x.......x.......x........"},
-    {DR_LT, "............................x..."},
-    {DR_MT, "..........................x....."},
-    {DR_HT, "........................x......."},
-    {DR_CR, "................................"},
+static const lane_t GROOVE808[] = {
+    {D8_BD, "X..x......x...x.X.....x...x....x"},
+    {D8_CP, "....X.......X.......X.......X..."},
+    {D8_SD, "...........g..............g..g.."},
+    {D8_CH, ".xx..xx..xx..xx..xx..xx..xx..xxx"},
+    {D8_OH, "........x...............x......."},
+    {D8_RS, "..g.......g.......g..g.........."},
+    {D8_CB, "......x...............x........."},
+    {D8_LT, "..............................g."},
 };
 
-static int16_t *render(const lane_t *L, int nl, uint32_t *frames)
+static int16_t *render(const lane_t *L, int nl, int kit808, uint32_t *frames)
 {
-    static drum909_t d;
+    static drum909_t d9;
+    static drum808_t d8;
     float dry[256], rev[256], dly[256];
-    double spb = RATE * 60.0 / BPM / 4.0;            /* samples per 16th */
+    double spb = RATE * 60.0 / BPM / 4.0;            /* host only: samples per 16th */
     uint32_t total = (uint32_t)(spb * STEPS + 0.5), pos = 0, i;
+    float *pcm = calloc(total, sizeof *pcm), peak = 0.0f;
     int16_t *out = malloc(sizeof(int16_t) * total);
     int step = 0;
-    drum909_init(&d);
-    while (pos < total) {
-        uint32_t next = step < STEPS ? (uint32_t)(spb * step + 0.5) : total, n;
-        if (pos >= next && step < STEPS) {
-            int l;
-            for (l = 0; l < nl; l++) {
-                char c = L[l].s[step];
-                if (c == 'x' || c == 'X' || c == 'g')
-                    drum909_trigger(&d, L[l].voice, c == 'X' ? 1.0f : c == 'g' ? 0.35f : 0.75f);
+    if (!pcm || !out) exit(1);
+    for (int l = 0; l < nl; l++)
+        if (strlen(L[l].s) != STEPS) exit(2);
+    if (kit808) drum808_init(&d8); else drum909_init(&d9);
+    /* Two warm-up cycles carry cymbal/BD tails across the loop boundary. */
+    while (pos < total * 3) {
+        uint32_t next = step < STEPS * 3 ? (uint32_t)(spb * step + 0.5) : total * 3, n;
+        if (pos >= next && step < STEPS * 3) {
+            for (int l = 0; l < nl; l++) {
+                char c = L[l].s[step % STEPS];
+                if (c == 'x' || c == 'X' || c == 'g') {
+                    float vel = c == 'X' ? 1.0f : c == 'g' ? 0.25f : kit808 ? D8_VEL_NORMAL : 0.75f;
+                    if (kit808) drum808_trigger(&d8, L[l].voice, vel);
+                    else drum909_trigger(&d9, L[l].voice, vel);
+                }
             }
             step++;
             continue;
         }
         n = next - pos;
-        if (n > 256)
-            n = 256;
+        if (n > 256) n = 256;
         memset(dry, 0, sizeof dry);
         memset(rev, 0, sizeof rev);
         memset(dly, 0, sizeof dly);
-        drum909_render(&d, dry, rev, dly, (int)n);
-        for (i = 0; i < n; i++) {
-            float v = dry[i] * 1.6f;                   /* a loop is normalised, like a sampled break */
-            v = v > 1.0f ? 1.0f : v < -1.0f ? -1.0f : v;
-            out[pos + i] = (int16_t)(v * 32767.0f);
-        }
+        if (kit808) drum808_render(&d8, dry, rev, dly, (int)n);
+        else drum909_render(&d9, dry, rev, dly, (int)n);
+        for (i = 0; i < n; i++)
+            if (pos + i >= total * 2) {
+                uint32_t j = pos + i - total * 2;
+                /* Sub-millisecond edge ramps avoid a hard predictor-reset seam. */
+                float ramp = j < 32 ? (float)j / 32.0f : j >= total - 32 ? (float)(total - 1 - j) / 32.0f : 1.0f;
+                float v = dry[i] * ramp;
+                pcm[j] = v;
+                if (v > peak) peak = v;
+                if (-v > peak) peak = -v;
+            }
         pos += n;
     }
+    for (i = 0; i < total; i++)
+        out[i] = (int16_t)(pcm[i] * (0.85f * 32767.0f / (peak > 0.0f ? peak : 1.0f)));
+    free(pcm);
     *frames = total;
     return out;
 }
@@ -122,21 +139,21 @@ static void emit(FILE *f, const char *name, const uint8_t *d, uint32_t ns)
 int main(int argc, char **argv)
 {
     uint32_t fa, fb, na, nb;
-    int16_t *a = render(GROOVE, (int)(sizeof GROOVE / sizeof GROOVE[0]), &fa);
-    int16_t *b = render(FILL, (int)(sizeof FILL / sizeof FILL[0]), &fb);
+    int16_t *a = render(GROOVE, (int)(sizeof GROOVE / sizeof GROOVE[0]), 0, &fa);
+    int16_t *b = render(GROOVE808, (int)(sizeof GROOVE808 / sizeof GROOVE808[0]), 1, &fb);
     uint8_t *ea = adpcm(a, fa, &na), *eb = adpcm(b, fb, &nb);
     FILE *f = fopen(argc > 1 ? argv[1] : "x0x_builtin_break.h", "w");
     if (!f)
         return 1;
     fprintf(f, "/* Generated by tools/gen_builtin_break.c -- do not edit. The BREAK part's default\n"
-               " * built-in loops: two bars at %g BPM played by this firmware's 909 port; IMA ADPCM,\n"
+               " * built-in loops: two bars at %g BPM played by this firmware's 909 and 808 ports; IMA ADPCM,\n"
                " * mono, 22050 Hz. */\n#pragma once\n#include <stdint.h>\n"
                "#define X0X_NBREAKS 2\n#define X0X_BREAK_RATE 22050u\n", BPM);
     emit(f, "X0X_BREAK_0", ea, na);
     emit(f, "X0X_BREAK_1", eb, nb);
     fprintf(f, "typedef struct { const char *name; const uint8_t *adpcm; uint32_t n; uint8_t bars; } x0x_break_t;\n"
                "static const x0x_break_t X0X_BREAKS[X0X_NBREAKS] = {\n"
-               "    {\"909 GR\", X0X_BREAK_0, X0X_BREAK_0_N, %d},\n    {\"909 FL\", X0X_BREAK_1, X0X_BREAK_1_N, %d},\n};\n",
+               "    {\"909 GR\", X0X_BREAK_0, X0X_BREAK_0_N, %d},\n    {\"808 GR\", X0X_BREAK_1, X0X_BREAK_1_N, %d},\n};\n",
             BARS, BARS);
     fclose(f);
     printf("builtin break: A %u + B %u samples, %u bytes of flash\n", na, nb, (na + 1) / 2 + (nb + 1) / 2);

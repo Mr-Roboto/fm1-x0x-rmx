@@ -1,108 +1,112 @@
 # P9 Final Implementation — X0X-RMX v1.0.0 Stable
 
-Stand: 16. Oktober 2026. Ausgangspunkt `e5cf961ccb23f4a8834869b0af6e98c9acde30fb`,
-Branch `orb-remix`. `main` bleibt bei `47f8e4c4ad602591b81c21bc5480db7a94f6d6af`.
-Keine Veröffentlichung, kein Tag, kein Push, kein öffentlicher Firmwareupload und keine
-Aktivierung des öffentlichen Installers. Dies ist die lokale Vorbereitung der offiziellen
-Stable-Version; die abschließende Hardwareprüfung ist offen.
+P9 firmware commit: `4694051a499aeaceb84692a0d195463029bf94b0` on `orb-remix`.
+Implementation baseline: `e5cf961ccb23f4a8834869b0af6e98c9acde30fb`.
+`main` remains at `47f8e4c4ad602591b81c21bc5480db7a94f6d6af`.
 
-## Ergebnis und technische Entscheidungen
+The maintainer approved publication on 16 October 2026 after confirming a regular update
+from FM-1_900, preserved patterns and user breaks, restoration of the five manual startup
+patterns, chain playback, a twelve-minute musical run without reported problems, and USB
+audio with iPad/AudioShare. Real-device sequencer, drum, bass synth, effects and breakbeat
+engine operation was also confirmed. Separate FULL/FOLLOWS KNOB hardware checks were not reported
+and are not an additional release condition. See [the hardware record](P9_FM1_TEST.md).
+The tested package is published unchanged; publication makes no firmware change or rebuild.
 
-- **P9-04:** `project_defaults()` setzt USB FULL. Factory Reset wendet die Settings nun auch
-  auf die Engine an. Vorhandene Settings werden weiterhin über die neuen Defaults geladen;
-  eine gespeicherte 0 (FOLLOWS KNOB) bleibt 0, eine 1 bleibt 1. Die Auswahl bleibt verfügbar.
-- **P9-05:** Fünf Bytes `start_pat[5]` werden an `settings_t` angehängt, hinter `rsv[0]`.
-  Manuelle PRESETS- und HOME-Auswahl ändern diese Bytes und markieren das Projekt als dirty.
-  SAVE/AUTOSAVE schreiben über die vorhandenen Objekthashes; kein Flashzugriff pro Wechsel.
-  Die UI merkt bereits die angeforderte manuelle Kombination, auch vor einem Cue-Wechsel.
-  Sequencer, Song und Chain kennen diese Bytes nicht und können sie nicht überschreiben.
-  Bei einer HOME-Chain ist die erste manuelle Wahl der Start; der zweite gehaltene Tastendruck
-  definiert nur das Ende. Boot wendet die gespeicherten Patterns über bestehende Cues an.
-- **Speicherformat:** Settings 28 → 36 B durch fünf Nutzbytes und Alignment, Projekt-RAM
-  30.944 → 30.952 B. Alle bisherigen Settings-Offsets bleiben unverändert, insbesondere
-  Remix APPLY in `rsv[0]` bei Offset 27. Startfelder liegen bei 28–32, Werte 0–31.
-  Fehlende Felder bleiben P1, ungültige Nummern werden zu P1 begrenzt. Das Settings-Objekt
-  wächst von 32 auf 40 B inklusive Formatwort; kein neues Objekt und kein neuer Sektor.
-  `pattern_t` bleibt 528 B, der gepackte Pattern/Song/Motion-Rohstrom bleibt 29.572 B und
-  Format 2 unverändert. Historische Format-1-Projekte werden weiterhin konvertiert.
-  **Rückwärtskompatibel bedeutet: neue Firmware liest alte Projekte.** Ältere Firmware
-  lehnt die längeren Settings ggf. ab; ein verlustfreier Downgrade ist nicht zugesichert.
-- **P9-07:** 909 GR und 808 GR ersetzen die vorherigen zwei 909-Loops. Beide zwei Takte,
-  96 BPM, 110.250 Samples bei 22.050 Hz, mono, 4-Bit-IMA-ADPCM, jeweils 55.125 B.
-  Host-Generator bindet den vorhandenen 808-Renderer ein. Zwei Vorlaufzyklen erhalten
-  Ausklänge; 32 Samples kurze Randrampen und Normalisierung auf 85 % vermeiden harte
-  Schnittkanten bzw. Clipping. Keine Erzeugung beim Booten, keine neue Engine im Target.
-- **P9-08/09:** Beide 303s: SEQUENCE → REMIX → KEYS; KEYS ausschließlich FREE PLAY.
-  Auf 909/808/303A/303B: APPLY / BANK / PATTERN / REMIX von links nach rechts.
-  DSP-, Remix- und Sequencer-Algorithmen, Patternparameter und Timing sind unverändert.
-- **Uploader:** Zusätzlich eng begrenzte FM-1-Namen einschließlich `FM-1 Midi 2` erkannt.
-  Identisch benannte Ein-/Ausgänge und bestehender X0X-SysEx-Handshake bleiben erforderlich.
-  Fremde Namen werden nicht angesprochen, falsche Header/Kommandos und ausbleibende
-  Antworten akzeptieren kein Gerät. Keine Änderung am Uploadprotokoll.
-- **Version:** Reguläre Releaseversionen erhalten keinen automatisch angehängten Status
-  mehr. Das existierende Produkt-ID-Schema, SDK-, Loader-, Flash-, RAM-, Pool-, MMIO-
-  und Soft-Double-Prüfungen bleiben bestehen. Explizite historische Versionssuffixe bleiben
-  explizit; die vorbereitete Version ist ausschließlich 1.0.0 Stable.
-- **Testumgebung:** POSIX-Featuredefinition für den C99-Host-Build ergänzt. Alte Struktur-
-  und UI-Erwartungen gezielt aktualisiert. Beim historischen LCD-Pixelvergleich wird nur
-  der bewusst umbenannte zweite Loop normalisiert, um die bisherigen Pixelchecks zu erhalten.
-  Die Suite kann das konkrete Stable-Paket über `X0X_TEST_PACKAGE` prüfen. Fehlende externe
-  Referenzen werden als Skip gemeldet; vorhandene Vergleiche dürfen weiterhin fehlschlagen.
-  Der geerbte Webtest überspringt nur den nicht vorhandenen Felucca-Editor, prüft aber jetzt
-  X0X-Pakete und das bestehende Browser-OTA-Protokoll.
+## Implementation decisions
 
-## Speicher und Artefakte
+- **P9-04:** `project_defaults()` selects USB FULL. Factory Reset applies settings to the
+  engine. Loading saved settings over the defaults retains an existing FOLLOWS KNOB or FULL
+  choice. Both choices remain available. Automated checks cover defaults and saved choices;
+  the physical confirmation covers USB audio with iPad/AudioShare without separate mode claims.
+- **P9-05:** Five `start_pat[5]` bytes are appended to `settings_t`, after `rsv[0]`.
+  Only manual PRESETS/HOME selection updates them and marks the project dirty. The existing
+  SAVE/AUTOSAVE object/hash mechanism writes them; pattern changes do not write flash.
+  Requested manual choices are remembered even before a playing cue takes effect. Song,
+  automatic chains and performance tests use the sequencer directly and cannot overwrite the
+  startup bytes. A HOME chain remembers its first manual choice; the second held key defines
+  the endpoint. Boot restores the combination through existing cues.
+- **Storage:** Settings grow 28 → 36 B (five data bytes plus alignment), project RAM
+  30,944 → 30,952 B. Existing settings offsets remain unchanged; Remix APPLY still occupies
+  `rsv[0]` at offset 27. Startup fields occupy offsets 28–32, with zero-based values 0–31.
+  Missing fields default to P1; invalid values are bounded to P1. The settings object grows
+  32 → 40 B including its format word, without a new object or sector. `pattern_t` stays
+  528 B and the format-2 pattern/song/motion raw stream stays 29,572 B. Format-1 migration
+  remains available. New firmware reads old projects; lossless downgrade of the longer
+  settings object to older firmware is not guaranteed.
+- **P9-07:** 909 GR and 808 GR replace the two former 909 loops. Both are two bars at 96 BPM,
+  110,250 mono samples at 22,050 Hz, encoded as 4-bit IMA ADPCM: 55,125 B each. The build-time
+  host generator links the existing 808 renderer. Two warm-up cycles carry tails across the
+  seam; 32-sample edge ramps and 85% normalization avoid hard cuts/clipping. There is no boot
+  rendering and no new target engine.
+- **P9-08/09:** Both 303s use SEQUENCE → REMIX → KEYS; KEYS has FREE PLAY only. All four
+  Remix parts expose APPLY / BANK / PATTERN / REMIX left to right. DSP, Remix algorithms,
+  pattern parameter formats and chronological timing remain unchanged.
+- **Uploader:** The existing filter additionally accepts narrow FM-1 names including
+  `FM-1 Midi 2`. Identically named input/output pairs and the existing X0X SysEx handshake
+  are still required. Unrelated names are not probed; wrong headers/commands or missing replies
+  do not identify a device. The upload protocol and sample layout are unchanged.
+- **Stable versioning:** Regular versions no longer receive an implicit status suffix.
+  The product-ID scheme and SDK, loader, image, RAM, pool, MMIO and soft-double checks remain.
+  Explicit historical suffixes remain explicit; this package is 1.0.0 Stable.
+- **Test maintenance:** The C99 host build gets its required POSIX feature definition.
+  Structure/layout and control-order expectations were updated. Historical LCD pixel tests
+  normalize only the intentionally renamed second loop. `X0X_TEST_PACKAGE` selects the exact
+  stable package. Missing external reference checkouts produce explicit skips; present
+  reference comparisons still fail normally on errors. The inherited web test skips the absent
+  Felucca editor but checks X0X package parsing and the existing browser OTA protocol.
 
-| Messung | Unverändert e5cf961 | Finale 1.0.0 | Rest / Grenze |
+## Budgets and artifacts
+
+| Measurement | Baseline e5cf961 | Final 1.0.0 | Reserve / limit |
 |---|---:|---:|---:|
-| App-Image | 579.820 B | 579.980 B | 1.584 B bis 581.564 B (`0x8DFBC`) |
-| Statisches RAM .data+.bss | 97.324 B | 97.332 B | 972 B bis 98.304 B |
-| Audiopool | 334.348 B | 334.348 B | 9.716 B bis 344.064 B |
-| Poolreserve über Pflichtminimum 8 KiB | 1.524 B | 1.524 B | Buildprüfung bestanden |
-| Built-in-ADPCM-Payload | 110.250 B | 110.250 B | unverändert |
-| OTA-Paket | 609.680 B | 609.680 B | festes Paketlayout |
-| Loader ota.bin | 6.524 B | 6.524 B | bestehende Implementierung |
+| App image | 579,820 B | 579,980 B | 1,584 B to 581,564 B (`0x8DFBC`) |
+| Static RAM .data+.bss | 97,324 B | 97,332 B | 972 B to 98,304 B |
+| Audio pool | 334,348 B | 334,348 B | 9,716 B to 344,064 B |
+| Pool reserve above required 8 KiB | 1,524 B | 1,524 B | Build check passed |
+| Built-in ADPCM payload | 110,250 B | 110,250 B | Unchanged |
+| OTA package | 609,680 B | 609,680 B | Fixed package layout |
+| Loader ota.bin | 6,524 B | 6,524 B | Existing implementation |
 
-Flashdelta +160 B, RAMdelta +8 B. Keine Funktion entfernt und keine kurzfristige DSP-
-Optimierung eingeführt. Die geringe Flash-/RAMreserve bleibt ein Entwicklungsrisiko;
-alle bestehenden Buildgrenzen sind eingehalten.
+Flash delta +160 B; RAM delta +8 B. No feature was removed and no last-minute DSP
+optimization was introduced. The small remaining flash/RAM reserves remain a development
+constraint; all existing build limits pass.
 
-- Paket: [x0x-1.0.0.fwsc](../build/x0x-1.0.0.fwsc)
-- Produkt-ID: `FM-1_9010000`, Display `X0X 1.0.0`, vorgesehener Tag `v1.0.0`.
-- SHA-256: `eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c`
-- Prüfsummendatei: [x0x-1.0.0.fwsc.sha256](../build/x0x-1.0.0.fwsc.sha256).
-- Firmware-Build: `./build.sh --release 1.0.0`, Log
-  [stable-build-final.log](../build/host/p9/stable-build-final.log).
-- Vorhermessung: [baseline-build.log](../build/host/p9/baseline-build.log).
-- Emulator: `X0X_VERSION=1.0.0 sh web/emu/build.sh`; Endstand in `build/emu/`,
-  SHA-256, Version und Quellenrevision in `build/emu/build-info.json`.
+- Package: `build/x0x-1.0.0.fwsc`; product `FM-1_9010000`; display `X0X 1.0.0`; tag `v1.0.0`.
+- SHA-256: `eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c`.
+- Firmware build log: `build/host/p9/stable-build-final.log`.
+- Baseline build log: `build/host/p9/baseline-build.log`.
+- P9 WASM SHA-256: `1e11309b6e47bd1081cc1af798ee31a99af37e67f9f60d0a8747b17ebf43e030`.
+  Core provenance is retained in `build/emu/build-info.json`. Release website text can be
+  updated without changing this tested binary.
+- Public package and installation links: [release notes](RELEASE_1.0.0.md).
 
-## Projekt- und Sample-Kompatibilität
+## Project and sample compatibility
 
-Bestätigt durch reale Host-Speicherung und -Migration: alte Settings, Format-1- und
-Format-2-Projekte, Remix/APPLY, Schemes, Song und Motion laden weiterhin. Die neue manuelle
-Startkombination ist vom automatischen Spielzustand getrennt. SAVE bei PLAY bleibt auf
-STOP verschoben; AUTOSAVE behält seine Ruhezeit und den 20-Sekunden-Abstand.
+Actual host save/load and migration tests cover historical settings, format-1/format-2
+projects, Remix/APPLY, schemes, song and motion. Manual startup state is isolated from
+playback state. SAVE during PLAY still waits for STOP; AUTOSAVE retains its idle delay and
+twenty-second gap. The maintainer additionally confirmed project/sample retention and startup
+pattern restoration on the physical device.
 
-Die drei User-Slots bleiben exakt bei `0xA0000`, `0xB4000`, `0xC8000`, jeweils `0x14000` B,
-Datenoffset 512, unverändertem Header und Protokoll. `slots.c`, Upload-Schreibpfade,
-Paketlayout und Loader-Schreibfenster wurden nicht verändert. Der Loader-Test belegt mit
-Sentinels über **alle Bytes von 0xA0000 bis 0xDBFFF**, dass ein reguläres Update die Slots
-unverändert lässt; ein wiederholtes identisches Update löscht nichts. Das ist ein
-simulierter OTA-Nachweis, kein Ersatz für den realen Erhaltstest auf der FM1.
+The three user slots remain at `0xA0000`, `0xB4000`, `0xC8000`, each `0x14000` B, with data
+offset 512 and unchanged headers/protocol. `slots.c`, upload write paths, package layout and
+loader write windows were not changed. The loader test checks sentinels over every byte from
+`0xA0000` through `0xDBFFF`; a regular update preserves them, and an identical repeat update
+erases nothing. The physical test confirmed retention of existing user breaks. Explicit
+uploader erase/replace operations intentionally write their selected slots.
 
-## Automatisierte Tests
+## Automated results
 
-Reproduzierbarer Hauptlauf:
+The full P9 run used:
 
 ```sh
 AC79_SDK=/home/falke/fw-AC79_AIoT_SDK \
 X0X_TEST_PACKAGE=build/x0x-1.0.0.fwsc X0X_VERSION=1.0.0 tests/run_tests.sh
 ```
 
-Ergebnis: **74 Prüfgruppen/Szenarien erfolgreich, 3 externe Referenzvergleiche ausgelassen, keine fehlgeschlagene verfügbare Prüfung**.
-Vollständige Ergebnisliste: [regression-final.log](../build/host/p9/regression-final.log).
-Einzellogs liegen in `build/host/`.
+**74 available test groups/scenarios passed; three external DSP comparisons were skipped.**
+No available test failed in the final run. Logs are in `build/host/`; the complete summary
+is `build/host/p9/regression-final.log`:
 
 ```text
 ok   tb3po
@@ -185,75 +189,69 @@ ok   tb3po
 all tests passed
 ```
 
-Zusätzlich bestanden:
+Additional successful checks:
 
-- `tests/release_test.py`: tatsächliches Stable-Paket, Produkt-ID, Firmwareanzeige,
-  Loader-Marker, Flashgrenze, Emulator-Version und Hash; Log `build/host/p9/release-artifacts.log`.
-- `tests/pages_test.py`: gesamte paketfreie Vorschau, Links/Anker, Bilder/Video,
-  Installer-Sperre, keine Firmware, WASM-Provenienz; Log `build/host/p9/pages-final.log`.
-- `tests/tb3po_scales_doc_test.py`: alle 22 Skalen und deutschen Notennamen;
-  Log `build/host/p9/scales-doc.log`.
-- Chromium Gerätefarben: Maus/Touch/Tastatur, Audio, Morph/Remix/Grids, Speicherung,
-  Mobilansicht und Release-Sperre; keine Seitenfehler, gemessener Audiopeak 0,273466.
-  Ergebnis `build/host/p9/device-browser/results.json`.
-- Chromium Factory-Scheme: Erststart, SAVE/Neustart, bestehende Settings, alte/kurze
-  Settings, Firmware-/Browserreset und Außenfarb-Isolation; keine Seitenfehler.
-  Ergebnis `build/host/p9/factory-browser/results.json`.
-- Drei echte neue Chromium-Remix-Aufnahmen; visuell kontrolliert: 909 A1/OFF/BEAT,
-  909 B3/ON/BAR und 303A C4/ON/LOOP. Keine Seitenfehler. Die beiden 303-KEYS-Seiten
-  und alle vier Remix-Seiten stimmen außerdem im direkten WASM-/Host-Pixelvergleich überein.
-- `git diff --check`: keine Whitespacefehler.
+- `tests/release_test.py`: exact stable product/display, loader marker, app limit,
+  emulator version and hash (`build/host/p9/release-artifacts.log`).
+- `tests/pages_test.py`: links, anchors, images/video, package-free preview gate and WASM
+  provenance (`build/host/p9/pages-final.log`). Release-mode website checks additionally
+  validate the exact package/hash, active installer metadata and stable release routes.
+- `tests/tb3po_scales_doc_test.py`: all 22 scales, names and note spellings.
+- Real Chromium device-palette checks: mouse/touch/keyboard, audio, Morph/Remix/Grids,
+  persistence, mobile layout, favicon and the then-reserved release gate. No page errors;
+  measured audio peak 0.273466. Results: `build/host/p9/device-browser/results.json`.
+- Real Chromium factory-scheme checks: startup, SAVE/restart, retained choices, historical/
+  short settings, firmware/browser reset and independent exterior color. No page errors.
+  Results: `build/host/p9/factory-browser/results.json`.
+- Three real Chromium Remix captures: 909 A1/OFF/BEAT, 909 B3/ON/BAR and 303A C4/ON/LOOP.
+  Both 303 KEYS pages and all four Remix pages also match the shared host renderer in WASM.
+- `git diff --check`: no whitespace errors.
 
-Die ursprünglichen Fehlversuche sind in den früheren `build/host/p9/`-Logs nachvollziehbar:
-veraltete Testgrößen/Knobzuordnungen, fehlende POSIX-Definition, Sandbox-EPERM für
-Kindprozesse und ein geerbter Test für die nicht vorhandene `web/editor.html`. Der finale
-Lauf behebt diese Ursachen. Der Felucca-Editor gehört nicht zu X0X und wird ausdrücklich
-als nicht anwendbar ausgelassen; Paketparser und Browser-OTA sind erfolgreich geprüft.
-Die drei externen DSP-Referenzcheckouts fehlen. Die eigentlichen DSP-Engines wurden in P9
-nicht verändert. Der geerbte `tests/target_budget.py` hat weder seinen Felucca-Budgetdatensatz
-noch passende X0X-Funktionsnamen und gehört nicht zur X0X-Suite; die Target-Buildprüfungen
-für Image/RAM/Pool/Soft-Double/MMIO wurden vollständig ausgeführt.
+Earlier failed attempts remain in the local logs: old test sizes/control mappings, a missing
+POSIX feature definition, sandbox EPERM on child processes, and the inherited test for the
+absent `web/editor.html`. Those causes were corrected before the successful final run.
+The Felucca editor is not part of X0X; its checks are explicitly inapplicable, while package
+parsing and browser OTA pass. External 9W9, 8W8 and schwung-303 checkouts were unavailable.
+The actual DSP engines were unchanged by P9. The inherited `tests/target_budget.py` has no
+Felucca budget dataset or matching X0X function set here and is not part of the X0X suite;
+the target build's image/RAM/pool/soft-double/MMIO checks ran successfully.
 
-Audio-Messwerte nach ADPCM-Decodierung:
+## Built-in break measurements
 
-| Loop | Peak (16 Bit) | RMS | Differenz an Loopgrenze |
+| Loop | Decoded 16-bit peak | RMS | Loop-boundary difference |
 |---|---:|---:|---:|
-| 909 GR | 25.916 | 4.798,5 | 10 |
-| 808 GR | 28.288 | 3.227,3 | 4 |
+| 909 GR | 25,916 | 4,798.5 | 10 |
+| 808 GR | 28,288 | 3,227.3 | 4 |
 
-Deterministische Erzeugung, korrekte Länge, Headroom und unterschiedliche rhythmische
-Energieverläufe geprüft (Distanz 2.961,3). Hördateien:
-[909](../build/host/p9/909-groove.wav), [808](../build/host/p9/808-groove.wav).
-Musikalische Klangqualität, Lautsprecher-/Kopfhörereindruck und echte FM1-Loopübergänge
-bleiben Teil des Gerätetests; es wird kein automatisierter Hörnachweis behauptet.
+Generation is deterministic; duration, headroom and distinct rhythmic envelopes pass (envelope
+distance 2,961.3). Listening WAVs are in `build/host/p9/909-groove.wav` and `808-groove.wav`.
+These measurements do not claim a separate subjective listening test of each loop or an
+exhaustive hardware benchmark.
 
-## Hardwarestatus und Veröffentlichungssperre
+## Hardware record and publication
 
-Aus der Aufgabenstellung liegen erste P9-Beobachtungen auf FM-1_900 vor. Es wurde hier
-keine physische FM1 bedient und kein iPad verbunden. Einzelne bestandene Hardwarefälle
-werden ohne vorliegendes Protokoll nicht erfunden. Die finale 1.0.0-Geräteprüfung ist offen:
-Update von FM-1_900, AudioShare/USB, bestehende USB-Einstellungen/FULL-Reset, Startpatterns,
-Song/Chain, Sample-Erhalt, Bedienung und längere Wiedergabe ohne Dropouts/Abstürze.
+The maintainer's confirmed results and explicit release approval are recorded at the top of
+this report and in [P9_FM1_TEST.md](P9_FM1_TEST.md). No unreported individual mode, Song,
+AUTOSAVE, Factory Reset, Morph stress or platform-specific uploader test is marked as passed.
+Separate FULL/FOLLOWS KNOB checks are not a publication condition.
 
-Die [kompakte FM1-Anleitung](P9_FM1_TEST.md) ist dafür vorbereitet. Die
-[Releasebeschreibung und Veröffentlichungsschritte](RELEASE_1.0.0.md) sind lokal vorbereitet.
-Nach bestandenen Gerätetests werden deren Ergebnisse ergänzt; erst mit ausdrücklicher
-Freigabe folgen Tag v1.0.0, GitHub-Stable-Release (Pre-release aus), Firmwareupload und
-Installer-/Pages-Aktivierung mit erhaltener Pages-Historie. Danach öffentliche Links,
-Checksumme, Identität und Emulator prüfen. `main` bleibt unverändert; kein Force-Push.
+The release uses the existing hardware-tested package, with no firmware change/rebuild.
+Publish `orb-remix`, the `v1.0.0` tag, a stable GitHub release and the history-preserving
+`gh-pages` update; never force-push or modify `main`. Verify the public package checksum,
+installer metadata, stable version, website routes and tested emulator binary after deployment.
+The release publication verification record is `build/host/v1-release/`.
 
-Das Video bleibt unverändert als frühere Emulatoraufnahme gekennzeichnet. Der Hinweis auf
-noch ausstehende Erstvalidierung wurde im umgebenden Text auf den tatsächlichen Stand
-korrigiert: erste P9-Beobachtungen vorhanden, abschließende 1.0.0-Prüfung offen. Eine spätere
-Neufassung der Schlusskarte sollte diesen Stand ebenfalls ausdrücken. Historische
-Upstream-Versionsnamen in der Versionshistorie bleiben als historische Namen erhalten;
-sie bezeichnen nicht die neue Stable-Firmware.
+The video remains identified as an earlier browser-emulator recording. The outro text was
+corrected for release to state successful real-device validation. The first 81.8 seconds are
+frame-identical, only the final 2.2-second encoding group is re-encoded, the full AAC audio
+stream is unchanged, and the approved banner/poster are unchanged. Historical
+upstream version names remain historical attribution, not labels for this stable release.
 
-## Geänderte Dateien
+## P9 changed files
 
-Die vier vorgefundenen unversionierten Benutzerdateien (`docs/P82_SCREENSHOT_REVIEW.md`,
-`docs/P83_VIDEO_PLAN.md`, Root-Banner und dessen Zone.Identifier) bleiben unangetastet und
-werden nicht mit committed. Buildartefakte und Testlogs bleiben unter `build/`.
+The four pre-existing untracked user files (`docs/P82_SCREENSHOT_REVIEW.md`,
+`docs/P83_VIDEO_PLAN.md`, the root banner and its Zone.Identifier) remain untouched and
+excluded from commits. Generated artifacts/logs remain under `build/`.
 
 - `BUILDING.md`
 - `README.md`

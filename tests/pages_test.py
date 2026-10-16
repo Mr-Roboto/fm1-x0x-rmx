@@ -32,6 +32,7 @@ class Links(HTMLParser):
                 self.links.append(attrs[attr])
 
 
+release = "--release" in sys.argv[2:]
 root = Path(sys.argv[1]).resolve()
 base = "http://localhost:8000/fm1-x0x-rmx/"
 pages = {p: Links(p.read_text()) for p in root.rglob("*.html")}
@@ -49,11 +50,25 @@ for page, parsed in pages.items():
             assert unquote(url.fragment) in pages[target].ids, (page, link, "missing anchor")
 for section in ("emu", "manual", "new", "breaks", "install"):
     assert (root / section / "index.html").is_file()
-assert not list(root.rglob("*.fwsc")), "preview includes firmware package"
-assert not (root / "firmware").exists(), "preview includes firmware directory"
 installer = (root / "install/index.html").read_text()
-assert not re.search(r"<(script|button|input)\b", installer), "preview enables installation"
-assert "validation" in installer and "approval" in installer
+if release:
+    pkg = root / "firmware/x0x-1.0.0.fwsc"
+    expected = "eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c"
+    assert hashlib.sha256(pkg.read_bytes()).hexdigest() == expected
+    assert list(root.rglob("*.fwsc")) == [pkg]
+    assert b"FELUCCA-LOADER-1" in pkg.read_bytes()
+    assert '"version": "1.0.0"' in installer
+    assert '"product": "FM-1_9010000"' in installer
+    assert '"pkg": "../firmware/x0x-1.0.0.fwsc"' in installer
+    assert 'id="go"' in installer and '/*META*/' not in installer and '/*LIB*/' not in installer
+    assert 'BETA' not in installer.upper()
+    assert 'Stable' in (root / 'index.html').read_text()
+    print("Stable release: exact hardware-tested package/hash, loader and active installer metadata passed")
+else:
+    assert not list(root.rglob("*.fwsc")), "preview includes firmware package"
+    assert not (root / "firmware").exists(), "preview includes firmware directory"
+    assert not re.search(r"<(script|button|input)\b", installer), "preview enables installation"
+    assert "validation" in installer and "approval" in installer
 for path in ("index.html", "emu/index.html", "manual/index.html", "breaks/index.html"):
     text = (root / path).read_text()
     assert "X0X-RMX" in text
@@ -107,7 +122,7 @@ print(f"Pages: {len(pages)} pages; relative links/anchors/subpath, identity, cre
 # conservative loading, separate from upstream hardware demonstration/release gates.
 video_assets = Path("docs/media/video")
 for name, approved_hash in (
-    ("x0x-rmx-demo.mp4", "84adf956774d1678af3b0b8e3303841e968f01ca5533e98a210d1ce27765960c"),
+    ("x0x-rmx-demo.mp4", "0bd9721ce02a5f842c1504e3f450dc09fe4f02a796d2866bb5e690296abe43e2"),
     ("x0x-rmx-demo-poster.png", "e66e897da7736ccfd02d77e20094275324e56e3ce775ca0af2375e24411d2811"),
 ):
     source = (video_assets / name).read_bytes()
@@ -124,9 +139,9 @@ assert video["poster"] == "media/video/x0x-rmx-demo-poster.png"
 assert video["width"] == "1280" and video["height"] == "720"
 assert "browser-emulator" in video["aria-label"]
 assert landing.index('id="demo"') < landing.index('id="upstream-demo"')
-assert "Emulator recording from before P9" in landing
-assert "Final v1.0.0 validation remains open" in landing
+assert "Earlier browser-emulator recording, not physical FM-1 footage" in landing
+assert "outro was updated to confirm successful v1.0.0 real-device validation" in landing
 assert 'href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"' in readme
 assert 'src="docs/media/video/x0x-rmx-demo-poster.png"' in readme
-assert "This is a browser-emulator recording from before P9" in readme
+assert "This is an earlier browser-emulator recording, not physical FM-1 footage" in readme
 print("Approved video/poster byte integrity, URLs, player controls and browser-only identification passed")

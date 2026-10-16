@@ -4,8 +4,11 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This manual covers the X0X-RMX fork of Charles Vestal's X0X. P9 hardware observations have been collected on development firmware FM-1_900.
-Final validation of the prepared stable version 1.0.0 is still open; the public installer and firmware downloads remain reserved. The
+This manual covers X0X-RMX v1.0.0 Stable, the fork of Charles Vestal's X0X. Successfully tested on a real M-VAVE FM-1. Hardware testing
+confirmed the regular update, retained patterns/user breaks, restored manual startup patterns,
+pattern chains and a twelve-minute musical run without reported problems. USB audio with
+iPad/AudioShare was confirmed successful, as was real-device operation of the sequencer,
+drums, bass synths, effects and breakbeat engine. The
 [public browser emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation
 are available. See [website details](PAGES.md).
 See [What's new](NEW.md).
@@ -91,15 +94,17 @@ The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI
 battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
 Successful browser playback does not validate physical FM-1 performance or installation.
 
-**Install/update:** Final X0X-RMX v1.0.0 hardware validation and explicit release approval are still pending.
-The public [release-status page](https://mr-roboto.github.io/fm1-x0x-rmx/install/) is reserved and offers no package or installation controls.
+**Install/update:** [Install X0X-RMX v1.0.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
+with Chrome or Edge, or [download x0x-1.0.0.fwsc](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc).
+The [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0) includes
+release notes and a SHA-256 checksum. The tested product identity is FM-1_9010000.
 Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
-The existing command-line installer, update loader and recovery tools are retained for future
-validated releases. An update normally keeps the project; installing another firmware can
-replace its storage. See [BUILDING.md](../BUILDING.md) for tooling and
+The existing command-line installer, update loader and recovery tools are retained.
+A regular X0X-RMX update keeps the project and the three user sample slots, confirmed in
+the release hardware test. Installing another firmware can replace its storage. See
+[BUILDING.md](../BUILDING.md) and
 [Recovering an FM-1 that will not start](#recovering-an-fm-1-that-will-not-start) for recovery.
-These tools do not imply that a tested X0X-RMX release is available.
 
 ---
 
@@ -440,9 +445,9 @@ saved as successful. If a loaded project contains Morph on both voices, A keeps 
 loads Saw; their Morph values remain independent.
 
 Wave 3 uses cubic four-box BLEP/BLAMP correction. The existing Saw/Square DSP, 2× default
-oversampling, overload guard, filters and drive remain unchanged. **FM1 hardware timing and
-listening validation are pending.** Host tests and successful builds do not establish hardware
-realtime performance or a universal audio-quality pass. The
+oversampling, overload guard, filters and drive remain unchanged. **Dedicated Morph worst-case timing and
+listening tests were not separately reported.** The successful release hardware run and host
+tests do not establish universal realtime performance or audio quality. The
 [waveform specification](TB303_WAVEFORMS_DESIGN.md) describes the implementation and remaining limits.
 
 ---
@@ -594,7 +599,7 @@ and sends are on the mixer's PARTS page (LFO, black key 5).
 In the emulator, load files into **Your breaks** below the device; no hardware connection is
 needed. The separate [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) is the
 retained Web MIDI uploader for a compatible FM-1 in Chrome/Edge; it does not install firmware.
-Final X0X-RMX v1.0.0 hardware validation is still pending. They appear after X0X's own loops as BR1, BR2 and so on.
+Existing user breaks were retained across a regular update in the release hardware test. They appear after X0X's own loops as BR1, BR2 and so on.
 There's room for about 21 seconds in all: around nine one-bar loops.
 
 <details><summary>From the command line</summary>
@@ -987,8 +992,8 @@ The physical-device implementation uses both of the FM-1's processor cores: the 
 share on the performance page is the time the first core waits for them, and the whole load is lower: on
 an upstream X0X FM-1 the test's three patterns went from 43%, 83% and 115% on one core to 39%, 54% and 68%,
 and the busiest moment of the worst case from over the limit to 84%. These are historical
-upstream measurements, not timing results for X0X-RMX, Grids or Morph. Physical fork validation
-is pending; browser load figures measure the computer, not the FM-1.
+upstream measurements, not timing results for X0X-RMX, Grids or Morph. The release hardware run reported no problems over twelve minutes; separate worst-case
+performance figures were not reported. Browser load figures measure the computer, not the FM-1.
 
 The top right of the performance page says 2 CORES. On some FM-1s the second core reads its work
 wrongly; X0X notices the first time and carries on with one core, and the page says 1 CORE: BAD
@@ -1013,7 +1018,8 @@ on, switch it off and on again.
 ## 16. MIDI and USB audio
 
 This section describes the retained physical-device interfaces. They are not exposed by the
-browser emulator, and X0X-RMX hardware validation is pending.
+browser emulator. USB audio with iPad/AudioShare was confirmed successful on the release
+firmware. Separate FULL and FOLLOWS KNOB hardware tests were not reported and are not claimed.
 
 When connected over USB, the FM-1 shows up as a MIDI device called "X0X FM-1".
 
@@ -1069,8 +1075,9 @@ next start shows RESTARTED AFTER A CRASH and an address (PC ...) for a moment. I
 problem, include that address and what you were doing.
 
 **Safe mode:** if X0X crashes twice in a row while starting, it starts in SAFE MODE instead. There's
-no sound, but USB works, so compatible upstream installation/recovery tooling can reach it. The reserved X0X-RMX
-release-status page cannot reinstall firmware or restore stock firmware. Press PLAY to try starting X0X normally again. If even safe
+no sound, but USB works, so compatible upstream installation/recovery tooling can reach it. The X0X-RMX
+[installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) can reinstall the release; its
+stock-firmware option requires a user-supplied stock package. Press PLAY to try starting X0X normally again. If even safe
 mode fails twice, the FM-1 drops into the chip's own update mode, and only the rescue below can
 reach it.
 
@@ -1104,8 +1111,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/charlesvestal/fm1-x0x/ma
    the script catches it. It checks the chip, saves a backup of the FM-1's memory in the
    `fm1-rescue` folder in your home folder, and asks before it writes anything.
 4. Type **yes** and press Return. Don't unplug anything until it says it's restarting the FM-1.
-   The FM-1 then starts into its original firmware. A later installation of original X0X
-   uses upstream tooling; there is no validated X0X-RMX package to install.
+   The FM-1 then starts into its original firmware. To install X0X-RMX afterwards, use the
+   checksum-verified v1.0.0 Stable package and its public installer.
 
 The script downloads M-VAVE's FM-1 V15 firmware and JieLi's flash loader, and checks both against
 known fingerprints. It writes only the firmware area of the memory, never the bootloader or the

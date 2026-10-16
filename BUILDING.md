@@ -83,7 +83,8 @@ sh tests/host/run_bass303_ui.sh         # UI, command/motion exclusion and proje
 These use the local host waveform prototype; the UI check also uses the generated assets in
 `build/gen/`. They are included in `tests/run_tests.sh` and do not generate WAV collections or
 run spectral matrices. Passing them, or building firmware and the emulator, does not validate
-FM1 CPU deadlines or device listening. Those checks remain pending; see the
+FM1 CPU deadlines or device listening. The release hardware run passed, while dedicated Morph worst-case measurements were not
+separately reported; see the
 [waveform specification](docs/TB303_WAVEFORMS_DESIGN.md).
 
 `host/build_host.sh` builds the simulator alone; `build/host/x0x_host SCRIPT OUTDIR` runs one
@@ -91,15 +92,15 @@ script (the command list is at the top of `host/x0x_host.c`).
 
 ## Installation tooling
 
-Initial P9 FM-1 observations exist on FM-1_900; final v1.0.0 device validation is pending. No public fork installer, firmware download
-or tested release is enabled. Charles Vestal's installer installs original X0X, not this fork.
+X0X-RMX v1.0.0 Stable is approved after successful hardware update/persistence/chain and
+twelve-minute musical tests, plus USB audio with iPad/AudioShare. Download the exact release
+package or use the public web installer. Charles Vestal's installer installs original X0X.
 The existing package format, hardware identities, loader and command-line tools are retained.
-For a future validated and approved package, the command-line installer accepts a local file
-(needs `pip3 install mido python-rtmidi`):
+The command-line installer accepts the local release file (needs `mido` and `python-rtmidi`):
 
 ```
 python3 tools/fm1_install.py --info          # identity of the connected FM-1
-python3 tools/fm1_install.py PATH_TO_APPROVED_PACKAGE.fwsc
+python3 tools/fm1_install.py build/x0x-1.0.0.fwsc
 ```
 
 If the FM-1 no longer starts but reaches the chip's update mode (4C4A:8057 on USB),
@@ -127,7 +128,7 @@ prepare the fork from `orb-remix`.
 The future package-enabled generator command is deliberately explicit:
 
 ```
-python3 tools/make_pages.py --validated-release PATH_TO_APPROVED_PACKAGE.fwsc VERSION build/release-site
+python3 tools/make_pages.py --validated-release build/x0x-1.0.0.fwsc VERSION build/release-site
 ```
 
 Run that only after real-device validation and explicit release approval. It retains the

@@ -1,12 +1,20 @@
 # X0X-RMX website, local previews and deployment records
 
-The browser-only website is live at [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/),
-with the [emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/) and documentation.
-Firmware installation and downloads remain disabled. Source:
-[Mr-Roboto/fm1-x0x-rmx](https://github.com/Mr-Roboto/fm1-x0x-rmx), development branch `orb-remix`.
-Keep `main` aligned with [original X0X](https://github.com/charlesvestal/fm1-x0x).
+X0X-RMX v1.0.0 Stable is approved for the [project website](https://mr-roboto.github.io/fm1-x0x-rmx/),
+[web installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/),
+[firmware download](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc) and
+[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0).
+The hardware-tested package is unchanged; its SHA-256 and confirmed test scope are recorded in
+[RELEASE_1.0.0.md](RELEASE_1.0.0.md) and [P9_FM1_TEST.md](P9_FM1_TEST.md).
+Separate FULL/FOLLOWS KNOB hardware results are not claimed or required for publication.
+The emulator remains the tested P9 WASM, with updated release text only.
 
-## Current public state
+Publish by an ordinary commit descending from the current `gh-pages` head. Preserve history,
+never force-push and keep `main` unchanged. Retain package identity/loader checks and verify the
+public firmware hash, active installer metadata, routes and emulator after deployment.
+The historical preparation and deployment records below describe their respective earlier stages.
+
+## Historical P7 public state
 
 The public emulator includes Remix, Grids MAP/EUCLID, 22 TB-3PO scales, Morph and the
 TONE/VOICE/EXTRA pages for both 303 voices. Its Device color selector defaults to Cream &
@@ -115,10 +123,10 @@ and `id-token: write` on the deployment job. Configure the `github-pages` enviro
 activation after approval; do not add automatic deployment to upstream-aligned `main`.
 No active deployment workflow is added in P7.1.
 
-## Deferred hardware installation
+## Historical P7.1 hardware publication gate
 
-Real FM-1 timing/listening/update validation and explicit approval are required before any
-release package, download, public installer or release version. The future
+At P7.1, real-device testing and explicit approval were required before any public package
+or installer. The v1.0.0 hardware tests and maintainer approval now satisfy that release gate. The future
 `--validated-release PKG VERSION OUT_DIR` generator mode retains package identity and loader
 checks; it is not a validation test and must not be used to bypass the release gate.
 Installer libraries, package names, protocol and hardware identifiers are retained.
@@ -311,13 +319,13 @@ poster thumbnail links to that player. The approved 84-second 720p/25 fps H.264/
 candidate and poster are stored under `docs/media/video/` and copied byte-for-byte to
 `media/video/`; publication does not transcode or edit them.
 
-The video is labelled as a browser-emulator demonstration. Physical FM-1 validation
-remains pending, with firmware installation and downloads still disabled. The existing
+At the P8.3d stage, the video was labelled as a browser-emulator demonstration and first
+physical validation was pending; firmware installation/downloads were disabled at that time. The existing
 banner, screenshot galleries and secondary upstream demonstration are preserved.
 Publication uses the same package-free preview and fast-forward Pages procedure above.
 
 
-## P9 — stable 1.0.0 preparation, publication blocked
+## Historical P9 — local preparation before release approval
 
 The local final sources prepare **X0X-RMX v1.0.0 Stable**, product `FM-1_9010000`, package
 `x0x-1.0.0.fwsc`. Initial P9 FM1 observations exist on FM-1_900. Final device tests and
@@ -334,7 +342,19 @@ never force-push or modify main.
 Three Remix screenshots were refreshed from real local Chromium, matching the final controls.
 The demonstration video and poster remain byte-identical. The caption now states that this is
 an emulator recording from before P9: the closing “Physical FM-1 Validation Pending” card
-reflects that earlier stage. Initial observations are now available; final 1.0.0 validation is
-still open. A future video recut should say “Final v1.0.0 hardware validation pending” while
-keeping “Browser emulator recording”; a recut is not needed to correct the surrounding context.
+reflects that earlier stage. The later v1.0.0 real-device tests and explicit release approval
+supersede it. A future recut should identify this as an earlier browser-emulator recording
+and state that v1.0.0 was subsequently tested successfully on a real M-VAVE FM-1.
 The existing video is never presented as FM1 footage or proof of completed validation.
+
+
+## v1.0.0 release video correction
+
+The published outro now reads **“v1.0.0 Stable — tested on a real M-VAVE FM-1”** and retains
+**“BROWSER EMULATOR DEMONSTRATION.”** Only the last 2.2-second video encoding group was
+re-encoded because its preceding keyframe is at 81.8 seconds. Text changes begin with the
+actual outro at 82.64 seconds. All first 2,045 frames are identical to the previous approved
+video; the complete AAC stream, poster and banner are unchanged. The final video is still
+84 seconds / 2,100 frames / 25 fps. [Media provenance](media/video/README.md) records hashes.
+The historical records above describe the earlier video and its then-pending validation card;
+that wording is no longer present in the current public video.

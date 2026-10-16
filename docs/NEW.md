@@ -1,13 +1,18 @@
 # X0X-RMX version history
 
-X0X-RMX stable version 1.0.0 is prepared locally. Initial P9 hardware observations
-were collected on FM-1_900; final 1.0.0 hardware validation and release approval remain open.
-The public installer and downloads remain reserved. See the [manual](MANUAL.md)
-and the [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
-The current `orb-remix` source is the implementation reference; browser/host tests and builds
-do not establish physical FM-1 timing, listening or installation compatibility.
+X0X-RMX v1.0.0 is the first official Stable release. See the [manual](MANUAL.md),
+[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0),
+[installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) and
+[public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 
-## 1.0.0 · Stable · prepared, not yet published
+## 1.0.0 · Stable · 16 October 2026
+
+Hardware testing confirmed the regular firmware update, preservation of existing patterns
+and user breaks, restoration of the five manual startup patterns, pattern-chain playback
+and a twelve-minute musical run without reported problems. USB audio with iPad/AudioShare
+was also confirmed successful. Real-device operation of the sequencer, drums, bass synths,
+effects and breakbeat engine was confirmed. Separate FULL/FOLLOWS KNOB hardware tests were not reported
+and are not claimed. Publication was explicitly approved by the maintainer.
 
 - USB AUDIO defaults to FULL for new projects and Factory Reset; saved choices remain intact.
 - SAVE/AUTOSAVE remember the last manual startup pattern combination for all five parts.
@@ -21,8 +26,8 @@ do not establish physical FM-1 timing, listening or installation compatibility.
   The musical mapping, saved Remix values and APPLY timing are unchanged.
 - Browser break uploader recognizes Windows names such as FM-1 Midi 2 and still requires
   the X0X protocol handshake on an identically named input/output pair.
-- Official package: x0x-1.0.0.fwsc; product FM-1_9010000; planned Git tag v1.0.0.
-  Publication and installer activation wait for final device tests and explicit approval.
+- Official package: x0x-1.0.0.fwsc; product FM-1_9010000; Git tag v1.0.0.
+  SHA-256: eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c.
 
 ### Included fork changes
 
@@ -37,8 +42,7 @@ do not establish physical FM-1 timing, listening or installation compatibility.
 - Six saved LCD schemes, coordinated part colors, and retained GLOBAL list position
   during a session. WHITE LILAC is the factory default for new projects and reset;
   saved scheme selections and legacy DEFAULT decoding are preserved.
-- Public X0X-RMX browser emulator and documentation; firmware installation and downloads
-  remain unavailable.
+- Public X0X-RMX browser emulator, documentation, stable firmware download and web installer.
 - Both 303s have TONE, VOICE and EXTRA EDIT pages. EXTRA exposes MORPH, ACCDEC, DRVTYPE and
   TUNE; only VOLUME remains under MORE.
 - Browser-only Device color selector: Cream & Lilac by default, Classic Dark with the
@@ -59,8 +63,8 @@ do not establish physical FM-1 timing, listening or installation compatibility.
   A conflicting loaded pair keeps A on Morph and loads B as Saw.
 - The implementation uses cubic four-box BLEP/BLAMP, replacing the original triangular
   correction proposal for Wave 3. Saw/Square, the 2× default and overload guard are unchanged.
-  **FM-1 hardware validation is pending.** These branch changes are not a claim about the
-  upstream releases or hosted installer. See the [local manual](MANUAL.md#6-303a-and-303b) and
+  The release hardware run reported no problems; dedicated Morph worst-case timing and
+  listening tests were not separately reported. These fork changes do not describe upstream releases. See the [local manual](MANUAL.md#6-303a-and-303b) and
   [waveform specification](TB303_WAVEFORMS_DESIGN.md).
 
 ## Original X0X history (Charles Vestal)

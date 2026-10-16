@@ -21,16 +21,21 @@ This fork adds:
 - **Six LCD color schemes**, plus **Cream & Lilac**, **Classic Dark**, **Sunset Orange** and **Pink Lilac** device finishes
   in the browser emulator.
 
-**Stable v1.0.0 is prepared locally.** Initial P9 hardware observations were collected
-on development firmware FM-1_900; final v1.0.0 hardware validation and release approval remain open. No X0X-RMX public installer or firmware download is enabled in this phase.
+**X0X-RMX v1.0.0 Stable** is the first official release. Successfully tested on a real M-VAVE FM-1. Hardware testing confirmed a regular
+firmware update, retained patterns and user breaks, five restored manual startup patterns,
+pattern-chain playback and a twelve-minute musical run without reported problems. USB audio
+with iPad/AudioShare was also confirmed successful. Real-device operation of the sequencer, drums, bass synths,
+effects and breakbeat engine was confirmed.
 Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
 
 - **Project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
 - **Play in your browser:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), with sound, Remix, Grids and both 303 EXTRA pages.
 - **Read online:** [manual](https://mr-roboto.github.io/fm1-x0x-rmx/manual/) and [version history](https://mr-roboto.github.io/fm1-x0x-rmx/new/).
 
-The public site is browser-only: firmware installation remains reserved until real-device
-validation and release approval. You can also [build and preview the website locally](docs/PAGES.md).
+[Install v1.0.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/) with Chrome or Edge,
+[download the firmware](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc), or
+read the [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0).
+You can also [build and preview the website locally](docs/PAGES.md).
 
 - [Source on orb-remix](https://github.com/Mr-Roboto/fm1-x0x-rmx/tree/orb-remix)
 - [User manual](docs/MANUAL.md) and [version history](docs/NEW.md)
@@ -45,8 +50,9 @@ validation and release approval. You can also [build and preview the website loc
 
 [Watch the 84-second musical demonstration](https://mr-roboto.github.io/fm1-x0x-rmx/#demo):
 Remix, Grids, TB-3PO and Morph, with real stereo emulator audio.
-This is a browser-emulator recording from before P9. The closing validation card reflects
-that earlier state: initial FM-1 observations now exist, while final v1.0.0 tests remain open.
+This is an earlier browser-emulator recording, not physical FM-1 footage. Its outro was
+updated for v1.0.0 to state successful real-device validation; the recording and audio remain
+an emulator demonstration.
 
 ## A closer look
 
@@ -93,7 +99,8 @@ Only **303A or 303B** may use Morph at a time. A conflicting selection is reject
 the previous accepted Wave; it does not change the other voice or wait to acquire Morph later.
 Select Saw or Square on the current Morph voice before transferring Morph to the other voice.
 
-Morph remains experimental: **FM-1 timing and listening validation are pending**.
+Morph remains experimental. Dedicated Morph worst-case timing and listening tests were not
+separately reported; the successful release hardware run is not a universal benchmark.
 See the [manual](docs/MANUAL.md#6-303a-and-303b) for the three EDIT pages, parameter behavior
 and ownership rules; the [waveform specification](docs/TB303_WAVEFORMS_DESIGN.md) retains
 the DSP mathematics and known quality limits.
@@ -104,11 +111,11 @@ installer and the storage) and replaces the instrument on top.
 
 ## Your own breaks
 
-X0X-RMX ships with no recorded breaks, only two loops played by its own 909. In the
+X0X-RMX ships with no recorded breaks, two loops rendered by its own engines: 909 GR and 808 GR. In the
 browser, load your files in **Your breaks** below the device; they stay in that browser.
 The retained hardware tooling can load your loops into the FM-1's three sample slots, which hold about nine one-bar loops in total.
 The [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) preserves the Chrome/Edge uploader for a compatible
-FM-1. See [website preparation](docs/PAGES.md); hardware validation is still pending.
+FM-1. Retention of existing user breaks across a regular update was confirmed on hardware.
 The command-line tool is also retained for developers:
 
 ```
@@ -121,7 +128,8 @@ Recorded breaks belong to whoever made them and aren't covered by this project's
 ## Building and testing
 
 [BUILDING.md](BUILDING.md) explains development builds and test prerequisites.
-A locally built package is not a physically validated release:
+An arbitrary local development build is not automatically the tested v1.0.0 release.
+Use the checksum-verified official package for installation; the commands below are for development:
 
 ```
 tests/run_tests.sh      # the maths, the sequencer, every engine against its original, the app in a simulator

@@ -1,5 +1,9 @@
 # P5 LCD color schemes
 
+**Current release status:** X0X-RMX v1.0.0 Stable has been successfully tested on a real
+M-VAVE FM-1. See [the hardware record](P9_FM1_TEST.md) for confirmed tests and their scope.
+Phase-specific measurements and earlier deployment restrictions below are historical records.
+
 GLOBAL has one SCHEME selector with six stable IDs. The browser uses the same LCD renderer. P5 did not recolor the device SVG; P7.3 now
 provides separate Cream & Lilac / Classic Dark device palettes (see [Pages](PAGES.md)).
 P7.4 adds Sunset Orange and Pink Lilac exterior variants inspired by these LCD palettes.
@@ -163,4 +167,5 @@ in the **581,564 B** application slot (**1,744 B free**). Static RAM is
 **97,324 / 98,304 B** (**980 B free**); pool usage is **334,348 / 344,064 B**
 (**9,716 B free**). The development package is **609,680 B**, identity `FM-1_900`;
 the browser WASM is **669,773 B**. These are local build results, not a hardware
-release or physical validation. Firmware installation/downloads remain disabled.
+release or physical validation at the P8.4 stage. Installation/downloads were disabled then;
+the later v1.0.0 Stable release is validated and approved as described above.

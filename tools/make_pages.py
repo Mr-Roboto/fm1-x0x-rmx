@@ -106,8 +106,8 @@ extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI impro
     <a href="media/video/x0x-rmx-demo.mp4">Watch the X0X-RMX demonstration (MP4)</a>
   </video>
   <figcaption>84 seconds of Remix, Grids, TB-3PO and Morph with real stereo browser-emulator audio.
-    Emulator recording from before P9; initial FM-1 tests have since begun. Final v1.0.0 validation remains open.
-    <a href="media/video/x0x-rmx-demo.mp4">Open the video (MP4, 6.39 MB)</a>.</figcaption>
+    Earlier browser-emulator recording, not physical FM-1 footage. The outro was updated to confirm successful v1.0.0 real-device validation.
+    <a href="media/video/x0x-rmx-demo.mp4">Open the video (MP4, 6.38 MB)</a>.</figcaption>
 </figure>
 </section>
 <section aria-labelledby="features">
@@ -159,8 +159,8 @@ RESERVED = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>X0X-RMX release status</title></head><body><main>
-<a href="../">X0X-RMX</a><h1>Firmware installation is reserved</h1>
-<p>Initial P9 FM-1 observations exist on FM-1_900. Final v1.0.0 validation and explicit release approval are pending.
+<a href="../">X0X-RMX</a><h1>Documentation-only preview</h1>
+<p>X0X-RMX v1.0.0 Stable has completed successful real M-VAVE FM-1 testing and received release approval. This package-free preview intentionally excludes installation controls.
 No firmware package, download or installation controls are available here.</p>
 <p>You can <a href="../emu/">play the browser emulator</a> or
 <a href="../manual/">read the manual</a>. Browser testing does not validate hardware timing.</p>
@@ -231,6 +231,8 @@ def main(out, pkg=None, version=None):
     else:
         (out / "firmware").mkdir()
         shutil.copy(pkg, out / "firmware" / name)
+        (out / "firmware" / (name + ".sha256")).write_text(
+            hashlib.sha256(raw).hexdigest() + "  " + name + "\n", encoding="utf-8")
         page = (SRC / "web" / "x0x_installer.html").read_text(encoding="utf-8")
         lib = strip_module((SRC / "web" / "fm1pkg.js").read_text(encoding="utf-8")) + "\n" + \
             strip_module((SRC / "web" / "fm1ota.js").read_text(encoding="utf-8"))
@@ -245,7 +247,7 @@ def main(out, pkg=None, version=None):
         raise SystemExit("x0x_breaks.html must contain /*LIB*/ once")
     lib = strip_module((SRC / "web" / "x0x_breaks.js").read_text(encoding="utf-8"))
     (out / "breaks" / "index.html").write_text(page.replace("/*LIB*/", lib), encoding="utf-8")
-    # Approved demonstration assets, copied without transcoding or image edits.
+    # Approved demonstration assets, including the corrected release outro; copied without transcoding.
     shutil.copytree(SRC / "docs" / "media" / "video", out / "media" / "video")
     # the manual (a complete page; its images beside it)
     subprocess.run([sys.executable, str(SRC / "tools" / "manual_html.py"), str(SRC / "docs" / "MANUAL.md"),
@@ -258,13 +260,16 @@ def main(out, pkg=None, version=None):
     for section in ("manual", "new"):
         doc = out / section / "index.html"
         doc.write_text(site_doc_links(doc.read_text(encoding="utf-8")), encoding="utf-8")
-    status = "Stable v1.0.0 is prepared locally. Initial P9 FM-1 observations exist; final device validation and release approval are pending. The browser emulator is available here; firmware installation and downloads are reserved."
-    install = '<a href="install/"><strong>Firmware release status</strong><span>Reserved until hardware validation and explicit approval.</span></a>'
+    status = "Documentation-only preview of X0X-RMX v1.0.0 Stable, successfully tested on real M-VAVE FM-1 hardware. This preview excludes the firmware package and installer; use the official release for installation."
+    install = '<a href="install/"><strong>Firmware release status</strong><span>Package-free local preview; use the official Stable release.</span></a>'
     download = ""
     if pkg is not None:
-        status = "Validated release " + html.escape(version) + ". Installing firmware is at your own risk."
+        status = "X0X-RMX " + html.escape(version) + " Stable, successfully tested on a real M-VAVE FM-1. Hardware update, pattern/sample retention, startup patterns, chain playback, a twelve-minute musical run and USB audio with iPad/AudioShare were confirmed successful."
         install = '<a href="install/"><strong>Install ' + html.escape(version) + '</strong><span>Chrome or Edge, Web MIDI.</span></a>'
-        download = '<a href="firmware/' + name + '"><strong>Download ' + name + '</strong></a>'
+        download = ('<a href="firmware/' + name + '"><strong>Download ' + name + '</strong></a>'
+                    + '<a href="firmware/' + name + '.sha256"><strong>SHA-256 checksum</strong></a>'
+                    + '<a href="' + REPO + '/releases/tag/v' + html.escape(version)
+                    + '"><strong>GitHub release ' + html.escape(version) + '</strong></a>')
     landing = LANDING.replace("__STATUS__", status).replace("__INSTALL__", install).replace("__DOWNLOAD__", download)
     (out / "index.html").write_text(landing.replace("__REPO__", REPO).replace("__UPSTREAM__", UPSTREAM), encoding="utf-8")
     (out / "emu").mkdir()

@@ -3,8 +3,11 @@
 
 ## Current implementation (English summary)
 
-Morph is implemented on `orb-remix` and remains experimental: physical FM-1 timing,
-listening and installation validation are pending. This document preserves the original
+X0X-RMX v1.0.0 Stable has been successfully tested on a real M-VAVE FM-1, including
+installation/OTA, project and sample retention, startup patterns, chains, a twelve-minute
+musical performance, USB audio with iPad/AudioShare and operation of all sound engines/effects.
+See [the hardware record](P9_FM1_TEST.md). Morph remains experimental; dedicated Morph
+worst-case timing and listening benchmarks were not separately reported. This document preserves the original
 German technical analysis and mathematics; the [English manual](MANUAL.md#6-303a-and-303b)
 is the user-facing control reference.
 
@@ -23,16 +26,19 @@ is the user-facing control reference.
   section is retained design history, not the current correction. Neither build success
   nor the one-voice restriction establishes universal audio quality or hardware headroom.
 
-## Status und verständlicher Einstieg
+## Historical technical analysis and introduction
 
-Wave 3 ist auf `orb-remix` in Produktions-DSP, UI und Projekt-Sound
-integriert, bleibt aber **experimentell: FM1-Hardwarevalidierung steht aus**.
-Dieses bestehende Dokument enthält die aktuelle Spezifikation sowie die
-historische Machbarkeitsanalyse und ursprüngliche Dreieckskern-Mathematik.
-Der tatsächlich implementierte **kubische Vier-Box-BLEP/BLAMP-Kern** ist unten
-separat definiert und ersetzt die ursprüngliche Korrektur für Wave 3.
-Host-Prototyp, fokussierte Regressionen und Builds wurden bereits geprüft;
-die damaligen Akzeptanzziele sind dadurch nicht pauschal bestanden.
+The following original analysis is retained as development history. Earlier statements about
+pending first-device validation are superseded by the English release status above; specific
+Morph benchmark targets are not automatically marked as passed by the release performance test.
+
+Wave 3 is integrated into production DSP, UI and project sound on `orb-remix`.
+The v1.0.0 Stable release has passed the real-device tests listed in the English status
+above. Morph retains its experimental waveform-quality limits and one-voice restriction;
+separate worst-case Morph benchmarks were not reported. The original German analysis below
+is retained as historical technical material, not a statement that first hardware validation
+is still pending. Its cubic four-box BLEP/BLAMP section describes the implemented correction;
+the earlier triangular-kernel proposal is design history.
 
 **Wave = 0 Saw, 1 Square, 2 Morph.** Die vorhandenen Saw-/Square-Ausdrücke und
 DSP-Pfade bleiben erhalten. Die dritte Auswahl ist eine Familie, deren Klang
@@ -48,10 +54,9 @@ sich mit dem Morph-Regler zwischen drei Formen bewegen lässt:
   oberen Plateau. Diese Kerbe verändert die Obertonstruktur und soll zusätzliche
   Klangfarben für Acid-Lines eröffnen, ohne harte rechteckige Löcher einzuführen.
 
-Die Namen bezeichnen die unten definierten Geometrien, keine verifizierte
-Nachbildung eines anderen Instruments. Der Charakter der Host-Hörbeispiele wurde
-freigegeben; das ersetzt weder Hörtests auf dem FM1 noch die noch offenen
-Audioqualitäts- und Echtzeitprüfungen.
+These names describe the geometries below, not a verified reproduction of another instrument.
+The host listening examples were approved during development. Specific waveform-quality and
+worst-case realtime targets are not automatically established by the release hardware run.
 
 Die endgültige Morph-Zuordnung lautet **0 = Sharkfin, 64 = Trapezoid,
 127 = Notch-Trapezoid**. Zwischenwerte verwenden kontinuierliches Smoothstep-

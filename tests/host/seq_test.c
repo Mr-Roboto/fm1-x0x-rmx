@@ -610,6 +610,150 @@ static void test_remix_sequencer(void)
     printf("  Remix: independent source columns, TIE/slide, repeats, partial blocks, chronological swing/callbacks, BREAK, OFF/A1 and directions checked\n");
 }
 
+static void direction_tick(void)
+{
+    seq_ext_clock(&S);
+    seq_advance(&S, 1, &SINK);
+}
+
+static void direction_step(void)
+{
+    for (int i = 0; i < 6; i++) direction_tick();
+}
+
+static void test_mrev(void)
+{
+    static const int lengths[] = {1, 8, 16, 17, 32, 64};
+    CHECK(DIR_FWD == 0 && DIR_REV == 1 && DIR_MREV == 2 && DIR_PINGPONG == 3 && DIR_RANDOM == 4 && NDIRS == 5,
+          "v1.0.1 stored direction numbering");
+    for (unsigned l = 0; l < sizeof lengths / sizeof lengths[0]; l++) {
+        int len = lengths[l];
+        for (int voice = 0; voice < NBASS; voice++) {
+            int t = TRK_BASS0 + voice;
+            reset(); S.ext = 1;
+            bpart_t *b = &P[0].bass[voice];
+            b->len = len; b->dir = DIR_MREV;
+            for (int i = 0; i < len; i++) b->step[i] = (bstep_t){30 + i, G_NOTE};
+            seq_set_remix(&S, t, 0, 6, 1);
+            pattern_t original = P[0];
+            seq_start(&S); direction_tick();
+            for (int n = 0; n <= len * 2; n++) {
+                int pos = (len - n % len) % len;
+                CHECK(S.t[t].pos == pos && seq_playback_source_step(&S, t) == pos,
+                      "MREV voice %d len %d step %d: got %d expected %d", voice, len, n, S.t[t].pos, pos);
+                CHECK(S.t[t].bars == (unsigned)(n / len), "MREV full-length cycle boundary len %d n %d", len, n);
+                CHECK(seq_next_step(&S, t, pos) == (pos + len - 1) % len, "MREV lookahead len %d", len);
+                if (n < len * 2) direction_step();
+            }
+            CHECK(!memcmp(&P[0], &original, sizeof original), "MREV leaves pattern and Remix selection/ON unchanged");
+            b->dir = DIR_FWD;
+            CHECK(seq_source_step(&S, t, 1) == 13, "Forward restores stored A7 Remix mapping");
+            b->dir = DIR_MREV;
+            seq_stop(&S); seq_advance(&S, 0, &SINK);
+            seq_start(&S); direction_tick();
+            CHECK(S.t[t].pos == 0 && S.t[t].bars == 0, "MREV restart from first step");
+            if (len > 1) {
+                direction_step(); seq_stop(&S); seq_advance(&S, 0, &SINK);
+                seq_continue(&S); direction_tick();
+                CHECK(S.t[t].pos == (len - 2) % len, "MREV Continue retains traversal");
+            }
+            P[1].bass[voice] = *b;
+            seq_cue_part(&S, t, 1);
+            for (int n = 0; n < 102 && S.ppat[t] != 1; n++) direction_tick();
+            if (!S.t[t].started) direction_tick(); /* existing external-clock pattern restart */
+            CHECK(S.ppat[t] == 1 && S.t[t].pos == 0 && S.t[t].bars == 0,
+                  "MREV cued pattern restarts at first step len %d", len);
+        }
+        /* Mutation and probability use one full MREV pass, including odd lengths. */
+        reset(); S.ext = 1;
+        bpart_t *b = &P[0].bass[0];
+        b->len = len; b->dir = DIR_MREV;
+        tb3po_generate(b); b->gen.mutate_bars = 1;
+        bpart_t expected = *b;
+        uint32_t rng = 0;
+        seq_start(&S); direction_tick();
+        for (int n = 1; n < len; n++) direction_step();
+        CHECK(!memcmp(b, &expected, sizeof expected), "MREV no premature mutation len %d", len);
+        direction_step(); tb3po_mutate(&expected, &rng);
+        CHECK(!memcmp(b, &expected, sizeof expected) && S.mut_rng[0] == rng && S.t[TRK_BASS0].bars == 1,
+              "MREV mutation on full wrap len %d", len);
+        /* Internal scheduling follows the backward parity, including odd wraps. */
+        for (int rate = RATE_16; rate <= RATE_32; rate += 2) {
+            for (int swing = 0; swing <= 60; swing += 60) {
+                reset(); S.bpm = 120.0f; P[0].swing = swing;
+                b = &P[0].bass[0]; b->len = len; b->dir = DIR_MREV; b->rate = rate;
+                for (int i = 0; i < len; i++) b->step[i] = (bstep_t){30 + i, G_NOTE};
+                uint32_t L = seq_step_q8(&S, rate), sw = L / 200u * swing;
+                uint64_t times[129] = {0};
+                for (int n = 1; n < len * 2; n++) {
+                    int p = (len - (n - 1) % len) % len, next = (len - n % len) % len;
+                    times[n] = times[n - 1] + ((next & 1) ? L + sw : (p & 1) ? L - sw : L);
+                }
+                seq_start(&S); run((uint32_t)(times[len * 2 - 1] / 256u) + 2);
+                int i = 0;
+                for (int n = 0; n < len * 2; n++) {
+                    i = find(E_ON, 0, i);
+                    CHECK(i >= 0 && evs[i].b == 30 + (len - n % len) % len &&
+                          abs((int)evs[i].t - (int)(times[n] / 256u)) <= 1,
+                          "MREV swing/rate len %d rate %d swing %d event %d", len, rate, swing, n);
+                    if (i < 0) break;
+                    i++;
+                }
+            }
+        }
+    }
+    /* Existing REV starts at the last step; PING bounces, RND remains random. */
+    static const int expected[3][8] = {{7,6,5,4,3,2,1,0}, {0,1,2,3,4,5,6,7}, {0,2,7,1,0,3,1,5}};
+    for (int d = 0; d < 3; d++) {
+        reset(); S.ext = 1;
+        P[0].bass[0].len = 8;
+        P[0].bass[0].dir = d == 0 ? DIR_REV : d == 1 ? DIR_PINGPONG : DIR_RANDOM;
+        seq_start(&S); direction_tick();
+        for (int n = 0; n < 8; n++) {
+            CHECK(S.t[TRK_BASS0].pos == expected[d][n], "legacy direction traversal %d/%d", d, n);
+            uint32_t rng = S.t[TRK_BASS0].rng;
+            seq_next_step(&S, TRK_BASS0, S.t[TRK_BASS0].pos);
+            CHECK(S.t[TRK_BASS0].rng == rng, "lookahead must not consume random state");
+            direction_step();
+        }
+        if (d == 0) CHECK(S.t[TRK_BASS0].bars == 2, "conventional REV retains both existing wrap boundaries");
+        if (d == 1) CHECK(S.t[TRK_BASS0].pos == 6, "PING bounces after last step");
+    }
+    /* Backwards TIE lookahead holds step 1 through the last step, then slides. */
+    reset(); S.bpm = 120.0f;
+    bpart_t *b = &P[0].bass[0]; b->len = 8; b->dir = DIR_MREV;
+    memset(b->step, 0, sizeof b->step);
+    b->step[0] = (bstep_t){36, G_NOTE};
+    b->step[7] = (bstep_t){40, G_TIE | BS_SLIDE};
+    b->step[6] = (bstep_t){43, G_NOTE | BS_ACCENT};
+    seq_start(&S); run(20000);
+    int on = find(E_ON, 0, 0), target = find(E_ON, 0, on + 1), off = find(E_OFF, 0, on);
+    CHECK(on >= 0 && evs[on].t == 0 && evs[on].b == 36, "MREV first note");
+    CHECK(target >= 0 && evs[target].b == 43 && evs[target].c == 1 && evs[target].d == 1,
+          "MREV TIE/slide into accented backwards target");
+    CHECK(off > target && abs((int)evs[target].t - 11025) <= 1 && abs((int)evs[off].t - 13781) <= 1,
+          "MREV TIE holds until target half gate");
+    /* A TIE across the actual 2 -> 1 cycle boundary also holds its source. */
+    reset(); S.bpm = 120.0f;
+    b = &P[0].bass[0]; b->len = 8; b->dir = DIR_MREV;
+    memset(b->step, 0, sizeof b->step);
+    b->step[1] = (bstep_t){48, G_NOTE}; b->step[0] = (bstep_t){36, G_TIE};
+    seq_start(&S); run(44100 + 4000);
+    on = find(E_ON, 0, 0); on = find(E_ON, 0, on + 1); off = find(E_OFF, 0, on);
+    CHECK(on >= 0 && evs[on].b == 48 && off >= 0 && abs((int)evs[off].t - 46856) <= 1,
+          "MREV TIE holds across full cycle boundary");
+    static song_t sg;
+    reset(); memset(&sg, 0, sizeof sg); S.bpm = 120.0f; S.song = &sg; S.song_on = 1; sg.len = 2;
+    sg.bar[1].pat[TRK_BASS0] = 1;
+    for (int p = 0; p < 2; p++) {
+        P[p].bass[0].len = 17; P[p].bass[0].dir = DIR_MREV;
+    }
+    seq_start(&S); run(1); run(88200);
+    CHECK(S.ppat[TRK_BASS0] == 1 && S.t[TRK_BASS0].pos == 0 && S.t[TRK_BASS0].bars == 0,
+          "MREV Song pattern changes restart on first step");
+    printf("  MREV: both voices, lengths 1/8/16/17/32/64, wraps/mutation, restart/continue/cue, Remix and TIE/slide checked\n");
+}
+
 int main(void)
 {
     test_drum_timing();
@@ -623,6 +767,7 @@ int main(void)
     test_remix_sequencer();
     test_tb3po_default_scale();
     test_tb3po_auto_mutate();
+    test_mrev();
     printf("seq: %s\n", fails ? "FAIL" : "ok");
     return fails != 0;
 }

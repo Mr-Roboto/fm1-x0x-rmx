@@ -138,6 +138,24 @@ static void legacy_appearance(void)
                     pg.n = 2;
                     draw_knobs();
                     assert(screen_hash() == original_lcd[p][part][v]);
+                } else if (appearance_views[v] == V_SEQ && (part == PART_303A || part == PART_303B)) {
+                    /* Verify all five v1.0.1 DIR pips, then normalize just their
+                     * 38x9 rectangle to the original four-pip FWD fixture.
+                     * Every remaining pixel still matches the historical hash. */
+                    assert(pref_desc(pg.r[0][2])->max == 4 && pref_get(pg.r[0][2]) == DIR_FWD);
+                    for (int pass = 0; pass < 2; pass++) {
+                        int n = pass ? 4 : 5, left = 150 - (n * 8 - 2) / 2;
+                        cv_begin(240, 9, C_BLACK);
+                        for (int k = 0; k < n; k++)
+                            box(left + k * 8, 0, 6, 9, k ? C_LINE : part_col());
+                        for (int y = 0; y < 9; y++)
+                            for (int x = 131; x < 169; x++) {
+                                uint16_t c = cv_px[y * 240 + x];
+                                if (!pass) assert(fb[(KNOB_Y + 33 + y) * 240 + x] == c);
+                                else fb[(KNOB_Y + 33 + y) * 240 + x] = c;
+                            }
+                    }
+                    assert(screen_hash() == original_lcd[p][part][v]);
                 } else {
                     if (screen_hash() != original_lcd[p][part][v])
                         fprintf(stderr, "LCD mismatch palette=%d part=%d view=%d\n", p, part, appearance_views[v]);
@@ -151,7 +169,7 @@ static void legacy_appearance(void)
         png_write(path);
     }
     legacy_loop_names = 0;
-    puts("DEFAULT: legacy pixels (303 page dots normalized), Grids replacements and five active COMP/GR references passed");
+    puts("DEFAULT: legacy pixels (303 page dots/DIR pips normalized), five DIR pips, Grids and active COMP/GR references passed");
 }
 
 static void global_memory(void)

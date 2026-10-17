@@ -24,6 +24,13 @@ from make_site import product_of, strip_module  # noqa: E402  (Felucca's: the pa
 REPO = "https://github.com/Mr-Roboto/fm1-x0x-rmx"
 UPSTREAM = "https://github.com/charlesvestal/fm1-x0x"
 
+
+def is_release_identity(product):
+    # Retain historical package support; neither development identity is publishable.
+    return (re.fullmatch(r"FM-1_(?:987[0-9]{6}|9(?:[0-9]{2}|[0-9]{6}))", product) is not None
+            and product not in ("FM-1_900", "FM-1_987"))
+
+
 LANDING = """<!doctype html>
 <html lang="en">
 <head>
@@ -167,12 +174,17 @@ No firmware package, download or installation controls are available here.</p>
 </main></body></html>"""
 
 
-def site_doc_links(page):
+def site_doc_links(page, firmware_name=None):
     """Resolve repository Markdown links without confusing them with Pages routes."""
     def link(match):
         url = match.group(1)
         site = "https://mr-roboto.github.io/fm1-x0x-rmx/"
         if url.startswith(site):
+            # Historical download links stay public when that package is absent
+            # from a documentation preview or a different future release.
+            if url.startswith(site + "firmware/") and url[len(site + "firmware/"):] not in (
+                    firmware_name, (firmware_name + ".sha256") if firmware_name else None):
+                return match.group(0)
             return 'href="../' + url[len(site):] + '"'
         if ":" in url or url.startswith("#"):
             return match.group(0)
@@ -219,7 +231,7 @@ def main(out, pkg=None, version=None):
         pkg = Path(pkg)
         raw = pkg.read_bytes()
         product = product_of(raw)
-        if not re.fullmatch(r"FM-1_9(\d\d|\d{6})", product) or product == "FM-1_900":
+        if not is_release_identity(product):
             raise SystemExit(f"{pkg}: identity {product!r}: requires a release build")
         if b"FELUCCA-LOADER-1" not in raw:
             raise SystemExit(f"{pkg}: no update loader in it")
@@ -259,7 +271,7 @@ def main(out, pkg=None, version=None):
     shutil.copytree(SRC / "docs" / "img" / "new", out / "new" / "img" / "new")
     for section in ("manual", "new"):
         doc = out / section / "index.html"
-        doc.write_text(site_doc_links(doc.read_text(encoding="utf-8")), encoding="utf-8")
+        doc.write_text(site_doc_links(doc.read_text(encoding="utf-8"), name), encoding="utf-8")
     status = "Documentation-only preview of X0X-RMX v1.0.0 Stable, successfully tested on real M-VAVE FM-1 hardware. This preview excludes the firmware package and installer; use the official release for installation."
     install = '<a href="install/"><strong>Firmware release status</strong><span>Package-free local preview; use the official Stable release.</span></a>'
     download = ""

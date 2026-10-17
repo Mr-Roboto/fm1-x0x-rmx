@@ -52,8 +52,19 @@ SDK_SHA256 = {
     "cfg/eq_cfg_hw.bin": "41167491bffed4651750719c973d2758adeb9021a5670d02d6a53c85ed80ea7d",
 }
 
-PRODUCT = "FM-1_900"                # package identity; release builds are FM-1_9XXYYZZ (see main)
+PRODUCT = "FM-1_987"                # X0X-RMX development identity; releases append XXYYZZ
 VERSION = None                      # FELUCCA_VERSION for release builds (default: firmware/src/ui.c)
+
+
+def release_identity(version):
+    """Permanent X0X-RMX namespace plus two decimal digits per version component."""
+    m = re.fullmatch(r"([0-9]{1,2})\.([0-9]{1,2})(?:\.([0-9]{1,2}))?(-[A-Za-z0-9]+)?", version)
+    if not m:
+        raise ValueError("use X.Y[.Z][-suffix], up to two digits each")
+    numbers = tuple(int(m[i] or 0) for i in (1, 2, 3))
+    if numbers == (1, 0, 0) and not m[4]:
+        raise ValueError("v1.0.0 is immutable; use the original published package or a future version")
+    return "FM-1_987%02d%02d%02d" % numbers
 
 
 def toolchain():
@@ -370,19 +381,17 @@ def mmio_check():
 def main():
     global PRODUCT, VERSION
     ap = argparse.ArgumentParser()
-    ap.add_argument("--release", metavar="X.Y[.Z]", help="release build: identity FM-1_9XXYYZZ, version string X.Y[.Z]")
+    ap.add_argument("--release", metavar="X.Y[.Z]", help="release build: identity FM-1_987XXYYZZ, version string X.Y[.Z]")
     ap.add_argument("--sdk", type=Path, help="JieLi AC79 SDK checkout (default: $AC79_SDK)")
     a = ap.parse_args()
     name = "x0x.fwsc"
     if a.release:
-        # identity FM-1_9 + major, minor, patch as two digits each (0.10 -> FM-1_9001000). FM-1 is the
-        # model the update tools match on; the number is ours (X0X 0.3..0.9 were FM-1_9XY, one digit
-        # each, which ran out at 0.9 and was also Felucca's own numbering). 12 of the 20 characters a
-        # package's identity holds; digits only after the underscore, as the tools parse it.
-        m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?(-[A-Za-z0-9]+)?", a.release)
-        if not m:
-            raise SystemExit(f"--release {a.release}: use X.Y[.Z][-suffix], up to two digits each")
-        PRODUCT = "FM-1_9%02d%02d%02d" % (int(m[1]), int(m[2]), int(m[3] or 0))
+        # 14 of the package marker's 20 characters; numeric after the model separator.
+        # The same PRODUCT is passed to FELUCCA_ID and the package writer below.
+        try:
+            PRODUCT = release_identity(a.release)
+        except ValueError as e:
+            raise SystemExit(f"--release {a.release}: {e}")
         VERSION = a.release.upper()
         name = f"x0x-{a.release}.fwsc"
     fm1pkg_make.SDK = a.sdk

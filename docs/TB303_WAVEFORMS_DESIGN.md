@@ -815,6 +815,19 @@ und Notch-Trapezoid (127). Beide Stimmen haben unabhängige Morph-Werte.
   wird noch der zuvor akzeptierte Wave-Wert gespeichert. Eine volle Queue kann
   ein Kommando verwerfen, erzeugt aber keine optimistisch gespeicherte Wave-Auswahl.
 
+### v1.0.1 user rejection notification
+
+WAVE turns through either the knob or SEL list use the dedicated `C_BWAVE_USER`
+queue command. The audio consumer calls the unchanged `apply_param()` exclusion
+logic and increments `eng_wave_rejected` only if that user request is rejected.
+The main UI observes the counter and shows exactly `MORPH IN USE` for 1.3 seconds
+in the existing header banner. The normal parameter readout and list occupy
+different screen regions and cannot cover this message. UI initialization
+discards old notifications. No persistent field or DSP ownership state is added.
+Generic commands, motion, project loading and playback never increment this
+counter. Queue ordering remains authoritative: a queued release before a user
+selection allows acquisition without a false warning from a stale UI mirror.
+
 ### Motion und Rückkehr zum Basis-Sound
 
 Motion verwendet denselben Audio-Callback wie Queue-Kommandos. Sein Apply-Callback

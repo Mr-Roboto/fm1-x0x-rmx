@@ -205,6 +205,13 @@ def installs():
     ok(rc == 0 and dev.bad == 0 and "done: the FM-1 runs FM-1_9010000" in out,
        "install: development FM-1_900 -> stable FM-1_9010000, identity verified")
 
+    rmx = package("FM-1_987010001")
+    for identity in ("FM-1_9010000", "ota-FM-1_900"):
+        dev = FakeFM1(I.logical_image(rmx), identity=identity, after_write="FM-1_987010001")
+        rc, out, err = cli([pkgfile("x0x-1.0.1.fwsc", rmx), "--yes"], dev)
+        ok(rc == 0 and dev.bad == 0 and "done: the FM-1 runs FM-1_987010001" in out,
+           f"install: {identity} -> independent FM-1_987010001, exact verification")
+
     dev = FakeFM1(image, identity="ota-FM-1_900", name="Felucca Update")
     rc, out, err = cli([p, "--yes"], dev)
     ok(rc == 0 and dev.bad == 0 and dev.upgrades == 1 and "update mode" in out, "install: device already in update mode -> finishes the write")

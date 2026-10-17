@@ -63,6 +63,8 @@ const char *engine_voice_name(int target, int voice);
 /* Audio-accepted Wave mirror; queued Wave requests must not be stored optimistically.
  * Motion display uses effective Waves; rejected requests are never replayed. */
 int engine_bass_wave(int voice);
+void engine_bass_wave_user(int voice, int wave);            /* queued UI selection only */
+extern volatile uint32_t eng_wave_rejected;                /* audio-owned rejection counter */
 void engine_sync_sound(sound_t *s);                         /* main: before display/save */
 void engine_sound_validate_bass(sound_t *s);                /* cold load: clamp, A wins */
 

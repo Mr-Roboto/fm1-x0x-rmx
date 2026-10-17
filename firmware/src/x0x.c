@@ -38,7 +38,7 @@ static inline int32_t clamp(int32_t v, int32_t lo, int32_t hi) { return v < lo ?
 #endif
 #define FELUCCA_UAC X0X_UAC
 #ifndef FELUCCA_ID
-#define FELUCCA_ID "FM-1_900"     /* package identity (tools/build.py) */
+#define FELUCCA_ID "FM-1_987"     /* X0X-RMX development identity (tools/build.py) */
 #endif
 #include "usb.c"
 #ifndef X0X_TRS

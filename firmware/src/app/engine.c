@@ -100,7 +100,7 @@ static float mix_pl[NPARTS] = {1, 1, 1, 1, 1}, mix_pr[NPARTS] = {1, 1, 1, 1, 1};
 /* ------------------------------------------------------- command queue --- */
 /* uint32 commands, single producer (main loop) / single consumer (audio ISR):
  * type:4 | a:8 | b:8 | c:12 */
-enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_BWAVES };
+enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_BWAVES, C_BWAVE_USER };
 #define CQ 1024u
 static uint32_t cq[CQ];
 static volatile uint32_t cq_w, cq_r;
@@ -118,6 +118,12 @@ static void cq_put(uint32_t type, uint32_t a, uint32_t b, uint32_t c)
 /* Audio publishes one atomic word: accepted base Waves (low nibble), effective
  * Waves (high nibble). Main never reads/writes bass303 state. No owner/pending flag. */
 static volatile uint32_t bass_waves;
+volatile uint32_t eng_wave_rejected;  /* ISR increments for rejected UI commands only */
+void engine_bass_wave_user(int voice, int wave)
+{
+    wave = wave < 0 ? 0 : wave > BASS303_WAVE_MORPH ? BASS303_WAVE_MORPH : wave;
+    cq_put(C_BWAVE_USER, (uint32_t)voice, 0, (uint32_t)wave);
+}
 int engine_bass_wave(int v)
 {
     return v >= 0 && v < NBASS ? (int)((bass_waves >> (2 * v)) & 3u) : 0;
@@ -563,8 +569,15 @@ static void drain(void)
     while (r != cq_w) {
         uint32_t c = cq[r % CQ], type = c >> 28, a = (c >> 20) & 0xFFu, b = (c >> 12) & 0xFFu, v = c & 0xFFFu;
         r++;
-        if (type < 8u) {
+        if (type < 8u || type == C_BWAVE_USER) {
+            int user = type == C_BWAVE_USER;
+            if (user) {
+                type = T_303;
+                b = BASS303_WAVE;
+            }
             int accepted = apply_param((int)type, (int)a, (int)b, (int)v);
+            if (user && !accepted)
+                eng_wave_rejected++;
             if (accepted && type == T_303 && a < NBASS && b == BASS303_WAVE) {
                 uint32_t shift = 2u * a;
                 bass_waves = (bass_waves & ~(3u << shift)) | ((uint32_t)b303[a].wave << shift);

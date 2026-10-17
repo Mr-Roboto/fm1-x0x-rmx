@@ -92,7 +92,7 @@ int seq_source_step(const seq_t *s, int t, int chronological_slot)
         return -1;
     const pattern_t *p = &s->pat[s->ppat[t]];
     uint16_t state;
-    if (t == TRK_BRK || (is_bass(t) && (bpart(s, t - TRK_BASS0)->dir & 3) != DIR_FWD))
+    if (t == TRK_BRK || (is_bass(t) && bpart(s, t - TRK_BASS0)->dir != DIR_FWD))
         return chronological_slot;
     state = s->playing ? s->remix[t].active
                        : pattern_remix_selection(p, t) | (pattern_remix_enabled(p, t) << 8);
@@ -143,8 +143,9 @@ static int next_pos(seq_t *s, int t, int p, int commit)
 {
     seq_track_t *tr = &s->t[t];
     int len = seq_part_len(s, t), dir = is_bass(t) ? bpart(s, t - TRK_BASS0)->dir : DIR_FWD, n;
-    switch (dir & 3) {
+    switch (dir) {
     case DIR_REV:
+    case DIR_MREV:
         return (p - 1 + len) % len;
     case DIR_PINGPONG:
         if (len == 1)

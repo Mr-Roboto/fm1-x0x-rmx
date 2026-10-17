@@ -41,8 +41,13 @@ On Linux x86-64 the toolchain runs natively and Docker is not needed.
 `JIELI_TOOLCHAIN` and `AC79_SDK` override the default locations
 (`~/.jieli/toolchain`, `~/fw-AC79_AIoT_SDK`).
 
-`./build.sh --release 1.0.0` builds the stable package `build/x0x-1.0.0.fwsc`,
-with display version `1.0.0` and product identity `FM-1_9010000`. Unsuffixed versions stay
+`./build.sh --release 1.0.1` builds a future local package `build/x0x-1.0.1.fwsc`,
+with display version `1.0.1` and product identity `FM-1_987010001`. The permanent
+X0X-RMX namespace is `FM-1_987`; release identities append major, minor and patch
+as two decimal digits each (0–99). Development builds use `FM-1_987` alone.
+The historical v1.0.0 Stable package retains `FM-1_9010000` and must never be rebuilt
+or replaced; this branch rejects `--release 1.0.0`. See [identity and upgrade validation](docs/FIRMWARE_IDENTITY.md).
+Unsuffixed versions stay
 unsuffixed; an explicitly supplied legacy suffix remains explicit. All image, RAM, pool,
 loader and SDK checks still run. A local build does not publish or authorize installation.
 
@@ -128,7 +133,7 @@ prepare the fork from `orb-remix`.
 The future package-enabled generator command is deliberately explicit:
 
 ```
-python3 tools/make_pages.py --validated-release build/x0x-1.0.0.fwsc VERSION build/release-site
+python3 tools/make_pages.py --validated-release build/x0x-1.0.1.fwsc 1.0.1 build/release-site
 ```
 
 Run that only after real-device validation and explicit release approval. It retains the

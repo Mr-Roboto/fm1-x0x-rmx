@@ -516,7 +516,10 @@ async function packages() {
   const logical = py(`import sys; raw = open(sys.argv[1], "rb").read()
 sys.stdout.buffer.write(b"".join(raw[i * 48:i * 48 + 47] for i in range(20)) + raw[960:])`, pkg);
   ok(eq(logicalImage(raw), logical), "fm1pkg.js logicalImage");
-  ok(/^FM-1_9(?:\d\d|\d{6})$/.test(productOf(raw)), "fm1pkg.js productOf");
+  const expected = py(`import sys; sys.path.insert(0, "tools")
+from fm1_install import product_of
+print(product_of(open(sys.argv[1], "rb").read()))`, pkg).toString().trim();
+  ok(productOf(raw) === expected && /^FM-1_[0-9]+$/.test(expected), "fm1pkg.js productOf == Python (full numeric identity)");
 }
 
 /* ------------------------------------------------- update protocol (fm1ota.js) --- */
@@ -525,7 +528,8 @@ const UPGRADE = [0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7];
 
 /* an FM-1 on WebMIDI: identity, then "device asks, host answers" reads of the image */
 class FakeFM1 {
-  constructor(image, { unplugAfter = Infinity } = {}) {
+  constructor(image, { unplugAfter = Infinity, afterWrite = "FM-1_900", afterName = "Felucca" } = {}) {
+    this.afterWrite = afterWrite; this.afterName = afterName;
     this.image = image; this.unplugAfter = unplugAfter; this.served = 0; this.bad = 0;
     this.access = { inputs: new Map(), outputs: new Map() };
     this.boot("FM-1_015", "FM-1");
@@ -563,7 +567,7 @@ class FakeFM1 {
       this.served++;
       if (this.served >= this.unplugAfter) { this.input.state = this.output.state = "disconnected"; return; }
       if (addr === 0xE0000000) setTimeout(() => this.boot("ota-FM-1_900", "Felucca Update"), 300);
-      else if (addr === 0xF0000000) setTimeout(() => this.boot("FM-1_900", "Felucca"), 300);
+      else if (addr === 0xF0000000) setTimeout(() => this.boot(this.afterWrite, this.afterName), 300);
       else this.next();
     }
   }
@@ -587,6 +591,21 @@ async function updater() {
   const got = await new Updater(dev.access).install(image, "FM-1_900", (k) => steps.push(k));
   ok(got === "FM-1_900" && dev.bad === 0 && steps.includes("write") && steps.at(-1) === "done",
     `fm1ota.js: install: running firmware -> loader -> Felucca (${dev.served} reads)`);
+
+  const rmx = new FakeFM1(image, { afterWrite: "FM-1_987010001", afterName: "X0X FM-1" });
+  rmx.boot("FM-1_9010000", "X0X FM-1");
+  const upgraded = await new Updater(rmx.access).install(image, "FM-1_987010001");
+  ok(upgraded === "FM-1_987010001" && rmx.bad === 0,
+    "fm1ota.js: X0X-RMX v1.0.0 -> independent identity, exact verification");
+
+  const resume = new FakeFM1(image, { afterWrite: "FM-1_987010001", afterName: "X0X FM-1" });
+  resume.boot("ota-FM-1_900", "Felucca Update");
+  const resumeUp = new Updater(resume.access);
+  const resumed = await resumeUp.resume(image);
+  const back = await resumeUp.waitFor((id) => !id.model.startsWith("ota-"), 3000);
+  back?.link.close();
+  ok(resumed && back?.id.text === "FM-1_987010001" && resume.bad === 0,
+    "fm1ota.js: independent package resumes through existing loader identity");
 
   const dev2 = new FakeFM1(image, { unplugAfter: 3 });
   dev2.boot("ota-FM-1_900", "Felucca Update");

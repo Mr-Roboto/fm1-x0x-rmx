@@ -112,16 +112,22 @@ returns to forward.
 Existing X0X reverse behavior differs from this Orb behavior and must be preserved
 unless an explicit design decision says otherwise.
 
-The following are **unresolved** and must not be invented:
+For v1.0.1, conventional reverse remains **REV**; musical reverse is **MREV**.
+Both the UI and stored values use FWD=0, REV=1, MREV=2, PING=3, RND=4.
+This explicitly changes the meaning of legacy stored PING=2 to MREV and RND=3
+to PING. No mapping or migration is performed; `bpart_t.dir` remains one byte.
 
-- Naming and UI treatment for conventional X0X reverse versus Orb-style musical
-  reverse.
-- Exact musical ping-pong behavior.
-- Exact musical-reverse behavior for partial lengths and multi-block patterns.
+MREV uses the configured length L (1–64), starts at zero-based position 0 and
+then visits L−1, L−2, …, 1, 0. For L=1 it repeats 0. It reverses the entire
+configured pattern, not each 16-step block. Returning to position 0 completes
+one full probability/auto-mutation cycle. TIE/slide lookahead and swing use the
+same backward next position. Start and pattern changes begin at position 0;
+Continue retains the existing transport semantics.
 
-The implemented integration preserves conventional X0X bass Reverse, Ping-Pong and
-Random by bypassing Remix in those directions. The unresolved musical-reverse variants
-above are possible extensions, not a missing decision in the current Forward feature.
+All non-Forward directions bypass Remix without changing stored selection or
+ON state; switching back to Forward restores the active Remix selection under
+the existing APPLY rules. Conventional REV start/wrap behavior and PING/RND
+traversal remain unchanged. A distinct musical ping-pong mode remains unspecified.
 
 ## Persistence and Storage
 

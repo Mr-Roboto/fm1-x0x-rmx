@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import sys
+import subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urljoin, urlsplit
@@ -68,7 +69,7 @@ else:
     assert not list(root.rglob("*.fwsc")), "preview includes firmware package"
     assert not (root / "firmware").exists(), "preview includes firmware directory"
     assert not re.search(r"<(script|button|input)\b", installer), "preview enables installation"
-    assert "validation" in installer and "approval" in installer
+    assert "Documentation-only preview" in installer and "excludes installation controls" in installer
 for path in ("index.html", "emu/index.html", "manual/index.html", "breaks/index.html"):
     text = (root / path).read_text()
     assert "X0X-RMX" in text
@@ -77,7 +78,7 @@ assert "https://github.com/Mr-Roboto/fm1-x0x-rmx" in (root / "index.html").read_
 assert "https://github.com/charlesvestal/fm1-x0x" in (root / "index.html").read_text()
 assert "Original X0X history" in (root / "new/index.html").read_text()
 info = json.loads((root / "emu/build-info.json").read_text())
-assert info["branch"] == "orb-remix"
+assert info["branch"] == subprocess.check_output(["git", "branch", "--show-current"], text=True).strip()
 assert info["wasm_sha256"] == hashlib.sha256((root / "emu/x0x.wasm").read_bytes()).hexdigest()
 assert '<link rel="icon" href="emu/favicon.svg" type="image/svg+xml">' in (root / "index.html").read_text()
 assert (root / "emu/favicon.svg").read_bytes() == Path("web/emu/favicon.svg").read_bytes()
@@ -98,7 +99,8 @@ assets = root / "manual/img/p82"
 assert len(list(assets.glob("*.png"))) == 19
 for image in assets.glob("*.png"):
     assert image.read_bytes() == (Path("docs/img/p82") / image.name).read_bytes(), image
-assert "Rejection is silent; there is no warning banner." in manual_path.read_text()
+assert "MORPH IN USE" in manual_path.read_text()
+assert "MREV" in manual_path.read_text()
 readme = Path("README.md").read_text()
 readme_images = re.findall(r'!\[[^\]]+\]\((docs/img/[^)]+)\)', readme)
 readme_images += [img["src"] for img in Links(readme).images]

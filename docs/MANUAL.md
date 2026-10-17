@@ -4,7 +4,12 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This manual covers X0X-RMX v1.0.0 Stable, the fork of Charles Vestal's X0X. Successfully tested on a real M-VAVE FM-1. Hardware testing
+This manual includes the **unreleased v1.0.1** changes: MREV playback and the MORPH conflict
+message. These additions still require physical-device validation and release approval;
+the public firmware download and installer remain v1.0.0 Stable.
+See [v1.0.1 release notes](RELEASE_1.0.1.md), including the saved-direction compatibility change.
+
+X0X-RMX is a fork of Charles Vestal's X0X. **v1.0.0 Stable** was successfully tested on a real M-VAVE FM-1. Hardware testing
 confirmed the regular update, retained patterns/user breaks, restored manual startup patterns,
 pattern chains and a twelve-minute musical run without reported problems. USB audio with
 iPad/AudioShare was confirmed successful, as was real-device operation of the sequencer,
@@ -412,8 +417,18 @@ drive type (off, soft or RAT) and tuning controls, with unchanged ranges and def
 ACCDEC sets accented-note decay (30–3000 ms). DRVTYPE chooses Off, Soft or RAT;
 DRIVE on VOICE sets the amount (0–127), with 0 bypassing drive. TUNE sets the reference pitch,
 not the pattern transpose. SEL lists these with the page parameters in the same order; only VOLUME remains under
-**MORE**. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION (forward, reverse,
-ping-pong or random) and TRANSPOSE. Each 303's level, pan and sends are on the mixer (LFO).
+**MORE**. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION and TRANSPOSE.
+Direction choices are **FWD → REV → MREV → PING → RND**. FWD plays forwards; REV starts
+at the last step and plays backwards. **MREV (Musical Reverse)** starts at step 1, then
+plays the remaining steps backwards: `1 → 16 → 15 → … → 2 → 1` for length 16.
+It follows the configured length, including 1–64 steps: length 8 plays
+`1 → 8 → 7 → … → 2 → 1`; length 1 repeats step 1. PING and RND retain their
+ping-pong and random traversal. Each 303's level, pan and sends are on the mixer (LFO).
+
+**Saved direction compatibility in v1.0.1:** the stored values are now
+0 FWD, 1 REV, 2 MREV, 3 PING, 4 RND. There is no migration: v1.0.0 patterns saved
+as PING (2) play MREV, and those saved as RND (3) play PING. Select the desired
+direction again and save. FWD and REV retain their values. The pattern layout is unchanged.
 
 **Morph (experimental Wave 3).** Pick 303A or 303B with ALGORITHM, press EDIT and turn SELECT
 to VOICE. Set WAVE to Morph with KNOB 2, then move to EXTRA and use KNOB 1 to change MORPH.
@@ -434,7 +449,9 @@ While Morph is sounding, changes slew over at most about 5 ms. Setting it while 
 idle settles immediately.
 
 **One Morph voice at a time.** If 303A uses Morph, a Morph selection on 303B is rejected and B
-keeps its prior accepted Wave. Rejection is silent; there is no warning banner.
+keeps its prior accepted Wave. A rejected user selection through the WAVE knob or
+SEL parameter list briefly shows exactly **MORPH IN USE** in the header, above the
+normal value readout. Playback, motion and project loading do not show this warning.
 The same applies with A and B reversed. The other voice is not
 forced to change. Set the current owner to Saw or Square before selecting Morph on the other
 voice. A rejected choice does not become active later when the owner releases it; make a new
@@ -678,7 +695,7 @@ Remix mappings are Bank A–P / Pattern 1–16.
    Stopped changes apply immediately. Start playback to hear the chosen mapping.
 
 **A1** is the neutral sequential mapping, even with REMIX ON. New patterns default to
-A1/OFF. On a 303, Remix acts only with DIRECTION = Forward. Reverse, Ping-Pong and Random
+A1/OFF. On a 303, Remix acts only with DIRECTION = Forward. Reverse, Musical Reverse (MREV), Ping-Pong and Random
 retain their existing playback; the Remix selection remains stored. Orb-style musical
 reverse is not implemented.
 

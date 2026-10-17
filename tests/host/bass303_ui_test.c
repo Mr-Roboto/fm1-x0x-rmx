@@ -289,9 +289,140 @@ static void persistence(void)
     draw_header(); draw_main(); draw_knobs();
     png_write("build/host/waveform-ui/303-sel-morph.png");
 }
+static void directions(void)
+{
+    setup();
+    static const char *const names[] = {"FWD", "REV", "MREV", "PING", "RND"};
+    assert(sizeof(bpart_t) == 144 && sizeof(pattern_t) == 528 && sizeof(project_t) == 30952);
+    assert(DIR_MREV == 2 && DIR_PINGPONG == 3 && DIR_RANDOM == 4);
+    for (int v = 0; v < 2; v++) {
+        ui.part = PART_303A + v; ui.view = V_SEQ;
+        ui.page[V_SEQ][ui.part] = 0; build_pages();
+        assert(pg.r[0][2].kind == R_BDIR);
+        pref_t r = PR(R_BDIR, v, 0, 0);
+        assert(pref_desc(r)->max == 4);
+        pref_set(r, DIR_FWD);
+        for (int d = 0; d < NDIRS; d++) {
+            char value[16], unit[8];
+            pref_value(r, value, unit);
+            assert(pref_get(r) == d && !strcmp(value, names[d]));
+            if (d < NDIRS - 1) panel_turn(EN_K3, 1);
+        }
+        open_list_of_pages();
+        int row = -1;
+        for (int i = 0; i < ui.list_n; i++) if (list_rows[i].kind == R_BDIR) row = i;
+        assert(row >= 0); ui.list_sel = row;
+        for (int d = NDIRS - 1; d > 0; d--) {
+            panel_turn(EN_ALGO, -1);
+            assert(pref_get(r) == d - 1);
+        }
+        ui.overlay = O_NONE;
+        for (int d = 0; d < NDIRS; d++) {
+            pref_set(r, d);
+            pattern_set_remix_selection(&proj.pat[0], ui.part, 5, 7);
+            pattern_set_remix_enabled(&proj.pat[0], ui.part, 1);
+            assert(project_save() == 0);
+            project_defaults(); assert(project_load() == 0);
+            assert(proj.pat[0].bass[v].dir == d);
+            assert(copy_part(1, 0, ui.part) == 0 && proj.pat[1].bass[v].dir == d);
+            undo_start(); pref_set(r, (d + 1) % NDIRS);
+            do_undo(0); assert(pref_get(r) == d);
+            do_undo(1); assert(pref_get(r) == (d + 1) % NDIRS);
+        }
+    }
+    /* Legacy raw values are deliberately reinterpreted, never migrated. */
+    proj.pat[0].bass[0].dir = 2; proj.pat[0].bass[1].dir = 3;
+    assert(project_save() == 0); project_defaults(); assert(project_load() == 0);
+    assert(proj.pat[0].bass[0].dir == DIR_MREV && proj.pat[0].bass[1].dir == DIR_PINGPONG);
+    puts("Directions: five ordered knob/SEL choices, unchanged sizes, raw legacy values, save/load/copy/Undo passed");
+}
+
+static void mrev_probability(void)
+{
+    static const int lengths[] = {1, 8, 16, 17, 32, 64};
+    for (unsigned l = 0; l < sizeof lengths / sizeof lengths[0]; l++)
+        for (int v = 0; v < NBASS; v++) {
+            setup();
+            int part = PART_303A + v, len = lengths[l];
+            proj.pat[0].bass[v].dir = DIR_MREV; proj.pat[0].bass[v].len = len;
+            int k = motion_alloc(proj.arr.lane, 0, part, T_PROB, part << 4, 0);
+            assert(k >= 0);
+            memset(proj.arr.lane[k].val, PROB_COND, NSTEPS); /* 1:2 on every source step */
+            seq_set_remix(&seq, part, 0, 6, 1);
+            seq.ext = 1; seq_start(&seq);
+            seq_ext_clock(&seq); seq_advance(&seq, 1, &SINK);
+            for (int n = 0; n < len * 3; n++) {
+                assert(seq.t[part].bars == (unsigned)(n / len));
+                assert(prob_skip(part, 0) == ((n / len) & 1));
+                for (int tick = 0; tick < 6; tick++) {
+                    seq_ext_clock(&seq); seq_advance(&seq, 1, &SINK);
+                }
+            }
+        }
+    puts("MREV conditional probability: 1:2 follows complete passes at all six lengths on both voices");
+}
+
+static void conflict_notice(void)
+{
+    uint16_t ordinary[240 * HDR_H], warning[240 * HDR_H];
+    for (int owner = 0; owner < 2; owner++) {
+        for (int list = 0; list < 2; list++) {
+            setup();
+            int voice = owner ^ 1;
+            pref_set(wave_ref(owner), 2); pref_set(wave_ref(voice), 1); flush();
+            ui.part = PART_303A + voice; ui.view = V_PART;
+            ui.page[V_PART][ui.part] = 1; ui.msg_until = 0; build_pages();
+            if (list) {
+                panel_tap(B_SEL);
+                int row = -1;
+                for (int i = 0; i < ui.list_n; i++)
+                    if (list_rows[i].kind == R_ENG && list_rows[i].c == BASS303_WAVE) row = i;
+                assert(row >= 0); ui.list_sel = row;
+            }
+            ui_frame(); memcpy(ordinary, fb, sizeof ordinary);
+            uint32_t count = eng_wave_rejected;
+            panel_turn(list ? EN_ALGO : EN_K2, 1);
+            assert(eng_wave_rejected == count + 1);
+            assert(pref_get(wave_ref(voice)) == 1 && b303[owner].wave == 2);
+            ui_frame();
+            assert(!strcmp(ui.msg, "MORPH IN USE") && ui.msg_until == plat_ms() + 1300u);
+            assert(list ? ui.overlay == O_LIST : ui.touched == 1);
+            memcpy(warning, fb, sizeof warning);
+            assert(memcmp(warning, ordinary, sizeof warning));
+            draw_main(); draw_knobs();
+            assert(!memcmp(warning, fb, sizeof warning)); /* readout/list cannot obscure header */
+            char path[96];
+            snprintf(path, sizeof path, "build/host/waveform-ui/conflict-%c-%s.png", voice ? 'b' : 'a', list ? "sel" : "knob");
+            png_write(path);
+            uint32_t until = ui.msg_until;
+            now_ms += 100; ui_frame(); assert(ui.msg_until == until);
+            /* Ordinary commands, motion and loading cannot generate UI notices. */
+            engine_set(T_303, voice, BASS303_WAVE, 2); flush();
+            mot_apply(NULL, T_303, voice, BASS303_WAVE, 2);
+            assert(project_save() == 0); assert(project_load() == 0);
+            engine_apply_sound(&proj.sound); flush(); ui_frame();
+            assert(eng_wave_rejected == count + 1 && ui.msg_until == until);
+            now_ms = until + 1; ui_frame(); assert(ui.msg_until == 0);
+            /* Queue order wins over the UI's stale mirror: release then select succeeds. */
+            engine_set(T_303, owner, BASS303_WAVE, 0);
+            turn_ref(wave_ref(voice), 1, EN_K2); flush(); ui_frame();
+            assert(b303[voice].wave == 2 && eng_wave_rejected == count + 1 && !ui.msg_until);
+            /* A motion-owned effective Morph also excludes a fresh user request. */
+            engine_set(T_303, voice, BASS303_WAVE, 1); flush();
+            assert(mot_apply(NULL, T_303, owner, BASS303_WAVE, 2) == 2);
+            assert(engine_bass_wave(owner) == 0);
+            turn_ref(wave_ref(voice), 1, EN_K2); flush(); ui_frame();
+            assert(eng_wave_rejected == count + 2 && pref_get(wave_ref(voice)) == 1);
+            assert(!strcmp(ui.msg, "MORPH IN USE"));
+        }
+    }
+    puts("MORPH IN USE: symmetric knob/SEL, actual framebuffer visibility, timeout, silence and queued release passed");
+}
+
 int main(void)
 {
     extra_pages(); selections(); automation(); persistence();
+    directions(); mrev_probability(); conflict_notice();
     puts("bass303 EXTRA pages/knobs/SEL/Undo and command exclusion/motion/persistence: PASS");
     return 0;
 }

@@ -146,8 +146,10 @@ int main(int argc, char **argv)
     memset(nor, 0xFF, sizeof nor);
     memcpy(nor, old + ofo, 0x93000);
     memcpy(head, nor, sizeof head);
-    /* All three user slots, including headers, must survive ordinary OTA. */
-    for (uint32_t a = 0xA0000; a < 0xDC000; a++)
+    /* Project objects, all three user slots, calibration/motion and globals. */
+    for (uint32_t a = 0x97000; a < 0xE0000; a++)
+        nor[a] = (uint8_t)((a * 37u + (a >> 8)) & 255u);
+    for (uint32_t a = 0xFC000; a < 0xFF000; a++)
         nor[a] = (uint8_t)((a * 37u + (a >> 8)) & 255u);
     {
         uint8_t r[112] = {0};
@@ -163,12 +165,17 @@ int main(int argc, char **argv)
     bad += check("finish asked (0xF0000000)", f0_asked >= 1);
     bad += check("update record cleared (RAM + flash)", record_cleared && nor[0xE4F06] == 0xFF);
     bad += check("no write outside the allowed windows", bad_range == 0);
-    for (uint32_t a = 0xA0000; a < 0xDC000; a++)
+    for (uint32_t a = 0x97000; a < 0xE0000; a++)
         if (nor[a] != (uint8_t)((a * 37u + (a >> 8)) & 255u)) {
-            bad += check("all three user sample slots untouched", 0);
+            bad += check("projects, samples, calibration and motion untouched", 0);
             break;
         }
-    if (!bad) check("all three user sample slots untouched", 1);
+    for (uint32_t a = 0xFC000; a < 0xFF000; a++)
+        if (nor[a] != (uint8_t)((a * 37u + (a >> 8)) & 255u)) {
+            bad += check("settings/globals untouched", 0);
+            break;
+        }
+    if (!bad) check("all project, user sample and settings bytes untouched", 1);
     /* same package again: nothing to erase */
     erases = 0; requests = 0;
     rc = ldr_session();

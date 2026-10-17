@@ -5,6 +5,25 @@ X0X-RMX v1.0.0 is the first official Stable release. See the [manual](MANUAL.md)
 [installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) and
 [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 
+## 1.0.1 · Unreleased
+
+- Independent firmware identity: `FM-1_987010001` in both the package and USB response.
+  The official v1.0.0 package, identity and SHA-256 are unchanged.
+- Five 303 directions in order: **FWD → REV → MREV → PING → RND**. MREV starts
+  at step 1, then traverses the remaining configured steps backwards. It bypasses
+  Remix while preserving its selection and ON state; Forward restores Remix.
+- **Compatibility change:** stored values are 0 FWD, 1 REV, 2 MREV, 3 PING, 4 RND.
+  No direction migration is performed. Existing v1.0.0 PING patterns (2) now use
+  MREV; existing RND patterns (3) now use PING. Reselect the desired direction
+  and save. Storage sizes and layouts remain unchanged.
+- A user WAVE selection rejected by the single-MORPH rule shows exactly
+  **MORPH IN USE**, through either the knob or SEL parameter list. The rejected
+  voice retains its accepted waveform. Motion and loading remain silent.
+- Physical-device validation and explicit release approval remain required.
+  No upstream X0X changes are included; those are reserved for v1.1.0.
+
+See [v1.0.1 release notes and validation](RELEASE_1.0.1.md).
+
 ## 1.0.0 · Stable · 16 October 2026
 
 Hardware testing confirmed the regular firmware update, preservation of existing patterns

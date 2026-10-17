@@ -60,6 +60,7 @@ typedef struct {
     uint8_t enc_run[NE];               /* quick detents in a row (acceleration waits for a spin) */
     char msg[28];
     uint32_t msg_until;
+    uint32_t wave_rejected;            /* last audio-consumed user Wave rejection */
     int8_t touched;                    /* knob cell being turned (4 = tempo), -1 none */
     uint32_t touch_until;
     uint8_t overlay;
@@ -187,7 +188,7 @@ typedef struct { uint8_t kind, a, b, c; } pref_t;
 #define NONE PR(R_NONE, 0, 0, 0)
 
 static const char *const RATE_N[] = {"1/16", "1/16T", "1/32", "1/8T"};
-static const char *const DIR_N[] = {"FWD", "REV", "PING", "RND"};
+static const char *const DIR_N[] = {"FWD", "REV", "MREV", "PING", "RND"};
 static const char *const ONOFF_N[] = {"OFF", "ON"};
 static const char *const BANK_N[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"};
 static const char *const APPLY_N[] = {"STEP", "BEAT", "BAR", "LOOP"};
@@ -220,7 +221,7 @@ static const char *const KEYSOUND_N[] = {"STOPPED", "ALWAYS"};
 static const char *const LIGHTS_N[] = {"OFF", "ON", "KEYS"};   /* ON: the keys, and the unlit buttons glow */
 static const x0x_param_t SEQ_P[NSQ] = {
     {"SWING", 100, 0, 0}, {"LENGTH", NSTEPS - 1, 15, 0}, {"RATE", 3, 0, RATE_N}, {"LENGTH", NSTEPS - 1, 15, 0},
-    {"RATE", 3, 0, RATE_N}, {"DIR", 3, 0, DIR_N}, {"TRANSP", 48, 24, 0}, {"TEMPO", 255, 105, 0},
+    {"RATE", 3, 0, RATE_N}, {"DIR", NDIRS - 1, 0, DIR_N}, {"TRANSP", 48, 24, 0}, {"TEMPO", 255, 105, 0},
     {"ACCENT", 127, 88, 0}, {"CLOCK OUT", 1, 1, ONOFF_N}, {"NOTES OUT", 1, 0, ONOFF_N}, {"SCHEME", NSCHEMES - 1, SCHEME_WHITE_LILAC, SCHEME_N},
     {"LIGHTS", 2, 1, LIGHTS_N}, {"KEY SOUND", 1, 0, KEYSOUND_N},
     {"AUTOSAVE", 1, 1, ONOFF_N},
@@ -2002,7 +2003,11 @@ static void turn_ref(pref_t r, int e, int knob)
         e = e > 0 ? 1 : -1;                          /* a switch: one detent, one position */
     else
         e = accel(knob, e, d->max);
-    pref_set(r, pref_get(r) + e);
+    if (r.kind == R_ENG && r.a == T_303 && r.c == BASS303_WAVE) {
+        mark_dirty();
+        engine_bass_wave_user(r.b, pref_get(r) + e);
+    } else
+        pref_set(r, pref_get(r) + e);
     motion_touch(r);
 }
 
@@ -4273,6 +4278,7 @@ void ui_init(void)
     ui.touched = -1;
     ui.overlay = O_NONE;
     ui.outline_ok = 0;
+    ui.wave_rejected = eng_wave_rejected;
     ui.global_sel = ui.global_top = 0;
     scheme_set((uint32_t)settings_scheme(&proj.set), proj.set.palette);
     for (i = 0; i < 4; i++)
@@ -4316,6 +4322,10 @@ void ui_frame(void)
     uint32_t i;
     engine_sync_sound(&proj.sound);
     input();
+    if (ui.wave_rejected != eng_wave_rejected) {
+        ui.wave_rejected = eng_wave_rejected;
+        say("MORPH IN USE", 0);
+    }
     undo_tick();
     autosave();
     perf_test_tick();

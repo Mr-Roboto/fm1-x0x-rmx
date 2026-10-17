@@ -17,7 +17,8 @@
 #define NBASS 2                      /* 303 A, 303 B */
 
 enum { RATE_16, RATE_16T, RATE_32, RATE_8T, NRATES };      /* step length */
-enum { DIR_FWD, DIR_REV, DIR_PINGPONG, DIR_RANDOM, NDIRS };  /* 303 playback direction */
+/* v1.0.1 inserts MREV at stored value 2; legacy PING/RND bytes are not migrated. */
+enum { DIR_FWD = 0, DIR_REV = 1, DIR_MREV = 2, DIR_PINGPONG = 3, DIR_RANDOM = 4, NDIRS };
 enum { G_REST, G_NOTE, G_TIE };                             /* 303 step gate */
 
 /* 303 step: one byte of note, one of flags */

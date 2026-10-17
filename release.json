@@ -1,0 +1,23 @@
+{
+  "version": "1.0.1",
+  "status": "Stable",
+  "source_commit": "a3cca394f942d66b7b75a47af3e944ed03728765",
+  "implementation_commit": "45310f6c5a20eae1951c034783e75dca7a1fd55d",
+  "product": "FM-1_987010001",
+  "firmware": "firmware/x0x-1.0.1.fwsc",
+  "firmware_bytes": 609680,
+  "firmware_sha256": "42190c2dffbda6d89807e40b68dd8d2426ef502fa3848dc47bb1af37e34a2fd3",
+  "wasm_sha256": "0b9873d2ba0a216c62f6c7cdc73b8cc0ab14158b34388f16ef4fabe539044a82",
+  "hardware_checklist_passed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "external_midi_extended_performance": "not performed",
+  "physical_interrupted_update_recovery": "not tested"
+}

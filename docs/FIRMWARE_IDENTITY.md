@@ -160,7 +160,10 @@ paths, save/restart and retained project data/user samples. See the
 [v1.0.1 hardware record](FM1_TEST_1.0.1.md) for the exact reported results and
 the unchanged tested package checksum. External MIDI clock/dedicated extended
 performance testing (item 9) and physical interrupted-update recovery remain
-untested. Stable publication still requires explicit approval.
+untested. The maintainer explicitly approved v1.0.1 Stable publication on
+18 October 2026 with these limitations and no additional hardware-test requirement.
+A publication-day recheck found no competing `FM-1_987` package identity among
+57 live catalogue entries; X0X-RMX family recognition remains present.
 
 The earlier validation plan below is retained for repeatability; it is not a
 claim that every subcheck was performed. Before approval, on an FM-1 running
@@ -177,6 +180,6 @@ the original v1.0.0 package:
    available through its agreed validation process. Current checks exercise its
    parser and matching code, not a physical Hub installation.
 
-Wait for explicit approval before publishing a release, firmware download or
-Pages update. The example version is a local validation candidate, not an
-announcement of a new release. Existing public v1.0.0 remains unchanged.
+v1.0.1 Stable publication, its exact tested package, the public installer and
+Pages update are explicitly approved. The original v1.0.0 release remains
+unchanged. Future releases require their own validation and authorization.

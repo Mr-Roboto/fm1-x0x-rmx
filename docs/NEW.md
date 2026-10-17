@@ -1,11 +1,11 @@
 # X0X-RMX version history
 
-X0X-RMX v1.0.0 is the first official Stable release. See the [manual](MANUAL.md),
-[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0),
+X0X-RMX v1.0.1 is the current Stable release; v1.0.0 remains available historically. See the [manual](MANUAL.md),
+[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1),
 [installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) and
 [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 
-## 1.0.1 · Unreleased
+## 1.0.1 · Stable · 18 October 2026
 
 - Independent firmware identity: `FM-1_987010001` in both the package and USB response.
   The official v1.0.0 package, identity and SHA-256 are unchanged.
@@ -19,8 +19,12 @@ X0X-RMX v1.0.0 is the first official Stable release. See the [manual](MANUAL.md)
 - A user WAVE selection rejected by the single-MORPH rule shows exactly
   **MORPH IN USE**, through either the knob or SEL parameter list. The rejected
   voice retains its accepted waveform. Motion and loading remain silent.
-- Physical-device validation and explicit release approval remain required.
-  No upstream X0X changes are included; those are reserved for v1.1.0.
+- Hardware checklist items 1–8 passed on a real M-VAVE FM-1, including save/restart
+  and existing project/user-sample data. Stable operation had no audible dropouts
+  or unexpected interruptions. External MIDI clock/dedicated extended performance
+  testing and physical interrupted-update recovery were not performed. Publication
+  is explicitly approved with these limitations. No upstream X0X changes are
+  included; those are reserved for v1.1.0.
 
 See [v1.0.1 release notes and validation](RELEASE_1.0.1.md).
 

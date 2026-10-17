@@ -4,9 +4,12 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This manual includes the **unreleased v1.0.1** changes: MREV playback and the MORPH conflict
-message. These additions still require physical-device validation and release approval;
-the public firmware download and installer remain v1.0.0 Stable.
+This manual covers **X0X-RMX v1.0.1 Stable**, approved for public release after
+successful installation and hardware checklist items 1–8 on a real M-VAVE FM-1.
+MREV, Remix restoration, both MORPH warning paths, save/restart and existing
+project/user-sample data passed. The device ran stably without audible dropouts
+or unexpected interruptions. External MIDI clock, a dedicated extended
+performance test and physical interrupted-update recovery were not tested.
 See [v1.0.1 release notes](RELEASE_1.0.1.md), including the saved-direction compatibility change.
 
 X0X-RMX is a fork of Charles Vestal's X0X. **v1.0.0 Stable** was successfully tested on a real M-VAVE FM-1. Hardware testing
@@ -99,10 +102,10 @@ The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI
 battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
 Successful browser playback does not validate physical FM-1 performance or installation.
 
-**Install/update:** [Install X0X-RMX v1.0.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
-with Chrome or Edge, or [download x0x-1.0.0.fwsc](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc).
-The [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0) includes
-release notes and a SHA-256 checksum. The tested product identity is FM-1_9010000.
+**Install/update:** [Install X0X-RMX v1.0.1](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
+with Chrome or Edge, or [download x0x-1.0.1.fwsc](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc).
+The [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1) includes
+release notes and a SHA-256 checksum. The tested product identity is FM-1_987010001.
 Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
 The existing command-line installer, update loader and recovery tools are retained.
@@ -1129,7 +1132,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/charlesvestal/fm1-x0x/ma
    `fm1-rescue` folder in your home folder, and asks before it writes anything.
 4. Type **yes** and press Return. Don't unplug anything until it says it's restarting the FM-1.
    The FM-1 then starts into its original firmware. To install X0X-RMX afterwards, use the
-   checksum-verified v1.0.0 Stable package and its public installer.
+   checksum-verified v1.0.1 Stable package and its public installer.
 
 The script downloads M-VAVE's FM-1 V15 firmware and JieLi's flash loader, and checks both against
 known fingerprints. It writes only the firmware area of the memory, never the bootloader or the

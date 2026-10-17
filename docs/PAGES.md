@@ -1,18 +1,39 @@
 # X0X-RMX website, local previews and deployment records
 
-X0X-RMX v1.0.0 Stable is approved for the [project website](https://mr-roboto.github.io/fm1-x0x-rmx/),
+X0X-RMX v1.0.1 Stable is explicitly approved for the [project website](https://mr-roboto.github.io/fm1-x0x-rmx/),
 [web installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/),
-[firmware download](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc) and
-[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0).
-The hardware-tested package is unchanged; its SHA-256 and confirmed test scope are recorded in
-[RELEASE_1.0.0.md](RELEASE_1.0.0.md) and [P9_FM1_TEST.md](P9_FM1_TEST.md).
-Separate FULL/FOLLOWS KNOB hardware results are not claimed or required for publication.
-The emulator remains the tested P9 WASM, with updated release text only.
+[firmware download](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc) and
+[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1).
+The hardware-tested v1.0.1 package is unchanged, identity `FM-1_987010001`, SHA-256
+`42190c2dffbda6d89807e40b68dd8d2426ef502fa3848dc47bb1af37e34a2fd3`.
+Hardware checklist items 1–8 passed; external MIDI clock/dedicated extended performance
+and physical interrupted-update recovery were not tested. The maintainer accepts these
+limitations for this release. See [RELEASE_1.0.1.md](RELEASE_1.0.1.md) and
+[FM1_TEST_1.0.1.md](FM1_TEST_1.0.1.md). Reuse the validated v1.0.1 WASM artifact;
+do not rebuild the physical firmware. Preserve the original emulator build provenance.
 
 Publish by an ordinary commit descending from the current `gh-pages` head. Preserve history,
 never force-push and keep `main` unchanged. Retain package identity/loader checks and verify the
 public firmware hash, active installer metadata, routes and emulator after deployment.
 The historical preparation and deployment records below describe their respective earlier stages.
+
+## v1.0.1 Stable publication preparation
+
+The maintainer explicitly authorized the v1.0.1 GitHub release/tag, unchanged tested
+firmware, Pages, manual and Web MIDI installer on 18 October 2026. Generated with
+`python3 tools/make_pages.py --validated-release build/x0x-1.0.1.fwsc 1.0.1 OUT_DIR`.
+The existing Pages checks were run with v1.0.1's pinned identity/checksum; historical
+v1.0.0 validation scripts and records were retained unchanged. Local Chromium checks
+passed: exact package/checksum and WASM, English installer ready without MIDI access,
+all page routes, current manual features, and live emulator audio/controls.
+
+The validated v1.0.1 WASM was reused without recompilation: SHA-256
+`0b9873d2ba0a216c62f6c7cdc73b8cc0ab14158b34388f16ef4fabe539044a82`.
+Its original build-info records base revision `7c40f5b` plus the then-uncommitted
+v1.0.1 implementation; that provenance is preserved, not relabeled as a fresh build.
+The updated HTML identifies v1.0.1 Stable. Deployment release metadata separately
+identifies the final release commit. Preserve historical v1.0.0 files when overlaying
+the generated output onto the existing `gh-pages` history; do not delete unrelated assets.
 
 ## Historical P7 public state
 

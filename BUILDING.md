@@ -41,7 +41,7 @@ On Linux x86-64 the toolchain runs natively and Docker is not needed.
 `JIELI_TOOLCHAIN` and `AC79_SDK` override the default locations
 (`~/.jieli/toolchain`, `~/fw-AC79_AIoT_SDK`).
 
-`./build.sh --release 1.0.1` builds a future local package `build/x0x-1.0.1.fwsc`,
+`./build.sh --release 1.0.1` builds a local package `build/x0x-1.0.1.fwsc`,
 with display version `1.0.1` and product identity `FM-1_987010001`. The permanent
 X0X-RMX namespace is `FM-1_987`; release identities append major, minor and patch
 as two decimal digits each (0–99). Development builds use `FM-1_987` alone.
@@ -97,15 +97,17 @@ script (the command list is at the top of `host/x0x_host.c`).
 
 ## Installation tooling
 
-X0X-RMX v1.0.0 Stable is approved after successful hardware update/persistence/chain and
-twelve-minute musical tests, plus USB audio with iPad/AudioShare. Download the exact release
-package or use the public web installer. Charles Vestal's installer installs original X0X.
-The existing package format, hardware identities, loader and command-line tools are retained.
+X0X-RMX v1.0.1 Stable is approved after successful FM-1 hardware checklist items 1–8.
+External MIDI clock/dedicated extended performance and physical interrupted-update
+recovery were not tested. Download the exact hardware-tested release package
+or use the public web installer; do not replace it with a local rebuild. Charles Vestal's installer installs original X0X.
+The package format, loader and command-line tools are retained; v1.0.1 uses the
+independent X0X-RMX firmware identity described above.
 The command-line installer accepts the local release file (needs `mido` and `python-rtmidi`):
 
 ```
 python3 tools/fm1_install.py --info          # identity of the connected FM-1
-python3 tools/fm1_install.py build/x0x-1.0.0.fwsc
+python3 tools/fm1_install.py build/x0x-1.0.1.fwsc
 ```
 
 If the FM-1 no longer starts but reaches the chip's update mode (4C4A:8057 on USB),

@@ -1,15 +1,16 @@
-# X0X-RMX v1.0.1 — development candidate
+# X0X-RMX v1.0.1 Stable
 
-Status: **unreleased; hardware checklist items 1–8 passed; explicit Stable release approval pending**.
-External MIDI clock/dedicated extended performance testing and physical
-interrupted-update recovery remain untested. Development branch:
-`dev/independent-firmware-identity`; documentation committing and a normal
-development-branch push are approved. No upstream X0X changes are included;
+Status: **Stable; public publication explicitly approved by the maintainer on 18 October 2026**.
+Hardware checklist items 1–8 passed. External MIDI clock/dedicated extended
+performance testing and physical interrupted-update recovery remain untested;
+no additional hardware tests or recovery experiments are required for this
+authorized release. Development branch: `dev/independent-firmware-identity`.
+No upstream X0X changes are included;
 upstream integration is reserved for v1.1.0.
 
 ## Changes
 
-- Independent namespace `FM-1_987`; this candidate reports **`FM-1_987010001`**
+- Independent namespace `FM-1_987`; this release reports **`FM-1_987010001`**
   in both the `.fwsc` package and the running firmware's USB identity. See the
   [identity registry check and update design](FIRMWARE_IDENTITY.md).
 - Five 303 playback directions in exact UI/stored order: **FWD → REV → MREV →
@@ -95,7 +96,7 @@ loader simulations pass, preserving all seeded project, sample and settings
 bytes. Hub decoder/parser/recognition checks pass against the saved live
 2026-10-17 snapshot; no Hub changes or physical installation are implied.
 
-The complete suite ran with `X0X_VERSION=1.0.1`, the candidate package and the SDK:
+The complete suite ran with `X0X_VERSION=1.0.1`, the release package and the SDK:
 74 groups passed directly. The scheme snapshot group initially failed because
 the DIR control now draws five position markers. Its updated test verifies
 those five markers and normalizes only their 38×9-pixel region for the
@@ -133,7 +134,7 @@ and compared byte for byte with a fresh conversion. Logs are under
 
 ## Reported hardware validation — 18 October 2026
 
-The maintainer successfully installed and tested this v1.0.1 candidate on a
+The maintainer successfully installed and tested this v1.0.1 release on a
 real M-VAVE FM-1. **The first eight items of the nine-item hardware checklist
 passed:** independent identity `FM-1_987010001`, five directions including
 MREV, correct Musical Reverse traversal, Remix bypass/restoration, `MORPH IN USE`
@@ -148,10 +149,12 @@ run above is not a pass for the dedicated extended test. No duration or more
 granular hardware measurements were reported. The complete result table and
 verification limits are in [FM1_TEST_1.0.1.md](FM1_TEST_1.0.1.md).
 
-Remaining preparation: decide how to address these unperformed checks, recheck
-the live Hub registry before publication, and obtain explicit approval before
-publishing v1.0.1 Stable. A physical Firmware Hub installation has not been
-reported; automated Hub compatibility checks do not establish that result.
+The maintainer accepts the documented unperformed checks for this Stable
+release; do not claim they passed. The publication-day Hub catalogue recheck
+listed 57 firmwares with no competing `FM-1_987` package identity. Its X0X-RMX
+recognition rule already includes `FM-1_987\d{6}`. A physical Firmware Hub
+installation has not been reported; automated compatibility checks do not
+establish that result.
 Retain the successfully tested binary and its checksum; a necessary firmware
 rebuild would require new hardware validation.
 
@@ -161,7 +164,13 @@ The official v1.0.0 release remains unchanged, including identity
 `FM-1_9010000` and SHA-256
 `eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c`.
 Its package was not rebuilt or replaced, its historical release records were
-not rewritten, and `main` was not modified. A documentation-only commit and a
-normal push of `dev/independent-firmware-identity` to origin are approved.
-No v1.0.1 tag, GitHub release, Pages deployment or public download/installer
-change is authorized. Wait for explicit approval before publishing v1.0.1 Stable.
+not rewritten, and `main` was not modified. The maintainer explicitly approved
+the v1.0.1 tag and public Stable release, this exact unchanged package, the
+Pages website, online manual and Web MIDI installer. Pages must advance
+`gh-pages` normally without rewriting history; historical v1.0.0 downloads remain available.
+
+- [Official GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1)
+- [Firmware download](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc)
+- [SHA-256 checksum](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc.sha256)
+- [Web MIDI installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
+- [Historical v1.0.0 release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0)

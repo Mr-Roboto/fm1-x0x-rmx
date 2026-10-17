@@ -21,23 +21,29 @@ This fork adds:
 - **Six LCD color schemes**, plus **Cream & Lilac**, **Classic Dark**, **Sunset Orange** and **Pink Lilac** device finishes
   in the browser emulator.
 
-**X0X-RMX v1.0.0 Stable** is the first official release. Successfully tested on a real M-VAVE FM-1. Hardware testing confirmed a regular
-firmware update, retained patterns and user breaks, five restored manual startup patterns,
-pattern-chain playback and a twelve-minute musical run without reported problems. USB audio
-with iPad/AudioShare was also confirmed successful. Real-device operation of the sequencer, drums, bass synths,
-effects and breakbeat engine was confirmed.
+**X0X-RMX v1.0.1 Stable** is approved for public release. Successfully installed
+and tested on a real M-VAVE FM-1: hardware checklist items 1–8 passed, covering
+the independent identity, MREV, Remix restoration, both MORPH warnings,
+save/restart and retained project/user-sample data. The device ran stably without
+audible dropouts or unexpected interruptions. External MIDI clock/dedicated
+extended performance testing and physical interrupted-update recovery were not tested.
+
+**Saved-direction compatibility:** old PING becomes MREV; old RND becomes PING.
+Reselect the desired direction and save affected patterns. The storage layout is unchanged.
+
 Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
 
 - **Project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
 - **Play in your browser:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), with sound, Remix, Grids and both 303 EXTRA pages.
 - **Read online:** [manual](https://mr-roboto.github.io/fm1-x0x-rmx/manual/) and [version history](https://mr-roboto.github.io/fm1-x0x-rmx/new/).
 
-[Install v1.0.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/) with Chrome or Edge,
-[download the firmware](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.0.fwsc), or
-read the [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0).
+[Install v1.0.1](https://mr-roboto.github.io/fm1-x0x-rmx/install/) with Chrome or Edge,
+[download the firmware](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc), or
+read the [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1).
+The [historical v1.0.0 release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0) remains available.
 You can also [build and preview the website locally](docs/PAGES.md).
 
-- [Source on orb-remix](https://github.com/Mr-Roboto/fm1-x0x-rmx/tree/orb-remix)
+- [Source at v1.0.1](https://github.com/Mr-Roboto/fm1-x0x-rmx/tree/v1.0.1)
 - [User manual](docs/MANUAL.md) and [version history](docs/NEW.md)
 - [Remix specification](docs/REMIX_DESIGN.md)
 - [Drum generator documentation](docs/DRUM_GENERATOR_CORE.md)
@@ -128,7 +134,7 @@ Recorded breaks belong to whoever made them and aren't covered by this project's
 ## Building and testing
 
 [BUILDING.md](BUILDING.md) explains development builds and test prerequisites.
-An arbitrary local development build is not automatically the tested v1.0.0 release.
+An arbitrary local development build is not automatically the tested v1.0.1 release.
 Use the checksum-verified official package for installation; the commands below are for development:
 
 ```

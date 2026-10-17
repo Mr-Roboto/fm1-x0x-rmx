@@ -3,9 +3,11 @@
 Report received from the maintainer on **18 October 2026**. Device: a real
 **M-VAVE FM-1**. Installation and testing succeeded. This records reported
 hardware observations, not an additional test performed by the coding agent.
-v1.0.1 Stable publication has **not** been approved.
+The maintainer explicitly approved **v1.0.1 Stable public publication** on
+18 October 2026, accepting the unperformed checks below. No additional hardware
+tests or recovery experiments are required for this authorized release.
 
-## Candidate
+## Stable release artifact
 
 - Implementation commit: `45310f6c5a20eae1951c034783e75dca7a1fd55d`.
 - Development branch: `dev/independent-firmware-identity`.
@@ -81,11 +83,11 @@ RND=4. Without migration, v1.0.0 PING (2) becomes MREV and RND (3) becomes PING.
 The [release notes](RELEASE_1.0.1.md) retain the full compatibility explanation.
 Data/sample preservation does not imply unchanged interpretation of those bytes.
 
-The maintainer authorized a documentation-only commit and a normal development
-branch push. Do not create a v1.0.1 tag/release or update Pages, the public
-installer or downloads without explicit v1.0.1 Stable publication approval.
-Address the unperformed checks above as part of the remaining release decision;
-do not mark them passed. Recheck the live identity registry before publication.
+The maintainer explicitly authorized the v1.0.1 Stable GitHub release/tag, the
+unchanged hardware-tested package, Pages, the online manual and Web MIDI
+installer. The unperformed checks are accepted release limitations, not passes.
+The publication-day registry recheck found no competing `FM-1_987` package
+identity among 57 listed firmwares; X0X-RMX family recognition remains present.
 
 `main`, the v1.0.0 release/tag and its historical hardware records remain
 unchanged. The original v1.0.0 package still hashes to

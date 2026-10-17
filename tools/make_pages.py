@@ -88,7 +88,8 @@ a { color: var(--accent); }
 line generator, and a breakbeat player, all running at once, with patterns, a song mode and
 recorded knob moves. This independent fork adds Orb-inspired Remix for 909, 808, 303A and 303B,
 Grids MAP/EUCLID drum generation with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo,
-extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.</p>
+extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.
+v1.0.1 adds Musical Reverse (MREV), an independent firmware identity and the MORPH IN USE warning.</p>
 <figure class="hero">
   <a href="emu/"><img src="manual/img/p82/01-overview-cream.png" width="3120" height="2175"
     alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" loading="lazy"></a>
@@ -153,7 +154,7 @@ separately from your project. GLO → SCHEME controls LCD colors independently.<
 <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita and contributors,
 Hügelton Instruments. Grids by Emilie Gillet / Mutable Instruments; MAP arithmetic cross-checked
 against DEADACTIVE's Hortator. See the <a href="manual/#s19">complete credits</a> and
-<a href="__REPO__/blob/orb-remix/LICENSING.md">licensing notices</a>.</p>
+<a href="__REPO__/blob/__SOURCE_REF__/LICENSING.md">licensing notices</a>.</p>
 <p class="small">An independent fork without implied endorsement by the original author.
 M-VAVE, FM-1, TR-808, TR-909 and TB-303 are trademarks of their owners; no affiliation or endorsement.</p>
 </main>
@@ -174,7 +175,7 @@ No firmware package, download or installation controls are available here.</p>
 </main></body></html>"""
 
 
-def site_doc_links(page, firmware_name=None):
+def site_doc_links(page, firmware_name=None, source_ref="dev/independent-firmware-identity"):
     """Resolve repository Markdown links without confusing them with Pages routes."""
     def link(match):
         url = match.group(1)
@@ -200,7 +201,7 @@ def site_doc_links(page, firmware_name=None):
             source = (Path("docs") / path).as_posix()
             if path.startswith("../"):
                 source = path[3:]
-            target = REPO + "/blob/orb-remix/" + source
+            target = REPO + "/blob/" + source_ref + "/" + source
             if fragment:
                 target += "#" + fragment
         return 'href="' + target + '"'
@@ -271,19 +272,29 @@ def main(out, pkg=None, version=None):
     shutil.copytree(SRC / "docs" / "img" / "new", out / "new" / "img" / "new")
     for section in ("manual", "new"):
         doc = out / section / "index.html"
-        doc.write_text(site_doc_links(doc.read_text(encoding="utf-8"), name), encoding="utf-8")
-    status = "Documentation-only preview of X0X-RMX v1.0.0 Stable, successfully tested on real M-VAVE FM-1 hardware. This preview excludes the firmware package and installer; use the official release for installation."
+        doc.write_text(site_doc_links(doc.read_text(encoding="utf-8"), name,
+                       "v" + version if pkg is not None else "dev/independent-firmware-identity"), encoding="utf-8")
+    status = "Documentation-only preview of X0X-RMX v1.0.1 Stable. This preview excludes the firmware package and installer; use the official release for installation."
     install = '<a href="install/"><strong>Firmware release status</strong><span>Package-free local preview; use the official Stable release.</span></a>'
     download = ""
     if pkg is not None:
         status = "X0X-RMX " + html.escape(version) + " Stable, successfully tested on a real M-VAVE FM-1. Hardware update, pattern/sample retention, startup patterns, chain playback, a twelve-minute musical run and USB audio with iPad/AudioShare were confirmed successful."
+        if version == "1.0.1":
+            status = ("X0X-RMX v1.0.1 Stable, successfully tested on a real M-VAVE FM-1. "
+                      "Hardware checklist items 1–8 passed, including MREV, Remix restoration, "
+                      "both MORPH warnings, save/restart and existing project/user-sample data. "
+                      "Stable operation had no audible dropouts or unexpected interruptions. "
+                      "External MIDI clock/dedicated extended performance and physical interrupted-update recovery were not tested. "
+                      "Saved-direction compatibility: old PING becomes MREV; old RND becomes PING. Reselect and save affected directions.")
         install = '<a href="install/"><strong>Install ' + html.escape(version) + '</strong><span>Chrome or Edge, Web MIDI.</span></a>'
         download = ('<a href="firmware/' + name + '"><strong>Download ' + name + '</strong></a>'
                     + '<a href="firmware/' + name + '.sha256"><strong>SHA-256 checksum</strong></a>'
                     + '<a href="' + REPO + '/releases/tag/v' + html.escape(version)
                     + '"><strong>GitHub release ' + html.escape(version) + '</strong></a>')
     landing = LANDING.replace("__STATUS__", status).replace("__INSTALL__", install).replace("__DOWNLOAD__", download)
-    (out / "index.html").write_text(landing.replace("__REPO__", REPO).replace("__UPSTREAM__", UPSTREAM), encoding="utf-8")
+    source_ref = "v" + version if pkg is not None else "dev/independent-firmware-identity"
+    (out / "index.html").write_text(landing.replace("__REPO__", REPO).replace("__UPSTREAM__", UPSTREAM)
+                                   .replace("__SOURCE_REF__", source_ref), encoding="utf-8")
     (out / "emu").mkdir()
     for asset in ("index.html", "worklet.js", "x0x.wasm", "favicon.svg", "build-info.json"):
         shutil.copy(emu / asset, out / "emu" / asset)

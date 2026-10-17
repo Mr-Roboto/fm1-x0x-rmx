@@ -154,7 +154,17 @@ deployments were made.
 
 ## Hardware and release gate
 
-Before approval, on an FM-1 running the original v1.0.0 package:
+The maintainer's 18 October 2026 hardware report confirms checklist items 1–8,
+including the independent identity, MREV, Remix restoration, both MORPH warning
+paths, save/restart and retained project data/user samples. See the
+[v1.0.1 hardware record](FM1_TEST_1.0.1.md) for the exact reported results and
+the unchanged tested package checksum. External MIDI clock/dedicated extended
+performance testing (item 9) and physical interrupted-update recovery remain
+untested. Stable publication still requires explicit approval.
+
+The earlier validation plan below is retained for repeatability; it is not a
+claim that every subcheck was performed. Before approval, on an FM-1 running
+the original v1.0.0 package:
 
 1. Save representative projects with Remix, patterns, song and settings; upload
    recognizable user breaks into all three slots and record their contents.

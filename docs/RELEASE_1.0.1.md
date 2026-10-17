@@ -1,8 +1,10 @@
 # X0X-RMX v1.0.1 — development candidate
 
-Status: **unreleased; physical-device validation and explicit release approval pending**.
-Development branch: `dev/independent-firmware-identity`. The implementation is
-approved for a local commit only. No upstream X0X changes are included;
+Status: **unreleased; hardware checklist items 1–8 passed; explicit Stable release approval pending**.
+External MIDI clock/dedicated extended performance testing and physical
+interrupted-update recovery remain untested. Development branch:
+`dev/independent-firmware-identity`; documentation committing and a normal
+development-branch push are approved. No upstream X0X changes are included;
 upstream integration is reserved for v1.1.0.
 
 ## Changes
@@ -58,6 +60,13 @@ Command: `./build.sh --release 1.0.1`.
 
 Package: `build/x0x-1.0.1.fwsc`, 609,680 B, identity `FM-1_987010001`.
 SHA-256: `42190c2dffbda6d89807e40b68dd8d2426ef502fa3848dc47bb1af37e34a2fd3`.
+On 18 October 2026, the existing package was checked without rebuilding:
+its checksum matches the build record committed in
+`45310f6c5a20eae1951c034783e75dca7a1fd55d`, its decrypted packaged app
+matches `build/x0x.bin`, and its package/app identity is `FM-1_987010001`.
+Firmware and build inputs have no source differences from that commit.
+See the [hardware record and artifact verification](FM1_TEST_1.0.1.md).
+
 Relative to the identity-only candidate, these two improvements add 288 B of
 app flash and 4 B of static RAM after linker alignment; pool use is unchanged.
 The loader image remains 7,764 B and wrapped `ota.bin` 6,524 B, byte-identical
@@ -122,22 +131,29 @@ and compared byte for byte with a fresh conversion. Logs are under
   `manual.html`, `NEW.md`, `REMIX_DESIGN.md`, `TB303_WAVEFORMS_DESIGN.md`,
   `RELEASE_1.0.1.md`.
 
-## Remaining physical-device checks
+## Reported hardware validation — 18 October 2026
 
-1. Update an FM-1 running the original official v1.0.0 package. Verify USB
-   identity `FM-1_987010001`, retained projects/settings and all three uploaded
-   break slots after a power cycle. Confirm the documented PING/RND reinterpretation.
-2. Listen to MREV at the tested short/odd/long lengths, including accents,
-   TIE/slide across wrap, swing, conditional probability and auto-mutation;
-   check transport restart, external MIDI clock, Song and manual pattern changes.
-3. Check MREV Remix bypass and Forward restoration, with conventional REV/PING/RND
-   behavior intact. Check the complete direction order on the device screen.
-4. Trigger both MORPH conflict paths in both directions. Confirm readable,
-   temporary `MORPH IN USE`, retained waveform and no playback/motion/loading
-   warnings. Check queue-heavy interaction and the existing single-MORPH rule.
-5. Repeat interrupted-update recovery and the agreed musical/USB audio smoke
-   checks. Validate a Firmware Hub installation through an agreed candidate
-   validation process before approval for public distribution.
+The maintainer successfully installed and tested this v1.0.1 candidate on a
+real M-VAVE FM-1. **The first eight items of the nine-item hardware checklist
+passed:** independent identity `FM-1_987010001`, five directions including
+MREV, correct Musical Reverse traversal, Remix bypass/restoration, `MORPH IN USE`
+through the knob, the same message through SEL, save/restart persistence,
+and existing project data/user samples. The device also ran stably without
+audible dropouts or unexpected interruptions.
+
+**Item 9 was not performed:** external MIDI equipment was not connected, so
+external MIDI clock and the dedicated extended performance test are untested.
+**Interrupted-update recovery on physical hardware was not tested.** The stable
+run above is not a pass for the dedicated extended test. No duration or more
+granular hardware measurements were reported. The complete result table and
+verification limits are in [FM1_TEST_1.0.1.md](FM1_TEST_1.0.1.md).
+
+Remaining preparation: decide how to address these unperformed checks, recheck
+the live Hub registry before publication, and obtain explicit approval before
+publishing v1.0.1 Stable. A physical Firmware Hub installation has not been
+reported; automated Hub compatibility checks do not establish that result.
+Retain the successfully tested binary and its checksum; a necessary firmware
+rebuild would require new hardware validation.
 
 ## Release protection
 
@@ -145,6 +161,7 @@ The official v1.0.0 release remains unchanged, including identity
 `FM-1_9010000` and SHA-256
 `eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c`.
 Its package was not rebuilt or replaced, its historical release records were
-not rewritten, and `main` was not modified. Local committing is approved;
-no push, tag, GitHub release, Pages deployment or public download/installer
-change is authorized by this work.
+not rewritten, and `main` was not modified. A documentation-only commit and a
+normal push of `dev/independent-firmware-identity` to origin are approved.
+No v1.0.1 tag, GitHub release, Pages deployment or public download/installer
+change is authorized. Wait for explicit approval before publishing v1.0.1 Stable.

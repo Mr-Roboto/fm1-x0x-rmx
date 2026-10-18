@@ -5,6 +5,15 @@ X0X-RMX v1.0.1 is the current Stable release; v1.0.0 remains available historica
 [installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) and
 [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 
+## 1.1.0 · RC1 · hardware validation pending
+
+The development candidate adds G.711 µ-law storage for built-in 909 cymbals,
+BREAK FILTER (LP/OFF/HP), and ENV + KNOB 1–4 reset to descriptor defaults.
+Existing project layouts and v1.0.1 direction values remain intact; older
+projects initialize BREAK Filter to OFF. This candidate is not a public release.
+See [draft notes, exact package and checksum](RELEASE_1.1.0.md) and the
+[short FM-1 validation checklist](FM1_TEST_1.1.0.md).
+
 ## 1.0.1 · Stable · 18 October 2026
 
 - Independent firmware identity: `FM-1_987010001` in both the package and USB response.

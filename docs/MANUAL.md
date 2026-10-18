@@ -4,13 +4,12 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This manual covers **X0X-RMX v1.0.1 Stable**, approved for public release after
-successful installation and hardware checklist items 1–8 on a real M-VAVE FM-1.
-MREV, Remix restoration, both MORPH warning paths, save/restart and existing
-project/user-sample data passed. The device ran stably without audible dropouts
-or unexpected interruptions. External MIDI clock, a dedicated extended
-performance test and physical interrupted-update recovery were not tested.
-See [v1.0.1 release notes](RELEASE_1.0.1.md), including the saved-direction compatibility change.
+This development-branch manual covers **X0X-RMX v1.1.0 RC1**, with µ-law
+909 cymbals, BREAK FILTER and ENV + KNOB default reset. Physical FM-1
+validation is pending; v1.0.1 remains the public Stable release. See the
+[draft v1.1.0 notes](RELEASE_1.1.0.md) and [short hardware checklist](FM1_TEST_1.1.0.md).
+The v1.0.1 hardware results and saved-direction compatibility notice remain in
+its [historical release notes](RELEASE_1.0.1.md).
 
 X0X-RMX is a fork of Charles Vestal's X0X. **v1.0.0 Stable** was successfully tested on a real M-VAVE FM-1. Hardware testing
 confirmed the regular update, retained patterns/user breaks, restored manual startup patterns,
@@ -161,10 +160,10 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | PRESETS | The next pattern: on a part's screen for that part only, on HOME for all five. |
 | ALGORITHM | The part: 909, 808, 303A, 303B or BREAK. In a list, it changes the value. |
 | OCT-, OCT+ | The steps, 16 at a time (1–16 … 49–64). On HOME and SONG, patterns 1–16 or 17–32. On the 303 keyboard, the octave. In a generator, mutate or write a new pattern. |
-| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. Hold ENV and turn one to reset it to its defined parameter default (v1.1.0 development). |
+| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. Hold ENV and turn one to reset it to its defined parameter default (v1.1.0 RC1). |
 | FX | The reverb and the delay. |
 | SEL | Everything on this screen as a list, including the settings on no page (see Lists). In a question, yes. |
-| ENV | Hold while pressing keys: an accent. Hold and turn KNOB 1–4 to reset that parameter to its default (v1.1.0 development). |
+| ENV | Hold while pressing keys: an accent. Hold and turn KNOB 1–4 to reset that parameter to its default (v1.1.0 RC1). |
 | LFO | The mixer and the master. Hold while pressing keys: a slide. |
 | EDIT | The selected part's sound. The keys still write its steps. |
 | GLO | The settings. Press again to close. |
@@ -605,7 +604,7 @@ In SEL's list: PHRASE, the length of a phrase (2, 4, 8 or 16 bars, or off), and 
 LENGTH, how often a new slice is chosen (every 1/4 bar to every 8 bars).
 
 **The loops.** EDIT has LOOP A, LOOP B, B CHANCE (the chance of switching to loop B in the last
-bar of a phrase; with PHRASE off, in any bar) and PITCH. In v1.1.0 development, press EDIT again
+bar of a phrase; with PHRASE off, in any bar) and PITCH. In v1.1.0 RC1, press EDIT again
 for the SOUND page: FILTER and LEVEL. FILTER is OFF in the middle; turn left for a low-pass,
 right for a high-pass. High-pass filtering can leave a loop's hats while the 909 or 808 supplies
 the kick and snare. Older projects load with this filter OFF. Loops follow the
@@ -1214,7 +1213,7 @@ in SEL's list; the rest are its sound pages.
 | A length, B length | 1/4, 1/2, 1, 2, 4 or 8 bars |
 | Level | 0–127 |
 | Pitch | -12 to +12 semitones |
-| Filter (v1.1.0 development) | LP 100%–1%, OFF, HP 1%–100% |
+| Filter (v1.1.0 RC1) | LP 100%–1%, OFF, HP 1%–100% |
 
 </details>
 

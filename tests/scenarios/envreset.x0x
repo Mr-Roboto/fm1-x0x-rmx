@@ -1,0 +1,12 @@
+# ENV + knob: the knob back to its power-on value (#19), and ENV's press changes no screen
+wait 300
+expect view 1
+turn K3 20
+wait 100
+expect knobdef3 0
+press ENV
+turn K3 1
+release ENV
+wait 100
+expect knobdef3 1
+expect view 1

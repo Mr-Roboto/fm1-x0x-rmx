@@ -701,7 +701,11 @@ static int expect(const char *what, const char *val)
         got = ui.rec;
     else if (!strcmp(what, "sel"))                  /* the selected track of the part on screen */
         got = ui.sel[ui.part];
-    else if (!strcmp(what, "view"))
+    else if (!strncmp(what, "knobdef", 7)) {        /* knobdefK: knob K (1-4) on this page at its power-on value */
+        pref_t r = pg.r[cur_page()][(atoi(what + 7) - 1) & 3];
+        const x0x_param_t *d = pref_desc(r);
+        got = d && pref_get(r) == d->def;
+    } else if (!strcmp(what, "view"))
         got = ui.view;
     else if (!strcmp(what, "tempo"))
         got = (int)(seq.bpm + 0.5f);

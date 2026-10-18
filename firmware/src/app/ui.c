@@ -1225,6 +1225,7 @@ static int help_lines(int b, const char *l[HELP_LINES])
         if (is_303()) { L("HOLD + KEY: AN ACCENT"); if (kbd) L("WRITING: + OCT: A REST"); }
         else if (is_drum()) { L("HOLD + WHITE KEY: ACCENT"); L("HOLD + BLACK KEY: LOUD HIT"); }
         else L("HOLD + KEY: AN ACCENT");
+        L("HOLD + KNOB: ITS DEFAULT");
         break;
     case B_LFO:
         L("THE MIXER AND THE MASTER"); L("AGAIN: THE NEXT PAGE");
@@ -2698,7 +2699,20 @@ static void input(void)
             motion_forget(pg.r[cur_page()][i]);
             continue;
         }
-        turn_ref(pg.r[cur_page()][i], e, EN_K1 + (int)i);
+        if (ui.btn & (1u << B_ENV)) {                   /* ENV + knob: back to its power-on value (#19) */
+            pref_t r = pg.r[cur_page()][i];
+            const x0x_param_t *d = pref_desc(r);
+            ui.btn_used |= 1u << B_ENV;
+            if (d && r.kind != R_ACT && pref_get(r) != d->def) {
+                if (r.kind == R_ENG && r.a == T_303 && r.c == BASS303_WAVE) {
+                    mark_dirty();
+                    engine_bass_wave_user(r.b, d->def);
+                } else
+                    pref_set(r, d->def);
+                motion_touch(r);
+            }
+        } else
+            turn_ref(pg.r[cur_page()][i], e, EN_K1 + (int)i);
         ui.touched = (int8_t)i;
         ui.touch_until = plat_ms() + 900u;
     }

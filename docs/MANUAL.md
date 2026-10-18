@@ -161,10 +161,10 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | PRESETS | The next pattern: on a part's screen for that part only, on HOME for all five. |
 | ALGORITHM | The part: 909, 808, 303A, 303B or BREAK. In a list, it changes the value. |
 | OCT-, OCT+ | The steps, 16 at a time (1–16 … 49–64). On HOME and SONG, patterns 1–16 or 17–32. On the 303 keyboard, the octave. In a generator, mutate or write a new pattern. |
-| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. |
+| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. Hold ENV and turn one to reset it to its defined parameter default (v1.1.0 development). |
 | FX | The reverb and the delay. |
 | SEL | Everything on this screen as a list, including the settings on no page (see Lists). In a question, yes. |
-| ENV | Hold while pressing keys: an accent. |
+| ENV | Hold while pressing keys: an accent. Hold and turn KNOB 1–4 to reset that parameter to its default (v1.1.0 development). |
 | LFO | The mixer and the master. Hold while pressing keys: a slide. |
 | EDIT | The selected part's sound. The keys still write its steps. |
 | GLO | The settings. Press again to close. |

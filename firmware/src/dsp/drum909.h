@@ -78,7 +78,7 @@ typedef struct {
     float decay, volume, pitch, drive;
     int32_t dist_type;
     d9_shape_t shape;
-    const int16_t *buf;
+    const uint8_t *buf;           /* mu-law (x0x_mulaw) */
     uint32_t len;
     uint32_t pos, frac;           /* 32.32 read position */
     uint32_t inc, incf;           /* 32.32 playback rate */

@@ -9,7 +9,7 @@ mkdir -p build/gen build/host
 python3 tools/gen_remix.py build/gen/x0x_remix_table.h
 python3 tools/gen_grids.py build/gen/x0x_grids_map.h
 [ -f build/gen/felucca_font.h ] || python3 tools/gen_font.py build/gen/felucca_font.h >/dev/null
-[ -f build/gen/x0x_drum_samples.h ] || python3 tools/gen_drum_samples.py build/gen/x0x_drum_samples.h >/dev/null
+python3 tools/gen_drum_samples.py build/gen/x0x_drum_samples.h >/dev/null
 if [ -n "${X0X_BREAK_BANK:-}" ]; then python3 tools/gen_break_bank.py "$X0X_BREAK_BANK" build/gen/x0x_break_bank.h >/dev/null
 else sh tools/gen_builtin_break.sh build/gen >/dev/null; fi
 U="firmware/src/dsp/drum909.c firmware/src/dsp/drum808.c firmware/src/dsp/bass303.c firmware/src/dsp/breaks.c

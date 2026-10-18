@@ -13,7 +13,12 @@ CC="${CC:-cc}"
 OUT=build/drum909_test
 mkdir -p "$OUT"
 
-python3 tools/gen_drum_samples.py build/gen/x0x_drum_samples.h
+# the reference plays the samples as the device does (mu-law, 8-bit): its own module directory with
+# those, everything else 9W9's, so the comparison measures the 909's DSP and not the sample codec
+REFMOD="$OUT/ref_module"
+rm -rf "$REFMOD" && mkdir -p "$REFMOD"
+for f in "$NINEW9_DIR/src"/*; do [ "$(basename "$f")" = samples ] || ln -s "$(cd "$(dirname "$f")" && pwd)/$(basename "$f")" "$REFMOD/"; done
+python3 tools/gen_drum_samples.py build/gen/x0x_drum_samples.h --ref-wavs "$REFMOD/samples"
 
 # the reference: 9W9's engine as 9W9 builds it (libm, doubles)
 "$CC" -O2 -ffp-contract=off -w -I"$NINEW9_DIR/src/dsp" -c "$NINEW9_DIR/src/dsp/er99_engine.c" -o "$OUT/er99_engine.o"
@@ -33,4 +38,4 @@ done
 "$CC" -O2 -ffp-contract=off $WARN -Ifirmware/src -Ifirmware/src/dsp -Ibuild/gen -c tests/host/drum909_test.c -o "$OUT/drum909_test.o"
 "$CC" -o "$OUT/drum909_test" "$OUT/drum909_test.o" "$OUT/drum909.o" "$OUT/fxbus.o" "$OUT/er99_engine.o" "$OUT/drum909_ref.o" "$OUT/drum909_refd.o" -lm
 
-"$OUT/drum909_test" "$NINEW9_DIR/src" build/drum909_demo.wav
+"$OUT/drum909_test" "$REFMOD" build/drum909_demo.wav

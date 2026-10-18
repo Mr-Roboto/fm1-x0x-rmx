@@ -727,13 +727,13 @@ static void d9_render_smp(d9_smp_t *s, const d9_bus_t *bus, int n)
     d9_env_anchor(&s->out);
     const int drive = s->drive > 0.25f;
     const float pre = 1.0f + s->drive * 0.5f;
-    const int16_t *buf = s->buf;
+    const uint8_t *buf = s->buf;
     const uint32_t len = s->len;
     for (int i = 0; i < m; ++i) {
         float v = 0.0f;
         if (s->pos < len) {
-            const float a = (float)buf[s->pos] * (1.0f / 32768.0f);
-            const float b = s->pos + 1 < len ? (float)buf[s->pos + 1] * (1.0f / 32768.0f) : 0.0f;
+            const float a = (float)x0x_mulaw[buf[s->pos]] * (1.0f / 32768.0f);
+            const float b = s->pos + 1 < len ? (float)x0x_mulaw[buf[s->pos + 1]] * (1.0f / 32768.0f) : 0.0f;
             const float fr = (float)s->frac * (1.0f / 4294967296.0f);
             v = a + (b - a) * fr;
             const uint32_t f2 = s->frac + s->incf;

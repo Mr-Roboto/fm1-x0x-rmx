@@ -650,6 +650,16 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
             put_s(num, t);
             return;
         }
+        if (r.a == T_BRK && r.c == 2) {                  /* the break's FILTER, as the master's: OFF, LP 40%, HP 20% */
+            int a = v < 60 ? (60 - v) * 100 / 60 : v > 68 ? (v - 68) * 100 / 59 : 0;
+            if (!a)
+                put_s(num, "OFF");
+            else {
+                put_i(put_s(num, v < 60 ? "LP " : "HP "), a);
+                put_s(unit, "%");
+            }
+            return;
+        }
         if (r.a == T_MIX) {
             if (r.c == 0) {                              /* level: 100 = 0 dB, square law */
                 if (!v)
@@ -888,7 +898,7 @@ static void build_pages(void)
             pg_grp = GR_PAT;                           /* (its groove and retrigs: SEQ) */
             add_page("LOOPS", PR(R_BRKSLOT, 0, 0, 0), PR(R_BRKSLOT, 1, 0, 0), PR(R_BRKSET, 0, 0, BRK_BCHANCE),
                      PR(R_ENG, T_BRK, 0, 1));
-            more(PR(R_ENG, T_BRK, 0, 0));
+            add_page("SOUND", PR(R_ENG, T_BRK, 0, 2), PR(R_ENG, T_BRK, 0, 0), NONE, NONE);   /* FILTER (#14), LEVEL */
         }
         break;
     case V_GEN:

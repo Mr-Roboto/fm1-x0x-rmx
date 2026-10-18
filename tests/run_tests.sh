@@ -25,6 +25,7 @@ run() {
 }
 W="-O2 -ffp-contract=off -Wall -Wextra -Wdouble-promotion -Werror"
 run drum-mulaw python3 tests/host/run_drum_mulaw.py
+run break-filter sh tests/host/run_break_filter.sh
 run tb3po sh tests/host/run_tb3po.sh
 run drum-generator sh tests/host/run_drum_gen.sh
 run drum-generator-project sh tests/host/run_drum_gen_project.sh

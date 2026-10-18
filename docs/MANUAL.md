@@ -605,7 +605,10 @@ In SEL's list: PHRASE, the length of a phrase (2, 4, 8 or 16 bars, or off), and 
 LENGTH, how often a new slice is chosen (every 1/4 bar to every 8 bars).
 
 **The loops.** EDIT has LOOP A, LOOP B, B CHANCE (the chance of switching to loop B in the last
-bar of a phrase; with PHRASE off, in any bar) and PITCH; LEVEL is in SEL's list. Loops follow the
+bar of a phrase; with PHRASE off, in any bar) and PITCH. In v1.1.0 development, press EDIT again
+for the SOUND page: FILTER and LEVEL. FILTER is OFF in the middle; turn left for a low-pass,
+right for a high-pass. High-pass filtering can leave a loop's hats while the 909 or 808 supplies
+the kick and snare. Older projects load with this filter OFF. Loops follow the
 tempo by playing faster or slower, so their pitch follows it too, as on a sampler; PITCH shifts it
 on top. X0X comes with two loops of its own, 909 GR and 808 GR, rendered by its own 909 and 808 engines at build time
 (two bars each, 96 BPM, mono 22,050 Hz, 4-bit IMA ADPCM); loops you
@@ -1211,6 +1214,7 @@ in SEL's list; the rest are its sound pages.
 | A length, B length | 1/4, 1/2, 1, 2, 4 or 8 bars |
 | Level | 0–127 |
 | Pitch | -12 to +12 semitones |
+| Filter (v1.1.0 development) | LP 100%–1%, OFF, HP 1%–100% |
 
 </details>
 

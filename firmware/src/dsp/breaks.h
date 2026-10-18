@@ -34,7 +34,7 @@ typedef struct {
 } brk_loop_t;
 
 /* indices of breaks_param() past the per-pattern settings */
-enum { BRK_LEVEL = BRK_NSET, BRK_PITCH, BRK_REV, BRK_DLY, BRK_NPARAM };
+enum { BRK_LEVEL = BRK_NSET, BRK_PITCH, BRK_FILT, BRK_REV, BRK_DLY, BRK_NPARAM };   /* X0X: FILT (#14) */
 
 typedef struct {
     int16_t pred;                     /* IMA state BEFORE decoding the nibble at that index */
@@ -114,6 +114,7 @@ typedef struct breaks {
     uint8_t st_forced;
     int8_t pin;                       /* X0X: the next step's own slice of loop A (breaks_pin), -1 = the generator's */
     uint8_t rsv[2];
+    float f_g, f_ic1, f_ic2;          /* X0X: FILTER's state-variable filter (breaks_render): g, its two integrators */
 } breaks_t;
 
 void breaks_init(breaks_t *b);

@@ -62,7 +62,8 @@ static const x0x_param_t BRK_PARAMS[BRK_NPARAM] = {
     {"Cmplx", 100, 50, 0},  {"Anchor", 100, 0, 0}, {"Roll", 100, 0, 0},   {"Fill", 100, 0, 0},
     {"Rtg2x", 100, 0, 0},   {"Rtg3x", 100, 0, 0},  {"Rtg4x", 100, 0, 0},  {"Rtg8x", 100, 0, 0},
     {"Phrase", 4, 0, N_PHRASE}, {"BChnc", 100, 0, 0}, {"A Len", 5, 2, N_LEN}, {"B Len", 5, 2, N_LEN},
-    {"Level", 127, 100, 0}, {"Pitch", 24, 12, N_PITCH}, {"Rev", 127, 0, 0}, {"Dly", 127, 0, 0},
+    {"Level", 127, 100, 0}, {"Pitch", 24, 12, N_PITCH}, {"Filter", 127, 64, 0}, {"Rev", 127, 0, 0},
+    {"Dly", 127, 0, 0},
 };
 static const uint8_t PHRASE_BARS[5] = {0, 2, 4, 8, 16};
 static const uint8_t LEN_TICKS[6] = {3, 6, 12, 24, 48, 96};   /* BB Gen: 12 * length, 24 ppq */
@@ -586,6 +587,35 @@ int breaks_silent(const breaks_t *b)
            b->sub_count + 1 >= b->sub_div && b->keys == b->keys_seen;
 }
 
+/* X0X: FILTER (#14), one knob as the master's: 60..68 off, under it a low-pass sweeping down (18 kHz ..
+ * 70 Hz), over it a high-pass sweeping up (20 Hz .. 7 kHz), a little resonance. Zavalishin's TPT state-variable
+ * filter (stable at any cutoff, as master.c's); g glides a block at a time, so a turn does not zipper */
+static void brk_filter(breaks_t *b, float *x, int n)
+{
+    const int v = b->set[BRK_FILT];
+    const float k = 1.2f;                                  /* 1 / Q */
+    float fc, gt, g, a1;
+    int i;
+    if (v >= 60 && v <= 68) {
+        b->f_g = b->f_ic1 = b->f_ic2 = 0.0f;               /* off: the next turn starts from rest */
+        return;
+    }
+    fc = v < 60 ? 18000.0f * fm_exp2f((float)(v - 60) * (8.0f / 60.0f))
+                : 20.0f * fm_exp2f((float)(v - 68) * (8.5f / 59.0f));
+    gt = fm_tanf(FM_PI * fc / (float)BRK_FS);
+    g = b->f_g == 0.0f ? gt : b->f_g + 0.5f * (gt - b->f_g);
+    b->f_g = g;
+    a1 = 1.0f / (1.0f + g * (g + k));
+    for (i = 0; i < n; i++) {
+        float v3 = x[i] - b->f_ic2;
+        float v1 = a1 * b->f_ic1 + g * a1 * v3;
+        float v2 = b->f_ic2 + g * v1;
+        b->f_ic1 = fm_flush(2.0f * v1 - b->f_ic1);
+        b->f_ic2 = fm_flush(2.0f * v2 - b->f_ic2);
+        x[i] = v < 60 ? v2 : x[i] - k * v1 - v2;           /* low-pass; high-pass */
+    }
+}
+
 void breaks_render(breaks_t *b, float *out, int n)
 {
     float inc[2], lvl, gstep = 1.0f / (float)BRK_FADE;
@@ -670,6 +700,7 @@ void breaks_render(breaks_t *b, float *out, int n)
             b->gate = fm_maxf(b->gate - gstep, b->gate_to);
         out[i] = y * b->gate * lvl;
     }
+    brk_filter(b, out, n);
     if (b->gate == 0.0f && b->gate_to == 0.0f && !b->running) {
         b->v[0].on = 0;                                    /* stopped and silent: stop decoding */
         b->v[1].on = 0;

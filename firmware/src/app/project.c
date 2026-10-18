@@ -440,6 +440,7 @@ int project_load(void)
     set = proj.set;
     /* Historical short settings omit the scheme byte: keep their original LCD. */
     settings_set_scheme(&set, SCHEME_DEFAULT);
+    set.snd_rev = 0;                                 /* absent in historical short settings: pre-revision sound */
     if (load_settings(&set) == 0 && set.magic == PROJ_MAGIC)
         proj.set = set;
     else
@@ -483,6 +484,8 @@ int project_load(void)
         sound_rev1();
     if (sound_ok && proj.set.snd_rev < 2)             /* before the one-knob COMP, FILTER, TAPE */
         sound_rev2();
+    if (sound_ok && proj.set.snd_rev < 5)             /* before the break FILTER: its unused pot was 0 */
+        proj.sound.v[T_BRK][0][2] = engine_param(T_BRK, 0, 2)->def;
     proj.set.snd_rev = PROJ_SND_REV;
     engine_sound_validate_bass(&proj.sound);
     return bad ? -1 : 0;

@@ -138,6 +138,14 @@ static void legacy_appearance(void)
                     pg.n = 2;
                     draw_knobs();
                     assert(screen_hash() == original_lcd[p][part][v]);
+                } else if (appearance_views[v] == V_PART && part == PART_BRK) {
+                    /* BREAK FILTER adds a SOUND page. Normalize only the new
+                     * navigation dots; every original LOOPS pixel stays checked. */
+                    assert(pg.n == 2 && !strcmp(pg.title[1], "SOUND"));
+                    assert(pg.r[1][0].a == T_BRK && pg.r[1][0].c == 2);
+                    pg.n = 1;
+                    draw_knobs();
+                    assert(screen_hash() == original_lcd[p][part][v]);
                 } else if (appearance_views[v] == V_SEQ && (part == PART_303A || part == PART_303B)) {
                     /* Verify all five v1.0.1 DIR pips, then normalize just their
                      * 38x9 rectangle to the original four-pip FWD fixture.
@@ -169,7 +177,7 @@ static void legacy_appearance(void)
         png_write(path);
     }
     legacy_loop_names = 0;
-    puts("DEFAULT: legacy pixels (303 page dots/DIR pips normalized), five DIR pips, Grids and active COMP/GR references passed");
+    puts("DEFAULT: legacy pixels (303/BREAK page dots and DIR pips normalized), five DIR pips, Grids and active COMP/GR references passed");
 }
 
 static void global_memory(void)

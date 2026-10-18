@@ -166,7 +166,7 @@ int engine_nparams(int t, int v)
     case T_909: return drum909_nparams(v);
     case T_808: return drum808_nparams(v);
     case T_303: return bass303_nparams();
-    case T_BRK: return 2;                                /* Level, Pitch (sends: the mixer's; the rest: the pattern's) */
+    case T_BRK: return 3;                                /* Level, Pitch, Filter (sends: the mixer's; the rest: the pattern's) */
     case T_FX: return fxbus_nparams();
     case T_MIX: return MX_NPARAMS;                       /* every part: Level, Rev send, Dly send */
     case T_MST: return master_nparams();

@@ -33,7 +33,8 @@ class Links(HTMLParser):
                 self.links.append(attrs[attr])
 
 
-release = "--release" in sys.argv[2:]
+release = "--release" in sys.argv[2:] or "--release-1.1.0" in sys.argv[2:]
+stable_110 = "--release-1.1.0" in sys.argv[2:]
 root = Path(sys.argv[1]).resolve()
 base = "http://localhost:8000/fm1-x0x-rmx/"
 pages = {p: Links(p.read_text()) for p in root.rglob("*.html")}
@@ -53,14 +54,17 @@ for section in ("emu", "manual", "new", "breaks", "install"):
     assert (root / section / "index.html").is_file()
 installer = (root / "install/index.html").read_text()
 if release:
-    pkg = root / "firmware/x0x-1.0.0.fwsc"
-    expected = "eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c"
+    version = "1.1.0" if stable_110 else "1.0.0"
+    product = "FM-1_987010100" if stable_110 else "FM-1_9010000"
+    pkg = root / f"firmware/x0x-{version}.fwsc"
+    expected = ("b343c135779c1de933d655236b14628103816036e170d65faed706aba620dcaa" if stable_110
+                else "eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c")
     assert hashlib.sha256(pkg.read_bytes()).hexdigest() == expected
     assert list(root.rglob("*.fwsc")) == [pkg]
     assert b"FELUCCA-LOADER-1" in pkg.read_bytes()
-    assert '"version": "1.0.0"' in installer
-    assert '"product": "FM-1_9010000"' in installer
-    assert '"pkg": "../firmware/x0x-1.0.0.fwsc"' in installer
+    assert f'"version": "{version}"' in installer
+    assert f'"product": "{product}"' in installer
+    assert f'"pkg": "../firmware/x0x-{version}.fwsc"' in installer
     assert 'id="go"' in installer and '/*META*/' not in installer and '/*LIB*/' not in installer
     assert 'BETA' not in installer.upper()
     assert 'Stable' in (root / 'index.html').read_text()
@@ -147,3 +151,15 @@ assert 'href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"' in readme
 assert 'src="docs/media/video/x0x-rmx-demo-poster.png"' in readme
 assert "This is an earlier browser-emulator recording, not physical FM-1 footage" in readme
 print("Approved video/poster byte integrity, URLs, player controls and browser-only identification passed")
+
+if stable_110:
+    backup = (root / "backup/index.html").read_text()
+    assert backup == Path("web/backup/index.html").read_text()
+    assert 'href="backup/"' in landing
+    assert "v1.1.0 Stable" in backup
+    assert "0x524d" in backup.lower()
+    assert "FM-1_987" in backup
+    assert "RESTORE FROM USB?" in backup
+    for feature in ("BREAK FILTER", "USB project backup", "ENV + KNOB", "µ-law"):
+        assert feature in manual_path.read_text(), feature
+    print("v1.1.0: approved RC2 bytes, installer identity, production RMX backup, navigation and four-feature manual passed")

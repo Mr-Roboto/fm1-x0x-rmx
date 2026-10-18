@@ -9,6 +9,18 @@ does not change the numeric identity, as in the original build scheme.
 Development builds use `FM-1_987` without version digits; Pages rejects this
 development identity for a package-enabled installer.
 
+## v1.1.0 Stable registry check
+
+The live [Firmware Hub catalogue](https://thefirmwarehub.com/catalog.json)
+was checked again on 18 October 2026 (snapshot `2026-10-18 11:00 UTC`,
+57 packages). Our own `x0xrmx` entry already publishes v1.0.1 with identity
+`FM-1_987010001` and recognizes the `FM-1_987` release family. No unrelated
+package or identity rule claims `FM-1_987010100`, and no unrelated package
+uses our chosen RMX family. This is a current catalog observation, not a
+globally exclusive registration. The v1.1.0 package and embedded USB identity
+were verified as `FM-1_987010100`. Indexing of the new release may be asynchronous.
+The audit accepts our existing published entry and rejects unrelated claimants.
+
 ## Registry check
 
 Checked the live [Firmware Hub identity guidance](https://thefirmwarehub.com/kb/#identity)

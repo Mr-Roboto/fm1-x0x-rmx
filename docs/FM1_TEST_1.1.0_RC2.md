@@ -1,10 +1,10 @@
 # X0X-RMX v1.1.0 RC2 — one FM-1 validation session
 
-**All physical results are pending. USB backup remains a provisional release
-feature.** Keep the original backup file unchanged throughout this session.
-Allow approximately 15–20 minutes with a familiar saved project and uploaded
-user break. No external MIDI equipment, cycle counter, interrupted update or
-power-cut experiment is required. RC1 and its records remain unchanged.
+**Completed: maintainer-reported physical RC2 validation passed.** The maintainer
+explicitly approved v1.1.0 Stable publication, including USB backup/restore,
+on 18 October 2026. The session instructions below are retained for provenance;
+results are user-reported hardware observations, not automated test results.
+RC1 and its original pending record remain unchanged.
 
 ## Exact candidate
 
@@ -20,7 +20,7 @@ b343c135779c1de933d655236b14628103816036e170d65faed706aba620dcaa
 These are exactly the existing experimental USB-backup package's bytes.
 The RC2 filename does not change its embedded version or identity. Retain this
 read-only file for eventual publication, without rebuilding or repackaging.
-See [draft notes and automated validation](RELEASE_1.1.0.md).
+See [Stable release notes and automated validation](RELEASE_1.1.0.md).
 
 Windows Explorer can open the containing folder:
 
@@ -111,28 +111,33 @@ does not need regenerating. These commands do not rebuild the firmware package.
 
 | Built-in workload | v1.0.0 mean | v1.0.0 peak | RC2 mean | RC2 peak | Mean / peak difference (percentage points) |
 | --- | ---: | ---: | --- | --- | --- |
-| FACTORY LOOP | 41.1% | 49% | Pending | Pending | Pending |
-| ALL FIVE | 56.6% | 69% | Pending | Pending | Pending |
-| WORST CASE | 70.7% | 90% | Pending | Pending | Pending |
+| FACTORY LOOP | 41.1% | 49% | 41.5% | 50% | +0.4 / +1 |
+| ALL FIVE | 56.6% | 69% | 56.8% | 70% | +0.2 / +1 |
+| WORST CASE | 70.7% | 90% | 71.0% | 89% | +0.3 / −1 |
 
 These are recorded v1.0.0 baselines, not v1.1.0 results. Subtract baseline
 from RC2: 42.1% versus 41.1% is **+1.0 percentage point**, not +1.0% relative
 CPU usage. Record actual observations; no new numerical pass threshold is
 introduced. The same-pattern OFF/LP/HP comparison is a separate workload.
 
-| Observation | Result |
+| Observation | Maintainer-reported result |
 | --- | --- |
-| Package checksum, version, identity, original project/user break | Pending |
-| 2 CORES and built-in benchmark | Pending |
-| BREAK OFF / LP / HP: sound and live load/peak | Pending |
-| ENV default reset / 909 cymbals | Pending |
-| Original backup download / file validation | Pending |
-| HOME cancels without modification | Pending |
-| SEL restores original after reversible saved change | Pending |
-| Playback backup / dropouts / live processor observations | Pending |
-| MIDI SysEx and USB audio together; optional host notes/clock | Pending |
-| Save / restart / user sample preservation | Pending |
+| Installation and operation | Successful |
+| Two CPU cores / built-in PERFORMANCE benchmark | Operational / completed; values above |
+| BREAK FILTER | Successful; no numerical live-filter measurements supplied |
+| ENV + KNOB reset / 909 cymbal playback | Successful |
+| USB project backup and restore | Successful |
+| HOME cancellation and other checklist items | Reported successful |
+| Existing project / user samples / persistence | Successful |
+| Audio glitches or regressions | None reported |
 
-Report values or photos plus any audible/visible problems. Wait for the
-maintainer's physical results and final USB-feature inclusion decision before
-Stable publication. Only the exact successfully tested binary may be released.
+The built-in benchmark differences are small. The maintainer's general checklist
+confirmation does not supply specific USB timings, independent Chrome-versus-Edge
+measurements, optional external MIDI details or physical power-cut results; none
+are claimed. Interrupted commit recovery remains an automated simulation result.
+The exact package checksum is independently verified before and after publication.
+
+Only this successfully tested binary is approved for Stable publication, without
+rebuilding or repackaging. The local preview instructions above describe RC2
+preparation; the approved public backup page is now `/backup/`, with the public
+installer updated to the same tested v1.1.0 bytes.

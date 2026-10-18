@@ -1,15 +1,14 @@
-# X0X-RMX v1.1.0 — draft release notes / RC2
+# X0X-RMX v1.1.0 Stable
 
-**Release candidate, not Stable. Physical FM-1 validation is pending.**
-The four-feature candidate is frozen for evaluation. USB backup remains an
-experimental inclusion pending the maintainer's physical results and final decision.
-Nothing has been released, tagged or deployed for
-v1.1.0. v1.0.1 remains the public Stable release.
+The maintainer completed physical RC2 validation on the FM-1 and explicitly
+approved Stable publication, including USB project backup/restore, on 18 October
+2026. The release uses the exact tested RC2 package without rebuilding or
+repackaging.
 
 The [original RC1 release record](RELEASE_1.1.0_RC1.md),
 [RC1 hardware checklist](FM1_TEST_1.1.0.md), branch and immutable package are preserved.
 
-## Candidate changes
+## Four new features
 
 - **TR-909 cymbal compression:** Charles Vestal's G.711 µ-law encoder and
   flash-resident decode table store the built-in hi-hat, ride and crash in
@@ -51,7 +50,7 @@ occupies an existing unused sound byte. Settings, sound, pattern and project
 sizes remain 36, 1,344, 528 and 30,952 bytes respectively; the packed raw
 stream remains 29,572 bytes. Existing project, pattern, motion, Remix and
 user-sample data follow the existing preservation paths. Automated migration
-and update tests pass; v1.1.0 physical confirmation remains pending.
+and update tests pass; the maintainer also reports successful physical project, sample and persistence checks.
 
 **The v1.0.1 direction compatibility caveat still applies to upgrades directly
 from v1.0.0:** FWD=0, REV=1, MREV=2, PING=3, RND=4, without direction migration.
@@ -68,7 +67,7 @@ backing up. Grids' written patterns are saved; session-only generator settings,
 Undo history and unsaved playing edits are not. Keep uploaded loop WAVs
 separately; a backup retains slot references, not sample audio.
 
-## Candidate provenance and artifact
+## Release provenance and immutable artifact
 
 Verified linear ancestry, with no upstream merge:
 
@@ -84,8 +83,8 @@ Verified linear ancestry, with no upstream merge:
 RC2 branch: `dev/v1.1.0-rc2`, created directly from the USB-backup commit.
 RC2 preparation changes documentation only; firmware and build inputs are unchanged.
 
-`./build.sh --release 1.1.0` produced `build/x0x-1.1.0.fwsc`, **609,680 B**.
-The verification rebuild is byte-for-byte identical to the existing experimental
+During RC2 preparation, `./build.sh --release 1.1.0` produced `build/x0x-1.1.0.fwsc`, **609,680 B**.
+That preparation verification rebuild was byte-for-byte identical to the existing experimental
 package. RC2 uses a read-only copy of that original package, not a repack:
 `build/v1.1.0-usb-backup/x0x-1.1.0-usb-backup-b343c135779c.fwsc`.
 SHA-256:
@@ -106,7 +105,7 @@ local preview are in `build/v1.1.0-rc2/`. These generated local
 artifacts are not committed. Read-only permissions guard against accidental
 overwriting; SHA-256 is the authority for byte identity.
 
-**Install and test this exact copy. Keep it for eventual publication without
+**Physical validation passed for this exact copy. Publish it without
 rebuilding or repackaging.** A changed checksum identifies a different candidate
 and invalidates the association with the user's hardware results.
 
@@ -124,7 +123,8 @@ capacity, single-precision linkage, RAM code and register-access boundaries.
 Explicit package inspection confirms matching USB/package identity and that
 the decrypted packaged application equals the built 476,940-byte app.
 The existing 8,192-byte minimum pool-headroom gate passes with 540 bytes
-to spare. Static RAM remains tight; real USB/audio timing is pending hardware.
+to spare. Static RAM remains tight. The maintainer reports successful USB backup/restore
+and no audio glitches; no numerical USB timing measurements were supplied.
 Backup adds no per-sample DSP work. Stopped restore briefly pauses audio
 rendering for commit/reload; backup runs cooperatively in the main loop.
 
@@ -156,16 +156,28 @@ AC79_SDK=/home/falke/fw-AC79_AIoT_SDK tests/run_tests.sh
 The current Markdown manual and generated HTML are synchronized. Existing
 v1.0.0/v1.0.1 release notes and hardware records are not rewritten.
 
-## Physical validation and release boundary
+## Physical validation and publication approval
 
-Use the [RC2 FM-1 checklist and local preview instructions](FM1_TEST_1.1.0_RC2.md).
-All v1.1.0 hardware results,
-including CPU load and two-core operation, are pending; earlier release
-observations are not v1.1.0 results. NO CYCLE COUNTER does not prevent this
-CPU-percentage comparison. Host timings do not establish FM-1 CPU overhead.
+The [RC2 hardware record](FM1_TEST_1.1.0_RC2.md) records the maintainer's
+successful installation and operation, two operational CPU cores, built-in
+PERFORMANCE benchmark, BREAK FILTER, ENV + KNOB reset, 909 cymbals, USB backup
+and restore, HOME cancellation, existing projects, user samples and persistence.
+No audio glitches or regressions were reported. These are user-reported physical
+observations, separate from the automated tests above.
 
-No physical flashing, release tag, GitHub release, Pages deployment or public
-installer update is part of RC preparation. Main and published v1.0.0/v1.0.1
-artifacts remain unchanged. Wait for the maintainer's hardware results and
-final USB-feature inclusion decision and explicit publication approval before
-publishing the exact tested package. No hardware result is implied by automated tests.
+| Built-in workload | v1.0.0 mean / peak | RC2 mean / peak | Difference (percentage points) |
+| --- | --- | --- | --- |
+| FACTORY LOOP | 41.1% / 49% | 41.5% / 50% | +0.4 / +1 |
+| ALL FIVE | 56.6% / 69% | 56.8% / 70% | +0.2 / +1 |
+| WORST CASE | 70.7% / 90% | 71.0% / 89% | +0.3 / −1 |
+
+The measured differences are small. No numerical live-filter measurements,
+specific USB timings or physical power-cut results were supplied. Interrupted
+commit recovery was tested in simulation; physical power-cut recovery is not
+claimed. External reference comparisons remain the two automated skips above.
+
+The approved public asset is **`x0x-1.1.0.fwsc`**, **609,680 bytes**, a
+byte-identical copy of the RC2 file with the SHA-256 shown above. Release tag:
+**v1.1.0** on the finalized documentation/website release-source commit descending
+from RC2 preparation commit `c1e37c961dd295ce4184694b96fd600da59b9d8f`.
+Main, historical releases and the immutable RC1/RC2 packages remain unchanged.

@@ -4,11 +4,10 @@ X0X turns the M-VAVE FM-1 into a groovebox: a 909, an 808, two 303s and a breakb
 all playing at once, in stereo. Each part can play its own pattern, you can arrange patterns
 into a song, record knob moves, and give single steps a sound and a chance of their own.
 
-This development-branch manual covers **X0X-RMX v1.1.0 RC2**, with µ-law
-909 cymbals, BREAK FILTER, ENV + KNOB default reset and experimental USB
-project backup/restore. Physical FM-1
-validation is pending; v1.0.1 remains the public Stable release. See the
-[draft v1.1.0 notes](RELEASE_1.1.0.md) and [short RC2 hardware checklist](FM1_TEST_1.1.0_RC2.md).
+This manual covers **X0X-RMX v1.1.0 Stable**, with G.711 µ-law 909 cymbals,
+BREAK FILTER (LP/OFF/HP), ENV + KNOB default reset and USB project backup/restore.
+The maintainer reports successful physical RC2 validation and approved publication.
+See the [release notes](RELEASE_1.1.0.md) and [hardware record](FM1_TEST_1.1.0_RC2.md).
 The v1.0.1 hardware results and saved-direction compatibility notice remain in
 its [historical release notes](RELEASE_1.0.1.md).
 
@@ -102,10 +101,10 @@ The emulator uses browser audio rather than the FM-1's physical audio, USB, MIDI
 battery and processor cores. It does not expose the hardware MIDI/USB-audio interfaces.
 Successful browser playback does not validate physical FM-1 performance or installation.
 
-**Install/update:** [Install X0X-RMX v1.0.1](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
-with Chrome or Edge, or [download x0x-1.0.1.fwsc](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc).
-The [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1) includes
-release notes and a SHA-256 checksum. The tested product identity is FM-1_987010001.
+**Install/update:** [Install X0X-RMX v1.1.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/)
+with Chrome or Edge, or [download x0x-1.1.0.fwsc](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.1.0.fwsc).
+The [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0) includes
+release notes and a SHA-256 checksum. The tested product identity is FM-1_987010100.
 Upstream X0X and Felucca installers install their respective firmware, not X0X-RMX.
 
 The existing command-line installer, update loader and recovery tools are retained.
@@ -161,10 +160,10 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | PRESETS | The next pattern: on a part's screen for that part only, on HOME for all five. |
 | ALGORITHM | The part: 909, 808, 303A, 303B or BREAK. In a list, it changes the value. |
 | OCT-, OCT+ | The steps, 16 at a time (1–16 … 49–64). On HOME and SONG, patterns 1–16 or 17–32. On the 303 keyboard, the octave. In a generator, mutate or write a new pattern. |
-| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. Hold ENV and turn one to reset it to its defined parameter default (v1.1.0 RC2). |
+| KNOB 1–4 | The four values at the bottom of the screen. Each click is one step, however quickly you turn a few; spin and they speed up. Hold ENV and turn one to reset it to its defined parameter default (v1.1.0). |
 | FX | The reverb and the delay. |
 | SEL | Everything on this screen as a list, including the settings on no page (see Lists). In a question, yes. |
-| ENV | Hold while pressing keys: an accent. Hold and turn KNOB 1–4 to reset that parameter to its default (v1.1.0 RC2). |
+| ENV | Hold while pressing keys: an accent. Hold and turn KNOB 1–4 to reset that parameter to its default (v1.1.0). |
 | LFO | The mixer and the master. Hold while pressing keys: a slide. |
 | EDIT | The selected part's sound. The keys still write its steps. |
 | GLO | The settings. Press again to close. |
@@ -605,7 +604,7 @@ In SEL's list: PHRASE, the length of a phrase (2, 4, 8 or 16 bars, or off), and 
 LENGTH, how often a new slice is chosen (every 1/4 bar to every 8 bars).
 
 **The loops.** EDIT has LOOP A, LOOP B, B CHANCE (the chance of switching to loop B in the last
-bar of a phrase; with PHRASE off, in any bar) and PITCH. In v1.1.0 RC2, press EDIT again
+bar of a phrase; with PHRASE off, in any bar) and PITCH. In v1.1.0, press EDIT again
 for the SOUND page: FILTER and LEVEL. FILTER is OFF in the middle; turn left for a low-pass,
 right for a high-pass. High-pass filtering can leave a loop's hats while the 909 or 808 supplies
 the kick and snare. Older projects load with this filter OFF. Loops follow the
@@ -1002,15 +1001,13 @@ when migrated. The TB-3PO scale-index and Morph-default caveats above still appl
 
 </details>
 
-<details><summary>Experimental USB project backup (development branch only)</summary>
+<details><summary>USB project backup and restore</summary>
 
-The `dev/v1.1.0-rc2` candidate includes a local Chrome/Edge backup page and
+Use the [USB backup page](https://mr-roboto.github.io/fm1-x0x-rmx/backup/) in
+Chrome or Edge with Web MIDI/SysEx access, or use the Python CLI:
 `python3 tools/x0x_backup.py backup FILE.x0b` / `restore FILE.x0b`.
-This remains experimental pending physical validation and the maintainer's
-final inclusion decision. It is not part of v1.0.1 Stable or RC1, and is not deployed publicly.
-Use the [RC2 local-preview instructions](FM1_TEST_1.1.0_RC2.md#local-chromeedge-preview-from-wsl).
-See the [experimental backup guide](https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/dev/v1.1.0-usb-backup/docs/DEV_1.1.0_USB_BACKUP.md) for local preview,
-compatibility, validation and safety details.
+Both use the same RMX protocol and compatible files. See the
+[implementation and compatibility guide](DEV_1.1.0_USB_BACKUP.md).
 
 A backup holds saved settings, sounds, patterns, song and motion, including
 Remix, MREV, Morph and BREAK FILTER. Grids' written patterns are included;
@@ -1161,7 +1158,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/charlesvestal/fm1-x0x/ma
    `fm1-rescue` folder in your home folder, and asks before it writes anything.
 4. Type **yes** and press Return. Don't unplug anything until it says it's restarting the FM-1.
    The FM-1 then starts into its original firmware. To install X0X-RMX afterwards, use the
-   checksum-verified v1.0.1 Stable package and its public installer.
+   checksum-verified v1.1.0 Stable package and its public installer.
 
 The script downloads M-VAVE's FM-1 V15 firmware and JieLi's flash loader, and checks both against
 known fingerprints. It writes only the firmware area of the memory, never the bootloader or the
@@ -1240,7 +1237,7 @@ in SEL's list; the rest are its sound pages.
 | A length, B length | 1/4, 1/2, 1, 2, 4 or 8 bars |
 | Level | 0–127 |
 | Pitch | -12 to +12 semitones |
-| Filter (v1.1.0 RC2) | LP 100%–1%, OFF, HP 1%–100% |
+| Filter (v1.1.0) | LP 100%–1%, OFF, HP 1%–100% |
 
 </details>
 

@@ -1,5 +1,47 @@
 # X0X-RMX website, local previews and deployment records
 
+## v1.1.0 Stable publication
+
+On 18 October 2026 the maintainer explicitly approved v1.1.0 Stable, including
+USB project backup/restore, after successful physical RC2 validation. Use the
+exact RC2 package (609,680 bytes, identity `FM-1_987010100`, SHA-256
+`b343c135779c1de933d655236b14628103816036e170d65faed706aba620dcaa`)
+without rebuilding or repackaging. The generator pins these bytes for v1.1.0.
+
+Production generation:
+
+```sh
+python3 tools/make_pages.py --validated-release build/v1.1.0-rc2/x0x-1.1.0-rc2-b343c135779c.fwsc 1.1.0 build/v1.1.0-stable/site
+python3 tests/pages_test.py build/v1.1.0-stable/site --release-1.1.0
+```
+
+This approved production mode includes `/backup/` with unchanged strict RMX
+identity/profile validation, linked from the landing page, manual and emulator.
+The existing RC2 WASM is reused with its original build-info, without claiming
+a new binary build. Its SHA-256 is
+`dd928725ceeac30b3cd630067dcbc17631f3a6f03f0d6045ab381df5ca1fbfb8`.
+Emulator HTML is updated to identify Stable and link to USB backup.
+
+Overlay reviewed generated output on a separate checkout descending from
+`origin/gh-pages` (`bf8454a02bc74dbcf7b1f8fecd1ad249234b8db7` at preparation).
+Preserve historical firmware, checksums, documentation, release metadata and
+unrelated site assets. Commit and push normally, without force. Keep main
+unchanged. Verify public routes, exact package/WASM bytes, installer metadata,
+backup RMX protocol, historical downloads and emulator audio/controls.
+See [hardware observations](FM1_TEST_1.1.0_RC2.md) and [release notes](RELEASE_1.1.0.md).
+
+Prepublication verification passed: seven-page static link/anchor checks; exact
+RC2 package/app/USB identity inspection; live Hub identity/parser audit; backup
+browser-protocol transcript and rejection tests; headless Chromium installer
+readiness, backup page, routes, package/WASM checksums and functioning emulator
+audio/controls with no page errors. Browser automation requested no MIDI access
+and performed no hardware transfer. This release task rebuilt no firmware or
+WASM. The earlier RC2 suite remains 82 groups, 0 failures, 2 unavailable external
+reference skips; it was not rerun as a firmware build during publication.
+
+## Historical v1.0.1 publication record
+
+
 X0X-RMX v1.0.1 Stable is explicitly approved for the [project website](https://mr-roboto.github.io/fm1-x0x-rmx/),
 [web installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/),
 [firmware download](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.0.1.fwsc) and

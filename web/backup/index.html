@@ -7,7 +7,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>X0X-RMX experimental project backup</title>
+<title>X0X-RMX project backup</title>
 <meta name="description" content="Save the project on an FM-1 running X0X-RMX to a file, and load it back later. It works in Chrome or Edge.">
 <style>
   :root { --bg: #fff; --fg: #000; --dim: #777; --rule: #ddd; --accent: #c8700a; --bad: #d33; color-scheme: light; }
@@ -47,7 +47,7 @@
 <body>
 <main>
   <a class="home" href="../">X0X-RMX</a>
-  <p><b>Experimental X0X-RMX development feature. Not available in v1.0.1 or RC1.</b></p>
+  <p><b>Available in X0X-RMX v1.1.0 Stable.</b></p>
   <h1>Back up your project</h1>
   <p>Save the project on your FM-1 to a file on this computer, and load it back later. Keep as many projects as you
     like this way, and keep your songs safe while you try other firmware.</p>
@@ -83,14 +83,14 @@
     <li>A damaged file, HOME, or an interrupted transfer before confirmation keeps the current project.
       After SEL, a lost connection may leave the restored project active: check the FM-1.
       Interrupted commits recover through the journal at startup. Recovery is tested in simulation;
-      this experimental build has not been physically validated.</li>
-    <li>Only RMX-profile backups are accepted. Standard X0X-RMX and other firmware backups are incompatible. Older RMX sound revisions migrate as on normal project loading.</li>
+      physical power-cut recovery has not been reported. The maintainer reports successful normal backup/restore.</li>
+    <li>Only RMX-profile backups are accepted. Standard X0X and other firmware backups are incompatible. Older RMX sound revisions migrate as on normal project loading.</li>
     <li>The browser asks once for permission to use MIDI with SysEx. Allow it, and close other apps that use the
       FM-1's MIDI first.</li>
     <li>You can also back up from a terminal. Run <code>python3 tools/x0x_backup.py</code> in X0X-RMX's repository. It does
       the same, and makes the same files.</li>
   </ul>
-  <p class="small" style="margin-top:32px">X0X-RMX is a GPL-3.0 fork of Charles Vestal’s X0X-RMX, built on Felucca by Hügelton Instruments.
+  <p class="small" style="margin-top:32px">X0X-RMX is a GPL-3.0 fork of Charles Vestal’s X0X, built on Felucca by Hügelton Instruments.
     <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx">X0X-RMX source</a>;
     <a href="https://github.com/charlesvestal/fm1-x0x">upstream X0X-RMX</a></p>
 </main>

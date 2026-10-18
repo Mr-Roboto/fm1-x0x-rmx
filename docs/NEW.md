@@ -1,19 +1,30 @@
 # X0X-RMX version history
 
-X0X-RMX v1.0.1 is the current Stable release; v1.0.0 remains available historically. See the [manual](MANUAL.md),
-[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1),
+X0X-RMX v1.1.0 is the current Stable release; v1.0.0 and v1.0.1 remain available historically. See the [manual](MANUAL.md),
+[GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0),
 [installer](https://mr-roboto.github.io/fm1-x0x-rmx/install/) and
 [public emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/).
 
-## 1.1.0 · RC2 · hardware validation pending
+## 1.1.0 · Stable · 18 October 2026
 
-RC2 retains the three RC1 features and adds experimental USB project
-backup/restore for one normal-device validation session. Only supported RMX
-backup files are accepted; uploaded break audio and calibration are excluded
-and preserved. The local Chrome/Edge page is not publicly deployed. USB's
-final inclusion and Stable publication remain subject to the maintainer's decision.
-See [current draft notes and exact checksum](RELEASE_1.1.0.md) and the
-[RC2 checklist and WSL preview](FM1_TEST_1.1.0_RC2.md).
+Exactly four new features:
+
+- G.711 µ-law compression for the TR-909 cymbal samples.
+- BREAK FILTER with LP/OFF/HP operation.
+- ENV + KNOB parameter reset.
+- USB project backup/restore through Chrome/Edge Web MIDI and the Python CLI.
+
+The exact hardware-tested RC2 package is published unchanged. The maintainer
+reports successful operation, two cores, benchmark, filter/reset/cymbals,
+USB backup/restore, HOME cancellation and project/sample/persistence checks,
+with no audio glitches or regressions. See the [release notes](RELEASE_1.1.0.md)
+and [RC2 hardware record](FM1_TEST_1.1.0_RC2.md).
+
+Use the [USB backup page](https://mr-roboto.github.io/fm1-x0x-rmx/backup/).
+Only RMX-compatible files are accepted. User loops require separate backup;
+calibration, Undo history and session-only Grids controls are excluded.
+Restore requires explicit confirmation on the FM-1. The historical
+v1.0.0-to-v1.0.1 direction-number warning below still applies.
 
 ## 1.1.0 · RC1 · hardware validation pending
 

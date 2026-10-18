@@ -89,7 +89,9 @@ line generator, and a breakbeat player, all running at once, with patterns, a so
 recorded knob moves. This independent fork adds Orb-inspired Remix for 909, 808, 303A and 303B,
 Grids MAP/EUCLID drum generation with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo,
 extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.
-v1.0.1 adds Musical Reverse (MREV), an independent firmware identity and the MORPH IN USE warning.</p>
+v1.0.1 adds Musical Reverse (MREV), an independent firmware identity and the MORPH IN USE warning.
+v1.1.0 adds G.711 µ-law 909 cymbal compression, BREAK FILTER (LP/OFF/HP),
+ENV + KNOB parameter reset and USB project backup/restore.</p>
 <figure class="hero">
   <a href="emu/"><img src="manual/img/p82/01-overview-cream.png" width="3120" height="2175"
     alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" loading="lazy"></a>
@@ -211,6 +213,7 @@ def site_doc_links(page, firmware_name=None, source_ref="dev/independent-firmwar
 def main(out, pkg=None, version=None, experimental_backup=False):
     if experimental_backup and pkg is not None:
         raise SystemExit("experimental backup is available in local previews only")
+    stable_backup = pkg is not None and version == "1.1.0"
     out = Path(out).resolve()
     # Never recursively remove an arbitrary destination or leave stale firmware in a preview.
     build = (SRC / "build").resolve()
@@ -236,6 +239,9 @@ def main(out, pkg=None, version=None, experimental_backup=False):
         product = product_of(raw)
         if not is_release_identity(product):
             raise SystemExit(f"{pkg}: identity {product!r}: requires a release build")
+        if version == "1.1.0" and (len(raw) != 609680 or product != "FM-1_987010100" or
+                hashlib.sha256(raw).hexdigest() != "b343c135779c1de933d655236b14628103816036e170d65faed706aba620dcaa"):
+            raise SystemExit("v1.1.0 requires the exact hardware-tested RC2 package")
         if b"FELUCCA-LOADER-1" not in raw:
             raise SystemExit(f"{pkg}: no update loader in it")
         name = f"x0x-{re.sub(r'[^A-Za-z0-9.-]', '-', version)}.fwsc"
@@ -288,6 +294,13 @@ def main(out, pkg=None, version=None, experimental_backup=False):
                       "Stable operation had no audible dropouts or unexpected interruptions. "
                       "External MIDI clock/dedicated extended performance and physical interrupted-update recovery were not tested. "
                       "Saved-direction compatibility: old PING becomes MREV; old RND becomes PING. Reselect and save affected directions.")
+        if version == "1.1.0":
+            status = ("X0X-RMX v1.1.0 Stable. The maintainer reports successful physical FM-1 "
+                      "installation, two-core operation, PERFORMANCE benchmark, BREAK FILTER, "
+                      "ENV reset, 909 cymbals, USB backup/restore, HOME cancellation and "
+                      "project/user-sample persistence, with no audio glitches or regressions. "
+                      "For upgrades from v1.0.0: old PING becomes MREV; old RND becomes PING. "
+                      "Reselect and save affected directions.")
         install = '<a href="install/"><strong>Install ' + html.escape(version) + '</strong><span>Chrome or Edge, Web MIDI.</span></a>'
         download = ('<a href="firmware/' + name + '"><strong>Download ' + name + '</strong></a>'
                     + '<a href="firmware/' + name + '.sha256"><strong>SHA-256 checksum</strong></a>'
@@ -301,13 +314,16 @@ def main(out, pkg=None, version=None, experimental_backup=False):
     for asset in ("index.html", "worklet.js", "x0x.wasm", "favicon.svg", "build-info.json"):
         shutil.copy(emu / asset, out / "emu" / asset)
     (out / ".nojekyll").write_text("")
-    if experimental_backup:
+    if experimental_backup or stable_backup:
         (out / "backup").mkdir()
         shutil.copy(SRC / "web" / "backup" / "index.html", out / "backup" / "index.html")
         landing = out / "index.html"
         text = landing.read_text(encoding="utf-8")
-        text = text.replace('</nav>', '<a href="backup/"><strong>Experimental project backup</strong>'
-                            '<span>Development firmware only. Saved project data, not user samples or calibration.</span></a></nav>', 1)
+        label = "USB project backup" if stable_backup else "Experimental project backup"
+        description = ("Chrome or Edge. Saved project data; back up user loops separately."
+                       if stable_backup else "Development firmware only. Saved project data, not user samples or calibration.")
+        text = text.replace('</nav>', '<a href="backup/"><strong>' + label + '</strong><span>'
+                            + description + '</span></a></nav>', 1)
         landing.write_text(text, encoding="utf-8")
     print(f"site: {out}: index.html, emu/, manual/, new/, breaks/, install/; " +
           ("installation reserved, no firmware" if pkg is None else f"validated-release package {name}"))

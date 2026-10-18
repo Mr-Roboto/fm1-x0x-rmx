@@ -23,20 +23,22 @@ const audit = vm.runInNewContext(
   ['productOf', 'logicalImage', 'unpack7', 'parseIdentity', 'whoIs'].map(fn).join('\n') +
   '\n' + loader + '\n({productOf, logicalImage, parseIdentity, whoIs, OUR_LOADER})', {catalog});
 const product = audit.productOf(raw);
-assert.equal(product, 'FM-1_987010001');
-assert(!catalog.firmwares.some(f => (f.product || '').startsWith('FM-1_987')),
-  'no published Hub package occupies the proposed namespace');
+assert.match(product, /^FM-1_987\d{6}$/);
+const unrelated = catalog.firmwares.filter(f => f.id !== 'x0xrmx');
+assert(!unrelated.some(f => (f.product || '').startsWith('FM-1_987') ||
+  (f.ident && (new RegExp(`^(?:${f.ident})$`)).test(product))),
+  'no unrelated Hub package or family claims the RMX identity');
 const frame = text => [0xf0, ...pack7([0, 0x59, 0x11, 0, 0, 0,
   ...Buffer.from(text), ...Array(28 - text.length).fill(0)]), 0xf7];
 assert.equal(audit.parseIdentity(frame(product)).text, product);
 assert(audit.OUR_LOADER(audit.parseIdentity(frame('ota-FM-1_900'))));
 const recognized = audit.whoIs(product);
 assert.equal(recognized.fw?.id, 'x0xrmx', 'live Hub family matching selects X0X-RMX');
-assert.equal(recognized.exact, false);
+assert.equal(recognized.exact, catalog.firmwares.find(f => f.id === 'x0xrmx').product === product);
 // Simulate a future catalogue refresh without changing anything on the Hub.
 const rmx = catalog.firmwares.find(f => f.id === 'x0xrmx');
 rmx.product = product;
-rmx.version = '1.0.1';
+rmx.version = '1.1.0';
 assert.equal(audit.whoIs(product).fw.id, 'x0xrmx');
 assert.equal(audit.whoIs(product).exact, true);
 assert.equal(audit.logicalImage(raw).length, raw.length - 20);

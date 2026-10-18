@@ -1443,12 +1443,13 @@ static void drum_generate(int up)
 /* SAVE while playing waits for the stop: writing the flash stops the audio (the code and the samples
  * are read from it, and a 4 KB erase takes tens of ms) */
 static uint8_t save_wait;
+static uint8_t save_hold;              /* USB backup pins saved object copies */
 static void save_project(void)
 {
     int rc;
-    if (seq.playing || seq.req_stop) {
+    if (seq.playing || seq.req_stop || save_hold) {
         save_wait = 1;
-        say("SAVES WHEN STOPPED", 0);
+        say(save_hold ? "SAVES AFTER THE BACKUP" : "SAVES WHEN STOPPED", 0);
         return;
     }
     save_wait = 0;
@@ -4319,6 +4320,8 @@ void ui_init(void)
 static void autosave(void)
 {
     uint32_t now = plat_ms();
+    if (save_hold)
+        return;
     if (save_wait && !seq.playing && !seq.req_stop) { /* SAVE pressed while playing: now */
         save_project();
         return;
@@ -4371,3 +4374,43 @@ void ui_frame(void)
 void ui_input_only(void) { engine_sync_sound(&proj.sound); input(); }
 int ui_dirty(void) { return ui.dirty != 0; }
 void ui_say(const char *a, const char *b) { say(a, b); }
+
+/* ---- backup and restore over USB (backup.c) ---- */
+/* a backup, stopped: what is not saved yet saved first (the flash is what it sends); ui_dirty() after it says
+ * whether it worked */
+void ui_flush(void)
+{
+    if (!seq.playing && !seq.req_stop && ui.dirty && project_save() == 0) {
+        ui.dirty = 0;
+        save_wait = 0;
+    }
+}
+void ui_hold_saves(int on) { save_hold = (uint8_t)(on != 0); }
+void ui_redraw(void)
+{
+    int i;
+    lcd_fill(0, 0, 240, 240, C_BLACK);
+    for (i = 0; i < 4; i++)
+        blit_hash[i] = 0;
+}
+/* a restore wrote the project: all of it from the flash again, as at power-on (stopped: a restore is refused while
+ * playing); undo starts over from it */
+void app_restored(void)
+{
+    project_forget_saved();
+    if (project_load() != 0)
+        project_defaults();                      /* (as at power-on: a project that does not load whole) */
+    engine_apply_sound(&proj.sound);
+    seq.bpm = (float)proj.set.bpm_x10 / 10.0f;
+    seq.accent_q7 = proj.set.accent_q7;
+    project_apply_io();
+    engine_motion_reset();
+    engine_brk_loops();
+    save_wait = 0;
+    ui.dirty = 0;
+    ui.song_sel = 0;
+    ui.rec = 0;
+    seq.song_on = seq.song_rec = 0;       /* queued MIDI must not inherit armed song recording */
+    ui_redraw();
+    ui_init();
+}

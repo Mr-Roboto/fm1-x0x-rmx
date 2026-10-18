@@ -208,7 +208,9 @@ def site_doc_links(page, firmware_name=None, source_ref="dev/independent-firmwar
     return re.sub(r'href="([^"<>]+)"', link, page)
 
 
-def main(out, pkg=None, version=None):
+def main(out, pkg=None, version=None, experimental_backup=False):
+    if experimental_backup and pkg is not None:
+        raise SystemExit("experimental backup is available in local previews only")
     out = Path(out).resolve()
     # Never recursively remove an arbitrary destination or leave stale firmware in a preview.
     build = (SRC / "build").resolve()
@@ -273,7 +275,7 @@ def main(out, pkg=None, version=None):
     for section in ("manual", "new"):
         doc = out / section / "index.html"
         doc.write_text(site_doc_links(doc.read_text(encoding="utf-8"), name,
-                       "v" + version if pkg is not None else "dev/independent-firmware-identity"), encoding="utf-8")
+                       "dev/v1.1.0-usb-backup" if experimental_backup else ("v" + version if pkg is not None else "dev/independent-firmware-identity")), encoding="utf-8")
     status = "Documentation-only preview of X0X-RMX v1.0.1 Stable. This preview excludes the firmware package and installer; use the official release for installation."
     install = '<a href="install/"><strong>Firmware release status</strong><span>Package-free local preview; use the official Stable release.</span></a>'
     download = ""
@@ -292,13 +294,21 @@ def main(out, pkg=None, version=None):
                     + '<a href="' + REPO + '/releases/tag/v' + html.escape(version)
                     + '"><strong>GitHub release ' + html.escape(version) + '</strong></a>')
     landing = LANDING.replace("__STATUS__", status).replace("__INSTALL__", install).replace("__DOWNLOAD__", download)
-    source_ref = "v" + version if pkg is not None else "dev/independent-firmware-identity"
+    source_ref = "dev/v1.1.0-usb-backup" if experimental_backup else ("v" + version if pkg is not None else "dev/independent-firmware-identity")
     (out / "index.html").write_text(landing.replace("__REPO__", REPO).replace("__UPSTREAM__", UPSTREAM)
                                    .replace("__SOURCE_REF__", source_ref), encoding="utf-8")
     (out / "emu").mkdir()
     for asset in ("index.html", "worklet.js", "x0x.wasm", "favicon.svg", "build-info.json"):
         shutil.copy(emu / asset, out / "emu" / asset)
     (out / ".nojekyll").write_text("")
+    if experimental_backup:
+        (out / "backup").mkdir()
+        shutil.copy(SRC / "web" / "backup" / "index.html", out / "backup" / "index.html")
+        landing = out / "index.html"
+        text = landing.read_text(encoding="utf-8")
+        text = text.replace('</nav>', '<a href="backup/"><strong>Experimental project backup</strong>'
+                            '<span>Development firmware only. Saved project data, not user samples or calibration.</span></a></nav>', 1)
+        landing.write_text(text, encoding="utf-8")
     print(f"site: {out}: index.html, emu/, manual/, new/, breaks/, install/; " +
           ("installation reserved, no firmware" if pkg is None else f"validated-release package {name}"))
 
@@ -308,9 +318,11 @@ if __name__ == "__main__":
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--preview", metavar="OUT_DIR")
     mode.add_argument("--validated-release", nargs=3, metavar=("PKG", "VERSION", "OUT_DIR"))
+    parser.add_argument("--experimental-backup", action="store_true",
+                        help="include the unpublished development backup page (off by default)")
     args = parser.parse_args()
     if args.preview:
-        main(args.preview)
+        main(args.preview, experimental_backup=args.experimental_backup)
     else:
         pkg, version, out = args.validated_release
-        main(out, pkg, version)
+        main(out, pkg, version, experimental_backup=args.experimental_backup)

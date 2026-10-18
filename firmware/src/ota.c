@@ -154,14 +154,16 @@ static uint32_t ota_take(void)
 }
 
 /* main loop, outside a session: answer handshakes */
-static void ota_service(void)
+static uint32_t ota_service(void)
 {
     uint32_t d = ota_take();
     if (d == 7u && ota_dec[2] == 0x11)
         ota_reply_identity();
+    return d;
 }
 
 /* one read request (3 tries x 5 s); data -> dst */
+static uint32_t ota_try_ms = 5000u;
 static uint32_t ota_deadline;                    /* 0 = none; else ota_now_ms() limit of the session */
 
 static int ota_read(uint32_t addr, uint8_t *dst, uint32_t len)
@@ -178,7 +180,7 @@ static int ota_read(uint32_t addr, uint8_t *dst, uint32_t len)
     for (tries = 0; tries < 3u; tries++) {
         if (ota_send_msg(0x30, q, 8))
             return -1;
-        for (t = ota_now_ms(); ota_now_ms() - t < 5000u;) {
+        for (t = ota_now_ms(); ota_now_ms() - t < ota_try_ms;) {
             ota_idle();
             d = ota_take();
             if (!d)

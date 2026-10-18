@@ -1001,6 +1001,30 @@ when migrated. The TB-3PO scale-index and Morph-default caveats above still appl
 
 </details>
 
+<details><summary>Experimental USB project backup (development branch only)</summary>
+
+The `dev/v1.1.0-usb-backup` branch adds a local Chrome/Edge backup page and
+`python3 tools/x0x_backup.py backup FILE.x0b` / `restore FILE.x0b`.
+This is not part of v1.0.1 Stable or RC1, and is not deployed publicly.
+See the [experimental backup guide](https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/dev/v1.1.0-usb-backup/docs/DEV_1.1.0_USB_BACKUP.md) for local preview,
+compatibility, validation and safety details.
+
+A backup holds saved settings, sounds, patterns, song and motion, including
+Remix, MREV, Morph and BREAK FILTER. Grids' written patterns are included;
+its session-only generator controls and Undo history are not. Uploaded break
+loops and panel calibration are not included or overwritten. Keep loop WAVs
+separately. Stop playback before backup to include unsaved edits; during
+playback only saved data is sent and omitted edits are flagged.
+
+Restore replaces the project and requires stopped playback. Select the file,
+then answer **RESTORE FROM USB?** on the FM-1: **SEL** accepts, **HOME** cancels.
+Only supported **RMX-profile** files are accepted; standard X0X and other
+firmware backups are incompatible. Do not rename or relabel them to convert
+them. Older supported RMX sound revisions load through the existing migrations,
+including BREAK FILTER OFF. Restored projects start a new Undo history.
+
+</details>
+
 <details><summary>Performance: how hard the FM-1 is working</summary>
 
 GLO > PERFORMANCE shows how hard the FM-1 is working, updated every second: the audio load and

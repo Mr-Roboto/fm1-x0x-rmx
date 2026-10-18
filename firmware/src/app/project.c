@@ -69,6 +69,12 @@ static uint8_t io_buf[PLAT_STORE_MAX] __attribute__((aligned(4)));
  * objects that changed: an autosave usually erases one or two sectors, not six */
 static uint32_t stored_hash[OBJ_NOBJ];
 static uint8_t stored_known[OBJ_NOBJ];
+/* Only a USB restore replaces objects outside the normal save/load cache. */
+void project_forget_saved(void)
+{
+    for (int i = 0; i < OBJ_NOBJ; i++)
+        stored_known[i] = 0;
+}
 static uint32_t hash_of(const uint8_t *p, uint32_t n)        /* FNV-1a */
 {
     uint32_t h = 2166136261u;

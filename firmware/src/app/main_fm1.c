@@ -268,6 +268,152 @@ static void safe_main(void)
     }
 }
 
+/* ------------------------------------------------- backup and restore --- */
+typedef char rs_journal_fits[(sizeof rs_rec <= ST_SECTOR && RS_REC >= OTA_AREA + ST_SECTOR &&
+                             RS_REC + ST_SECTOR <= OTA_RES) ? 1 : -1];
+/* backup.c's hooks: the project to a file and back over USB (tools/x0x_backup.py, web/backup/index.html) */
+#if X0X_DEBUG
+uint32_t rs_auto;                                   /* development: 1 answers the question yes, 2 no (fm1_debug poke) */
+#endif
+static int rs_fetch(uint32_t addr, uint8_t *dst, uint32_t n) { return ota_read(addr, dst, n); }
+static int rs_note(uint32_t addr)                   /* (past the question: no session deadline, 3 tries) */
+{
+    uint8_t b[8];
+    ota_deadline = 0;
+    return ota_read(addr, b, 8);
+}
+static int rs_playing(void) { return seq.playing || seq.req_stop; }
+static void rs_begin(void)                          /* a backup is coming: patient now (5 s a read, 2 min in all) */
+{
+    ota_try_ms = 5000u;
+    ota_deadline = ota_now_ms() + 120000u;
+}
+static void rs_show(uint32_t pct)
+{
+    char b[8];
+    uint32_t i = 0;
+    if (pct >= 100u)
+        b[i++] = '1';
+    if (pct >= 10u)
+        b[i++] = (char)('0' + pct / 10u % 10u);
+    b[i++] = (char)('0' + pct % 10u);
+    b[i++] = '%';
+    b[i] = 0;
+    if (!pct)
+        lcd_fill(0, 0, 240, 240, C_BLACK);
+    draw_text_box(0, 92, 240, &FONT_B, "RESTORE FROM USB", C_WHITE, 1);
+    draw_text_box(0, 124, 240, &FONT_S, b, C_HI, 1);
+}
+static int rs_ask(void)                             /* SEL yes, HOME no; playing or 60 s: no */
+{
+    uint32_t t0 = fm1_ms, was = plat_buttons(), sel = 1u << B_SEL, home = 1u << B_HOME;
+    int yes = -1;
+    lcd_fill(0, 0, 240, 240, C_BLACK);
+    draw_text_box(0, 64, 240, &FONT_B, "RESTORE FROM USB?", C_WHITE, 1);
+    draw_text_box(0, 92, 240, &FONT_S, "REPLACES THE PROJECT:", C_GRAY, 1);
+    draw_text_box(0, 112, 240, &FONT_S, "SOUND, PATTERNS, SONG", C_GRAY, 1);
+    draw_text_box(0, 150, 240, &FONT_B, "SEL  YES      HOME  NO", C_HI, 1);
+    while (yes < 0 && fm1_ms - t0 < 60000u) {
+        uint32_t b = plat_buttons(), down = b & ~was;
+        fm1_wdt_feed();
+        was = b;
+        if (down & sel)
+            yes = 1;
+        else if ((down & home) || rs_playing())
+            yes = 0;
+#if X0X_DEBUG
+        if (rs_auto)
+            yes = rs_auto == 1u;
+#endif
+    }
+    for (t0 = fm1_ms; plat_buttons() && fm1_ms - t0 < 3000u;)
+        fm1_wdt_feed();                             /* let go first: the UI must not take the press as its own */
+    return yes > 0;
+}
+static void rs_reload(void) { app_restored(); }
+/* On core 0 the renderer has returned (including its core-1 wait) before main
+ * can mask it. USB continues; MIDI arriving during commit queues until reload
+ * is complete. No per-block flag or DSP branch is added. */
+static int rs_lock(void)
+{
+    uint32_t f = irq_save();
+    if (rs_playing()) {
+        irq_restore(f);
+        return -1;
+    }
+    fm1_irq_mask(FM1_IRQ_ALNK0);
+    audio_silence();
+    irq_restore(f);
+    return 0;
+}
+static void rs_unlock(void)
+{
+    uint32_t f = irq_save();
+    fm1_irq_unmask(FM1_IRQ_ALNK0);
+    irq_restore(f);
+}
+static int rs_object_read(uint32_t i, void *dst, uint32_t n)
+{
+    fm1_wdt_feed();
+    return st_read(st_sector(rs_rec.e[i].obj, rs_rec.e[i].copy) + ST_PAYLOAD_OFF, dst, n);
+}
+static int rs_contents(void)
+{
+    uint32_t len[BU_NOBJ];
+    for (uint32_t i = 0; i < BU_NOBJ; i++)
+        len[i] = rs_rec.e[i].len;
+    return project_backup_check(len, rs_object_read);
+}
+/* A failed committed restore must finish before saves or OTA erase its journal. */
+static void rs_recovery_failed(void)
+{
+    lcd_fill(0, 0, 240, 240, C_BLACK);
+    draw_text_box(0, 92, 240, &FONT_S, "RESTORE NEEDS RESTART", C_WARNING, 1);
+    for (;;)
+        fm1_wdt_feed();
+}
+static int rs_rec_erase(void) { return ota_erase(RS_REC); }
+static int rs_rec_prog(uint32_t off, const void *src, uint32_t n) { return ota_prog(RS_REC + off, src, n); }
+static int rs_rec_read(uint32_t off, void *dst, uint32_t n) { return ota_fread(RS_REC + off, dst, n); }
+static int bu_room(void)                            /* the SysEx ring empty: a frame goes in whole; -1: USB gone */
+{
+    if (!usb.config || usb.suspended)
+        return -1;
+    return so_w == so_r;
+}
+static int bu_send(const uint8_t *p, uint32_t n) { return ota_wire_send(p, n); }
+static void bu_flush(void) { ui_flush(); }
+static int bu_unsaved(void) { return ui_dirty(); }
+static void bu_hold(int on) { ui_hold_saves(on); }
+
+/* the main loop: the host's backup and restore requests (ota.c's framing; ota_service hands them over) */
+static void backup_service(uint32_t req)
+{
+    if (req == 11u && ota_dec[2] == BU_REQ && bu_rd32(ota_dec + 6) == BU_MAGIC && flash_ok)
+        bu_start();                                 /* a backup to the host: streamed by bu_step, playing on */
+    bu_step();
+    if (req == 15u && ota_dec[2] == RS_REQ && flash_ok) {
+        uint32_t len = ota_rd32(ota_dec + 6), crc = ota_rd32(ota_dec + 10);
+        int begun = 0, rc;
+        if (bu.on)
+            bu_stop();                              /* (a backup streaming: given up) */
+        ota_try_ms = 300u;                          /* its head first: a host that does not answer costs a second */
+        ota_deadline = ota_now_ms() + 3000u;
+        rc = restore_rx(len, crc, &begun);
+        ota_try_ms = 5000u;
+        ota_deadline = 0;
+        if (rc == RS_E_COMMIT)
+            rs_recovery_failed();
+        if (begun && rc)
+            ui_redraw();                            /* (restored: app_restored drew it all again) */
+        ui_say(!rc ? "RESTORED FROM USB" : rc == RS_E_PLAYING ? "STOP FIRST, THEN RESTORE"
+               : rc == RS_E_NO ? "NOT RESTORED" : "RESTORE FAILED", 0);
+#if X0X_DEBUG
+        rs_auto = 0;
+#endif
+    }
+}
+
 static void fm1_main(void)
 {
     int32_t knob = 512 * 16;
@@ -278,6 +424,10 @@ static void fm1_main(void)
         flash_ok = FL_FAR(fl_jedec_ram)() == 0x856014u;   /* the expected 1 MiB part, else RAM only */
         irq_restore(f);
         if (flash_ok) {
+            if (rs_boot() < 0) {
+                lcd_init();
+                rs_recovery_failed();
+            }
             fl_plain_window_init();                 /* user sample slots read as plaintext through XIP */
             for (k = 0; k < SMP_USER_SLOTS; k++)
                 smp_user_scan(k);
@@ -386,10 +536,11 @@ static void fm1_main(void)
             }
         }
         ed_service();                               /* sample upload SysEx */
-        ota_service();                              /* M-UPGRADE handshake */
+        backup_service(ota_service());              /* M-UPGRADE handshake; backup and restore */
         if (usb.ota_req) {
             usb.ota_req = 0;
             seq_stop(&seq);
+            bu_stop();
             if (flash_ok)
                 ota_session();                      /* returns only if nothing was committed */
             lcd_fill(0, 0, 240, 240, C_BLACK);

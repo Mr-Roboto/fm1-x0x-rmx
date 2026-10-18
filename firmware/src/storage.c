@@ -109,7 +109,7 @@ static int st_load(uint32_t obj, void *dst, uint32_t max)
 {
     uint32_t i;
     st_hdr_t h;
-    if (st_current(obj, &h) < 0)
+    if (st_current(obj, &h) < 0 || !h.len) /* restore tombstone: absent, without reviving the older copy */
         return -1;
     if (h.len > max)
         h.len = max;

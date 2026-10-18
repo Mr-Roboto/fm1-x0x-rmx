@@ -56,22 +56,24 @@ line generator, and a breakbeat player, all running at once, with patterns, a so
 recorded knob moves. This independent fork adds Orb-inspired Remix for 909, 808, 303A and 303B,
 Grids MAP/EUCLID drum generation with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo,
 extended TB-3PO, a 303 Morph waveform, and additional color schemes and UI improvements.
-v1.0.1 adds Musical Reverse (MREV), an independent firmware identity and the MORPH IN USE warning.</p>
+v1.0.1 adds Musical Reverse (MREV), an independent firmware identity and the MORPH IN USE warning.
+v1.1.0 adds G.711 µ-law 909 cymbal compression, BREAK FILTER (LP/OFF/HP),
+ENV + KNOB parameter reset and USB project backup/restore.</p>
 <figure class="hero">
   <a href="emu/"><img src="manual/img/p82/01-overview-cream.png" width="3120" height="2175"
     alt="X0X-RMX browser emulator in Cream &amp; Lilac, showing a 909 pattern and the Device color selector" loading="lazy"></a>
   <figcaption>The default Cream &amp; Lilac exterior, shown with the WHITE LILAC LCD scheme. Play it with mouse, touch or keyboard.</figcaption>
 </figure>
-<div class="status">X0X-RMX v1.0.1 Stable, successfully tested on a real M-VAVE FM-1. Hardware checklist items 1–8 passed, including MREV, Remix restoration, both MORPH warnings, save/restart and existing project/user-sample data. Stable operation had no audible dropouts or unexpected interruptions. External MIDI clock/dedicated extended performance and physical interrupted-update recovery were not tested. Saved-direction compatibility: old PING becomes MREV; old RND becomes PING. Reselect and save affected directions.</div>
+<div class="status">X0X-RMX v1.1.0 Stable. The maintainer reports successful physical FM-1 installation, two-core operation, PERFORMANCE benchmark, BREAK FILTER, ENV reset, 909 cymbals, USB backup/restore, HOME cancellation and project/user-sample persistence, with no audio glitches or regressions. For upgrades from v1.0.0: old PING becomes MREV; old RND becomes PING. Reselect and save affected directions.</div>
 <nav class="ways" aria-label="Explore X0X-RMX">
   <a href="emu/"><strong>Try it in the browser</strong><span>The current X0X-RMX sources compiled for the browser, with sound. Mouse, touch or keyboard; no FM-1 needed.</span></a>
-  <a href="install/"><strong>Install 1.0.1</strong><span>Chrome or Edge, Web MIDI.</span></a>
+  <a href="install/"><strong>Install 1.1.0</strong><span>Chrome or Edge, Web MIDI.</span></a>
   <a href="new/"><strong>Version history</strong><span>Fork development changes and clearly labelled upstream history.</span></a>
   <a href="manual/"><strong>Manual</strong><span>Getting started in ten steps, then everything else.</span></a>
   <a href="breaks/"><strong>Your own breaks</strong><span>Drop in loops and send them to the BREAK part, from Chrome or Edge.</span></a>
-  <a href="firmware/x0x-1.0.1.fwsc"><strong>Download x0x-1.0.1.fwsc</strong></a><a href="firmware/x0x-1.0.1.fwsc.sha256"><strong>SHA-256 checksum</strong></a><a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1"><strong>GitHub release 1.0.1</strong></a>
+  <a href="firmware/x0x-1.1.0.fwsc"><strong>Download x0x-1.1.0.fwsc</strong></a><a href="firmware/x0x-1.1.0.fwsc.sha256"><strong>SHA-256 checksum</strong></a><a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0"><strong>GitHub release 1.1.0</strong></a>
   <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx"><strong>Source</strong><span>X0X-RMX on GitHub, GPL-3.0.</span></a>
-</nav>
+<a href="backup/"><strong>USB project backup</strong><span>Chrome or Edge. Saved project data; back up user loops separately.</span></a></nav>
 <section aria-labelledby="demo">
 <h2 id="demo">X0X-RMX musical demonstration</h2>
 <figure>
@@ -121,9 +123,9 @@ separately from your project. GLO → SCHEME controls LCD colors independently.<
 <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita and contributors,
 Hügelton Instruments. Grids by Emilie Gillet / Mutable Instruments; MAP arithmetic cross-checked
 against DEADACTIVE's Hortator. See the <a href="manual/#s19">complete credits</a> and
-<a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/v1.0.1/LICENSING.md">licensing notices</a>.</p>
+<a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/v1.1.0/LICENSING.md">licensing notices</a>.</p>
 <p class="small">An independent fork without implied endorsement by the original author.
 M-VAVE, FM-1, TR-808, TR-909 and TB-303 are trademarks of their owners; no affiliation or endorsement.</p>
-</main>
+<p>Historical Stable releases: <a href="history/v1.0.1/manual/">v1.0.1 manual</a>, <a href="history/v1.0.1/new/">v1.0.1 history</a>, <a href="history/v1.0.1/install/">v1.0.1 installer</a>, <a href="firmware/x0x-1.0.1.fwsc">v1.0.1 firmware</a>, <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/tree/v1.0.0/docs">v1.0.0 documentation</a>, <a href="firmware/x0x-1.0.0.fwsc">v1.0.0 firmware</a>.</p></main>
 </body>
 </html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X0X-RMX: X0X-RMX version history</title>
+<meta name="description" content="X0X-RMX version history for X0X-RMX, groovebox firmware for the M-VAVE FM-1.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root {
+  --ground: #f4f5f6; --sheet: #ffffff; --ink: #1c1f23; --muted: #5b626a; --rule: #d9dde1;
+  --accent: #c8700a; --code-bg: #eef0f2; --swatch-ring: rgba(0,0,0,.18);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #131518; --sheet: #1a1d21; --ink: #e6e8eb; --muted: #9aa1a9; --rule: #2d3137;
+    --accent: #f0a043; --code-bg: #24282d; --swatch-ring: rgba(255,255,255,.22);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #131518; --sheet: #1a1d21; --ink: #e6e8eb; --muted: #9aa1a9; --rule: #2d3137;
+  --accent: #f0a043; --code-bg: #24282d; --swatch-ring: rgba(255,255,255,.22);
+  color-scheme: dark;
+}
+body {
+  background: var(--ground); color: var(--ink); margin: 0;
+  font: 400 17px/1.6 "Barlow", "Helvetica Neue", Arial, sans-serif;
+  padding-inline: 16px; padding-block: 32px 64px;
+}
+main { max-width: 46rem; margin: 0 auto; }
+h1, h2, h3 { font-family: "Barlow Semi Condensed", "Barlow", "Arial Narrow", sans-serif; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 2.3rem; font-weight: 700; margin: 0 0 .3rem; letter-spacing: -.01em; }
+h2 { font-size: 1.55rem; font-weight: 600; margin: 3rem 0 .8rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+h2 .num { color: var(--accent); margin-right: .35em; font-variant-numeric: tabular-nums; }
+h3 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 .5rem; }
+p, li { max-width: 65ch; }
+p { margin: 0 0 1rem; }
+ul, ol { padding-left: 1.3rem; margin: 0 0 1rem; }
+li { margin: .2rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code, pre { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .86em; }
+code { background: var(--code-bg); padding: .08em .35em; border-radius: 4px; }
+pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.45; margin: 0 0 1.2rem; }
+pre code { background: none; padding: 0; font-size: inherit; }
+hr { display: none; }
+.table { overflow-x: auto; margin: 0 0 1.3rem; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .7rem .45rem 0; border-bottom: 1px solid var(--rule); }
+th { font-family: "Barlow Semi Condensed", "Barlow", sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: .82rem; color: var(--muted); }
+td:first-child { white-space: nowrap; }
+.lede { color: var(--muted); margin-bottom: 1.6rem; }
+.status { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 16px; }
+.status p { margin: 0; }
+a.home { color: inherit; text-decoration: none; }
+main > a.home { display: inline-block; font: 700 1rem "Barlow Semi Condensed", "Barlow", sans-serif; letter-spacing: .03em; color: var(--muted); margin: 0 0 .4rem; }
+a.home:hover { color: var(--accent); }
+.callout { border-left: 3px solid var(--accent); background: var(--sheet); border-radius: 0 8px 8px 0; padding: 10px 16px; margin: 0 0 1.2rem; max-width: 65ch; }
+.callout p { margin: 0; }
+details { border: 1px solid var(--rule); border-radius: 8px; padding: 0 16px; margin: 0 0 1.2rem; }
+details > summary { cursor: pointer; padding: 10px 0; font-weight: 600; color: var(--muted); }
+details[open] > summary { margin-bottom: .4rem; }
+details > :last-child { margin-bottom: 1rem; }
+.swatch { display: inline-block; width: .7em; height: .7em; border-radius: 3px; margin-right: .4em; vertical-align: .02em; box-shadow: 0 0 0 1px var(--swatch-ring); }
+nav.contents ol { columns: 2 14rem; column-gap: 2rem; padding-left: 1.3rem; }
+.figs { display: flex; flex-wrap: wrap; gap: 20px; margin: .4rem 0 1.6rem; }
+figure { margin: 0; flex: 0 1 auto; }
+figure img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
+figure.shot img { width: 300px; image-rendering: pixelated; box-shadow: 0 0 0 1px var(--rule); }
+figure.wide { flex-basis: 100%; }
+figure.wide img { width: 100%; }
+figcaption { color: var(--muted); font-size: .88rem; margin-top: .4rem; max-width: 300px; }
+figure.wide figcaption { max-width: none; }
+nav.contents li { break-inside: avoid; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<main>
+<a class="home" href="/fm1-x0x-rmx/">X0X-RMX</a>
+<h1>X0X-RMX version history</h1>
+<p>X0X-RMX v1.0.1 is the current Stable release; v1.0.0 remains available historically. See the <a href="/fm1-x0x-rmx/manual/">manual</a>, <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1">GitHub release</a>, <a href="/fm1-x0x-rmx/install/">installer</a> and <a href="/fm1-x0x-rmx/emu/">public emulator</a>.</p>
+<h2 id="s1">1.0.1 · Stable · 18 October 2026</h2>
+<ul><li>Independent firmware identity: <code>FM-1_987010001</code> in both the package and USB response. The official v1.0.0 package, identity and SHA-256 are unchanged.</li><li>Five 303 directions in order: <strong>FWD → REV → MREV → PING → RND</strong>. MREV starts at step 1, then traverses the remaining configured steps backwards. It bypasses Remix while preserving its selection and ON state; Forward restores Remix.</li><li><strong>Compatibility change:</strong> stored values are 0 FWD, 1 REV, 2 MREV, 3 PING, 4 RND. No direction migration is performed. Existing v1.0.0 PING patterns (2) now use MREV; existing RND patterns (3) now use PING. Reselect the desired direction and save. Storage sizes and layouts remain unchanged.</li><li>A user WAVE selection rejected by the single-MORPH rule shows exactly <strong>MORPH IN USE</strong>, through either the knob or SEL parameter list. The rejected voice retains its accepted waveform. Motion and loading remain silent.</li><li>Hardware checklist items 1–8 passed on a real M-VAVE FM-1, including save/restart and existing project/user-sample data. Stable operation had no audible dropouts or unexpected interruptions. External MIDI clock/dedicated extended performance testing and physical interrupted-update recovery were not performed. Publication is explicitly approved with these limitations. No upstream X0X changes are included; those are reserved for v1.1.0.</li></ul>
+<p>See <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/v1.0.1/docs/RELEASE_1.0.1.md">v1.0.1 release notes and validation</a>.</p>
+<h2 id="s1">1.0.0 · Stable · 16 October 2026</h2>
+<p>Hardware testing confirmed the regular firmware update, preservation of existing patterns and user breaks, restoration of the five manual startup patterns, pattern-chain playback and a twelve-minute musical run without reported problems. USB audio with iPad/AudioShare was also confirmed successful. Real-device operation of the sequencer, drums, bass synths, effects and breakbeat engine was confirmed. Separate FULL/FOLLOWS KNOB hardware tests were not reported and are not claimed. Publication was explicitly approved by the maintainer.</p>
+<ul><li>USB AUDIO defaults to FULL for new projects and Factory Reset; saved choices remain intact.</li><li>SAVE/AUTOSAVE remember the last manual startup pattern combination for all five parts. PRESETS and HOME pattern keys are supported; automatic Song/Chain changes do not replace it. Older projects start at P1 on all parts; the packed pattern/song/motion format is unchanged.</li><li>Two built-in loops: 909 GR and 808 GR, distinct two-bar grooves at 96 BPM, rendered during the build. Their 110,250-byte combined ADPCM payload is unchanged in size. The three user slots, their addresses and upload protocol are unchanged; ordinary OTA preserves them.</li><li>Both 303 SEQ pages now follow SEQUENCE → REMIX → KEYS. KEYS retains only FREE PLAY.</li><li>All four Remix parts use KNOB 1 APPLY, KNOB 2 BANK, KNOB 3 PATTERN, KNOB 4 REMIX ON/OFF. The musical mapping, saved Remix values and APPLY timing are unchanged.</li><li>Browser break uploader recognizes Windows names such as FM-1 Midi 2 and still requires the X0X protocol handshake on an identically named input/output pair.</li><li>Official package: x0x-1.0.0.fwsc; product FM-1_9010000; Git tag v1.0.0. SHA-256: eccacfa995efec6b9c819583e7bce43b3aa7a126033c8e668ae89c6a988b754c.</li></ul>
+<h3 id="included-fork-changes">Included fork changes</h3>
+<ul><li>Independent Orb-inspired Remix for 909, 808, 303A and 303B; BREAK is unaffected. SEQ &gt; REMIX exposes Bank A–P, Pattern 1–16, ON/OFF and STEP/BEAT/BAR/LOOP APPLY. Forward playback and sound-motion recording follow mapped source steps; bass Reverse, Ping-Pong and Random retain their existing behavior.</li><li>Grids MAP/EUCLID drum generators with NEW/MUTATE, FILL, OFFSET, CHAOS and Undo integration.</li><li>Extended TB-3PO: 22 scales, Minor Pentatonic defaults for new configurations, short motifs with rhythmic answers and restrained mutation. Written notes are retained when generator knobs change; older saved scale indices are not automatically migrated.</li><li>Six saved LCD schemes, coordinated part colors, and retained GLOBAL list position during a session. WHITE LILAC is the factory default for new projects and reset; saved scheme selections and legacy DEFAULT decoding are preserved.</li><li>Public X0X-RMX browser emulator, documentation, stable firmware download and web installer.</li><li>Both 303s have TONE, VOICE and EXTRA EDIT pages. EXTRA exposes MORPH, ACCDEC, DRVTYPE and TUNE; only VOLUME remains under MORE.</li><li>Browser-only Device color selector: Cream &amp; Lilac by default, Classic Dark with the original appearance, plus Sunset Orange and Pink Lilac exterior variants inspired by the existing LCD palettes. Device appearance and GLO &gt; SCHEME remain independent. The emulator and landing page share the project SVG favicon. The visual choice is stored separately and can change during playback.</li></ul>
+<h3 id="experimental-morph-waveform">Experimental Morph waveform</h3>
+<ul><li><strong>Experimental Wave 3:</strong> the 303 WAVE choices are Saw, Square and Morph. On EDIT's <strong>EXTRA</strong> page, <strong>KNOB 1 (MORPH)</strong> moves continuously through 0 = Sharkfin, 64 = Trapezoid and 127 = Notch-Trapezoid, with independent settings and a 5 ms slew for each voice.</li><li>Only 303A or 303B may use Morph at a time. Conflicting UI, direct parameter and motion requests keep the prior accepted Wave; they do not force the other voice to change or wait for ownership to become available. Returning the owner to Saw or Square releases the limit.</li><li>Projects save accepted Wave settings and both Morph values in the existing sound allocation. A conflicting loaded pair keeps A on Morph and loads B as Saw.</li><li>The implementation uses cubic four-box BLEP/BLAMP, replacing the original triangular correction proposal for Wave 3. Saw/Square, the 2× default and overload guard are unchanged. The release hardware run reported no problems; dedicated Morph worst-case timing and listening tests were not separately reported. These fork changes do not describe upstream releases. See the <a href="/fm1-x0x-rmx/manual/#s6">local manual</a> and <a href="https://github.com/Mr-Roboto/fm1-x0x-rmx/blob/v1.0.1/docs/TB303_WAVEFORMS_DESIGN.md">waveform specification</a>.</li></ul>
+<h2 id="original-x0x-history-charles-vestal">Original X0X history (Charles Vestal)</h2>
+<p>The numbered entries below are retained upstream history. Their release, installer and hosted emulator links refer to original X0X, not X0X-RMX or a validated fork release. Hardware performance figures and release claims below are the original author's historical reports; they are not new measurements or release claims for this fork.</p>
+<h2 id="s1">1.0.6 · 11 October 2026</h2>
+<ul><li><strong>Free play on the 303s:</strong> press SEQ, turn SELECT to the KEYS page and set FREE PLAY to ON. The keys play the 303 on every 303 screen without writing anything, so you can try lines and shape the sound first; REC still records.</li><li><strong>The song plays from the SONG screen:</strong> press PLAY there and the song plays from the selected bar, and keeps playing wherever you go. PLAY anywhere else plays the patterns. The MODE setting is gone.</li><li><strong>GLO &gt; USB AUDIO:</strong> FULL keeps USB audio at full level whatever the MASTER knob says, so you can record over the cable with the speaker turned down. FOLLOWS KNOB (the default) is as before.</li><li>GLO is in sections: MIDI, AUDIO, KEYS AND SCREEN, PROJECT, SYSTEM.</li></ul>
+<h2 id="s1">1.0.5 · 10 October 2026</h2>
+<ul><li>A sharper check on the second processor core: on an FM-1 whose second core misreads, X0X now also catches the one misread 1.0.4 could miss, and carries on with one core. Nothing changes on an FM-1 whose cores both work.</li></ul>
+<h2 id="s1">1.0.4 · 10 October 2026</h2>
+<ul><li>On FM-1s whose second processor core doesn't work reliably, X0X notices and carries on with one core, instead of clicking or stopping in the middle of an update. GLO &gt; PERFORMANCE says 2 CORES, or 1 CORE: BAD READS on such a unit. Thanks to Jangada's maintainer for the measurements and the fixes.</li><li>A crash on the second core no longer freezes the FM-1.</li></ul>
+<h2 id="s1">1.0.3 · 10 October 2026</h2>
+<ul><li>GLO &gt; BATTERY shows the battery's charge: FULL, 2/3, 1/3 or EMPTY, or USB POWER while a computer powers the FM-1.</li></ul>
+<h2 id="s1">1.0.2 · 10 October 2026</h2>
+<ul><li>Probability cycles count from the first pass again when the 909 changes pattern, as the other parts already did: switch patterns and a 1:4 step plays on the new pattern's first bar.</li></ul>
+<h2 id="s1">1.0.1 · 10 October 2026</h2>
+<ul><li>Probability cycles: hold a step and turn SELECT down past 5% for 1:2, 2:2, 1:3 … 8:8. A step at 1:4 plays on the first of every four passes of its pattern, 2:4 on the second.</li></ul>
+<div class="figs"><figure class="shot"><img src="img/new/1.0.1-cycle.png" alt="STEP 15: 1:4, the open hat on the first of every four passes" loading="lazy"><figcaption>STEP 15: 1:4, the open hat on the first of every four passes</figcaption></figure></div>
+<h2 id="s1">1.0 · 10 October 2026</h2>
+<h3 id="highlights">Highlights</h3>
+<ul><li>Uses both of the FM-1's processor cores: no dropouts, even on the most complex patterns. The busiest test pattern went from about 115% to 68% load. Thanks @keremcode</li><li>Simpler navigation: HOME for the pattern and song, SEQ for the selected part's steps, EDIT for its sound. Press a button again, or turn SELECT, for the next page.</li><li>Clearer screens: each knob row says whose knobs they are, a hint line shows what the keys do, holding any button explains it, and labels are clearer throughout.</li><li>Up to 64 steps per part and 32 patterns</li><li>Per-step p-locks (on EDIT, hold a step and turn a knob) and probability (hold a step and turn SELECT)</li><li>A drum mixer with per-track mutes, sends and hit meters</li><li>A new <a href="https://charlesvestal.github.io/fm1-x0x/breaks/">break tool (original X0X)</a>: load and manage your own loops from the browser (BR1, BR2…)</li></ul>
+<div class="figs"><figure class="shot"><img src="img/new/1.0-home.png" alt="HOME: a line per part in every pattern with notes" loading="lazy"><figcaption>HOME: a line per part in every pattern with notes</figcaption></figure><figure class="shot"><img src="img/new/1.0-303-steps.png" alt="The 303&#x27;s steps on SEQ, two ties as one long note" loading="lazy"><figcaption>The 303's steps on SEQ, two ties as one long note</figcaption></figure><figure class="shot"><img src="img/new/1.0-plock.png" alt="A p-lock: the kick&#x27;s own TUNE on step 5" loading="lazy"><figcaption>A p-lock: the kick's own TUNE on step 5</figcaption></figure><figure class="shot"><img src="img/new/1.0-probability.png" alt="Probability: STEP 3 at 50%" loading="lazy"><figcaption>Probability: STEP 3 at 50%</figcaption></figure><figure class="shot"><img src="img/new/1.0-drum-mixer.png" alt="The 909 mixer, its meters lit by a hit" loading="lazy"><figcaption>The 909 mixer, its meters lit by a hit</figcaption></figure><figure class="shot"><img src="img/new/1.0-master.png" alt="MASTER: the output level, the pump at work" loading="lazy"><figcaption>MASTER: the output level, the pump at work</figcaption></figure><figure class="shot"><img src="img/new/1.0-song-repeat.png" alt="The song, bar 1 played four times" loading="lazy"><figcaption>The song, bar 1 played four times</figcaption></figure></div>
+<h3 id="sequencing">Sequencing</h3>
+<ul><li>New 303 note entry: REC turns the keys into a keyboard, ties show as one long note, and holding a step + OCT moves it an octave</li><li>Copy and paste whole patterns: hold SAVE, then press a white key</li><li>Song bars can repeat, ×1 to ×8</li><li>A break step can have its own slice: hold the step and press black keys 1–8</li><li>The break's COMPLEXITY now eases ROLL and FILL in gently</li></ul>
+<h3 id="sound-and-mix">Sound and mix</h3>
+<ul><li>Reverb and delay sends on both kicks</li><li>DECAY on the 909 snare</li><li>One-knob COMP and FILTER on the master, and the MASTER page shows the output level</li><li>A calmer factory reverb</li><li>OUTPUT LOUD, for quiet headphones</li><li>The 808's hats always choke like the 909's (CHOKE setting removed)</li></ul>
+<h3 id="midi">MIDI</h3>
+<ul><li>A MIDI channel per part, in and out, or OFF</li><li>A steady tempo readout when following an external clock</li></ul>
+<h3 id="feel-and-fixes">Feel and fixes</h3>
+<ul><li>Knobs: no more missed or doubled clicks, and small turns are exact</li><li>Key lights in two brightness levels: bright for chosen, dim for available</li><li>Saving waits until you stop, so the audio never cuts out</li><li>B CHANCE works without PHRASE</li><li>CLEAR PATTERN no longer leaves a bar showing on HOME</li><li>The keys no longer trigger steps or slices on the MASTER and FX screens</li></ul>
+<p>Projects saved with 0.10 load as they were.</p>
+<h2 id="earlier-versions">Earlier versions</h2>
+<details><summary>0.10.3-beta · 8 October 2026</summary>
+<ul><li><strong>PLAY is green</strong>: PLAY uses its green light, and turns red only while recording (REC on). Its glow is green too.</li></ul>
+</details>
+<details><summary>0.10.2-beta · 8 October 2026</summary>
+<ul><li><strong>Readable buttons in the dark</strong>: the buttons that aren't lit now glow dimly, so their labels can be read on the black FM-1. The KEY LIGHTS setting is now LIGHTS: ON (the default, and what a saved "on" becomes) shows the key lights and the glow, KEYS shows the key lights only, OFF neither.</li><li>The performance page also reports how deep the interrupts' stack has gone.</li></ul>
+</details>
+<details><summary>0.10.1-beta · 6 October 2026</summary>
+<ul><li>No more zippering when you turn volume, pan or the sends quickly: part volume, pan and sends, the master volume and every drum voice's pan now glide over about 10 ms instead of jumping.</li></ul>
+</details>
+<details><summary>0.10-beta · 6 October 2026</summary>
+<ul><li><strong>Fixes the brightness freeze</strong>: setting BRIGHTNESS low could freeze the FM-1, and it then stayed stuck at the boot screen (dim, no input) even after reinstalling. The setting is gone, a saved value is ignored, and the screen is always at full brightness. If your FM-1 is stuck, install 0.10-beta from the web installer.</li><li><strong>Stereo</strong>: every part has a PAN (its SENDS page, or MIX &gt; PANS), and so does every 909 voice and 808 track (the last setting on its page). With everything centred it sounds exactly as before.</li><li><strong>Stereo reverb</strong>, and a <strong>ping-pong delay</strong> (PING on the FX TAPE page; delay times over one second stay centred).</li><li><strong>TRS MIDI IN</strong>: notes, clock and transport from the TRS jack, the same as over USB.</li></ul>
+</details>
+<details><summary>0.9-beta · 5 October 2026</summary>
+<ul><li><strong>USB audio</strong>: the FM-1 shows up on a computer as a 44.1 kHz audio input ("X0X FM-1"), no driver. It is resampled to the computer's USB clock, so live monitoring (an AU host, a DAW) doesn't drift or drop out.</li><li><strong>USB MIDI clock and transport fixed</strong>: clock, Start, Stop and Continue sent over USB were ignored; X0X now follows a DAW's clock and transport.</li><li><strong>Fewer dropouts on busy patterns</strong>: audio renders in 11.6 ms blocks, so a heavy step no longer overruns (adds 5.8 ms of latency).</li><li><span class="swatch" style="background:#e0483e"></span><strong>808</strong>: voices stop once their tail is 60 dB under the hit, saving CPU without changing what you hear.</li><li><strong>303</strong>: holding a step no longer toggles it (only a tap does); holding or editing a step follows KEY SOUND like the drum keys, so it's silent while the pattern plays.</li><li><strong>TB-3PO</strong>: the GENERATE and SCALE knobs no longer rewrite the line; they set up the next <strong>OCT+</strong> (new line) or <strong>OCT-</strong> (mutate). The screen marks changed settings with a star.</li></ul>
+</details>
+<details><summary>0.8-beta · 5 October 2026</summary>
+<ul><li>Fast knob turns count: a quick flick no longer gets lost (the encoder decoder keeps up with skipped states)</li><li>Overload guard: when the FM-1 nears its CPU limit, the 303s drop oversampling and the 808's tails end sooner instead of dropping out; GUARD shows next to the audio load, and the performance page counts how often it engaged</li><li>Less screen tearing: the display runs at 60 MHz, the main area sends only what changed, and both halves change together. Some tearing remains: the FM-1 has no tearing-sync line</li></ul>
+</details>
+<details><summary>0.7-beta · 5 October 2026</summary>
+<ul><li>Knob acceleration by speed: turn slowly for single steps, quickly to sweep (a fast half turn covers the whole range).</li><li>GLO &gt; BRIGHTNESS: the screen's brightness, 1 to 8.</li><li>tools/upload_breaks.py: no longer crashes when given more loops than fit; retries a write the USB link lost.</li></ul>
+</details>
+<details><summary>0.6-beta · 5 October 2026</summary>
+<ul><li>Knobs and LEDs under load: the key/knob/LED matrix scan now keeps its rhythm while the audio renders. Fast knob turns no longer lose their steps, and the LEDs no longer flicker with the audio load. (Found on the first hardware run.)</li></ul>
+</details>
+<details><summary>0.5-beta · 5 October 2026</summary>
+<ul><li>Undo and redo: HOME + REC / HOME + PLAY, up to 32 steps, for sounds, patterns, the song and knob motion (CLEAR PATTERN and FACTORY RESET included). The screen says what was undone.</li><li>AUTOSAVE (GLO, on by default): while stopped, changes save themselves after 4 s of quiet. Saves now write only what changed.</li><li>Help cards: hold any button for a second to see what it does on the current screen, with its combinations.</li><li>Safe mode: after two failed starts X0X starts with no sound and USB on, so the web installer can always reach it (it used to drop into the chip's update mode, which no installer can see). PLAY tries again.</li><li>After a crash, the next start says so and shows where.</li><li>The web installer can put M-VAVE's stock firmware (FM-1 V15) back.</li><li>The browser version can load your own breaks.</li></ul>
+</details>
+<details><summary>0.4-beta · 4 October 2026</summary>
+<ul><li>Black drum keys select silently while the pattern plays (new GLO &gt; KEY SOUND, default STOPPED); they still sound when stopped and with REC on. ALWAYS keeps the old behaviour.</li><li>The 303 lines start empty, like the drums: a fresh FM-1 (or FACTORY RESET) no longer plays two generated lines. OCT+ on TB-3PO writes one. Saved projects are unchanged.</li><li>Delay: a division longer than the 2 s line (1/2. below 90 BPM, 1/2 below 60) now halves and stays on the beat instead of being cut off the grid.</li><li>GLO &gt; ABOUT shows the real version (every release said 0.1).</li><li>New: X0X in the browser, https://charlesvestal.github.io/fm1-x0x/emu/</li><li>New: recovering an FM-1 that won't start, from a Mac (manual, Troubleshooting).</li></ul>
+</details>
+<details><summary>0.3-beta · 4 October 2026</summary>
+<ul><li>Fixes the crash on hardware ("X0X CRASH" screen soon after start): a divide-by-zero trap fired in the master limiter. The trap is off and the divide is clamped.</li><li>Includes the PERFORMANCE screen and PERF TEST (GLO menu) from 0.2-beta.</li></ul>
+</details>
+<details><summary>0.2-beta · 4 October 2026</summary>
+<p><strong>Still not run on a real FM-1.</strong> This build measures itself, so the first install tells us what the FM-1 can do. Installing is at your own risk; M-VAVE's updater (M-UPGRADE) puts the official firmware back.</p>
+<p><strong>Please run the performance test:</strong> GLO &gt; PERFORMANCE, then SEL &gt; RUN PERF TEST. It plays three built-in patterns for about 15 seconds, puts your project back as it was, and shows a table. A photo of that screen is the most useful thing you can send.</p>
+<ul><li><strong>Install:</strong> https://charlesvestal.github.io/fm1-x0x/install/</li><li><strong>Manual:</strong> https://charlesvestal.github.io/fm1-x0x/manual/</li></ul>
+<p>Changes since 0.1-beta:</p>
+<ul><li>PERFORMANCE page: clock, audio load and peak, dropouts, each part's share of the CPU; RUN PERF TEST</li><li>Big-beat factory mix (break up front, 909 kick under it, RAT 303s into tape delay, a pumping master)</li><li>No clicks on the kick: the 909 kick's attack back to 9W9's, the pump eases in, a look-ahead limiter</li><li>Cheaper engines: silent parts skipped, lighter master, faster tanh, a RAT clipper without square roots or divides</li><li>The manual rewritten in plain sentences, with a Getting started tour</li></ul>
+</details>
+<details><summary>0.1-beta · 4 October 2026</summary>
+<p>First public build. <strong>Not yet run on a real FM-1</strong>: the first people to install it are the first test. Installing is at your own risk; M-VAVE's updater (M-UPGRADE) puts the official firmware back.</p>
+<ul><li><strong>Install:</strong> https://charlesvestal.github.io/fm1-x0x/install/ (Chrome or Edge, the FM-1 on USB), or <code>python3 tools/fm1_install.py x0x-0.1-beta.fwsc</code> with the file below.</li><li><strong>Manual:</strong> https://charlesvestal.github.io/fm1-x0x/manual/</li></ul>
+<p>What's in it:</p>
+<ul><li>A 909 (from 9W9 / ER-99) and an 808 (from 8W8), eleven tracks each</li><li>Two 303s (from schwung-303 / Open303), each with a TB-3PO line generator</li><li>A breakbeat generator (from BB Gen); load your own breaks with <code>tools/upload_breaks.py</code></li><li>16 patterns, each part on its own pattern; a song mode; recorded knob moves</li><li>Reverb and tape delay sends on every part; a master compressor with kick-keyed pump, a filter and a limiter</li><li>A big-beat factory mix</li></ul>
+</details>
+</main>
+</body>
+</html>

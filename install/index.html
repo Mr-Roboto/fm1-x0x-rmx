@@ -316,7 +316,7 @@ const TEXT = {
     warn: "Do not unplug the USB cable while writing.",
     install: "Install",
     manual: "The manual",
-    validated: "X0X-RMX v1.0.1 Stable was successfully tested on a real M-VAVE FM-1: hardware checklist items 1–8 passed, including MREV, Remix restoration, both MORPH warnings, save/restart and existing project/user-sample data. External MIDI clock, dedicated extended performance and physical interrupted-update recovery were not tested. Old saved PING becomes MREV; old RND becomes PING. Reselect and save affected directions.",
+    validated: "X0X-RMX v1.1.0 Stable: the maintainer reports successful physical FM-1 installation, two-core operation, PERFORMANCE benchmark, BREAK FILTER, ENV reset, 909 cymbals, USB backup/restore, HOME cancellation and project/user-sample persistence, with no audio glitches or regressions. Upgrading from v1.0.0: old saved PING becomes MREV; old RND becomes PING. Reselect and save affected directions.",
     direct: "Connect the USB cable directly to the computer. No probe or Transporter is needed.",
     brick: "If the FM-1 no longer starts, a Mac can put the stock firmware back:",
     bricklink: "recovering an FM-1 that won't start (manual)",
@@ -360,7 +360,7 @@ const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textCont
 const say = (txt) => { lastKey = null; $("status").textContent = txt; };
 const log = (t) => { $("log").textContent += t + "\n"; };
 let image = null;
-const meta = {"version": "1.0.1", "product": "FM-1_987010001", "pkg": "../firmware/x0x-1.0.1.fwsc"};
+const meta = {"version": "1.1.0", "product": "FM-1_987010100", "pkg": "../firmware/x0x-1.1.0.fwsc"};
 
 let writing = false;
 window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault(); e.returnValue = t("leave"); } });

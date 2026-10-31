@@ -170,6 +170,10 @@ Grids MAP data and arithmetic are by Emilie Gillet / Mutable Instruments (GPL-3.
 cross-checked against DEADACTIVE's Hortator port. See [LICENSING.md](LICENSING.md) and
 [Grids source attribution](assets/grids/README.md) for component provenance, notices and records still to confirm.
 
+The 303's render in passes, the 909's sample voices past their end and the 808's metal bank by
+blocks are after [Optimist](https://github.com/w0ts/optimist) (henri), a fork of X0X: the same
+sound, bit for bit, for less of the CPU.
+
 Felucca's own assets that aren't under its GPL (the icon set, the panel photo and the Hügelton
 drum pack) aren't part of this fork.
 

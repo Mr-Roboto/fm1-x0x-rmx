@@ -73,6 +73,7 @@ for t in drum909 drum808 bass303 breaks; do
 done
 run storage sh -c "$CC -O2 -o $OUT/storage_test tests/storage_test.c && $OUT/storage_test"
 run identity python3 tests/identity_test.py
+run flash-ok sh -c "$CC -std=c99 -Wall -Wextra -Werror -o $OUT/flash_ok_test tests/host/flash_ok_test.c && $OUT/flash_ok_test"   # firmware/hal/fm1_flash_ok.h: the flash parts the storage may use
 # the update path, against the firmware package (Felucca's tests; needs ./build.sh)
 if [ -f "$PKG" ]; then
     run ota-entry sh -c "$CC -o $OUT/ota_test tests/ota_test.c && $OUT/ota_test $PKG"

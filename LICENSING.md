@@ -25,6 +25,7 @@ remain applicable; the project licence does not replace third-party attribution.
 | The idea of a browser emulator for FM-1 firmware (`web/emu/`) | [Groove OS](https://www.groove-os.com/) by Peter Gombos, whose site runs its firmware in the browser; no code from it | credit only |
 | Remix lookup data (`assets/remix/remixes.txt`, generated nibble table) | Table transcribed, analyzed and manually compiled by project owner Mr-Roboto from MIDI recordings of all 256 physical Future Retro Orb patterns; historical Kontakt/Luminary source; import details and digest in [assets/remix/README.md](assets/remix/README.md) | Existing local source notice: GPL-3.0-only; provenance clarified by owner, without resolving underlying rights (below) |
 | Everything else in `firmware/src/{app,dsp,seq}`, `host/`, `tests/` | Charles Vestal's X0X and X0X-RMX modifications, retaining existing notices | GPL-3.0-only |
+| The flash parts the storage may use: `firmware/hal/fm1_flash_ok.h`, `tests/host/flash_ok_test.c` | [fm1-base](https://github.com/charlesvestal/fm1-base) (`device/fm1_flash_ok.h`, `tests/flash_ok_test.c`, fm1-base#35), Copyright (C) 2026 Laurens (@profikid) | MPL-2.0 (compatible with the GPL: MPL-2.0 section 3.3) |
 
 No recorded breaks are in this tree or in the default firmware: the built-in break loops are
 generated at build time by X0X's own 909 code. `tools/import_breaks.py`,

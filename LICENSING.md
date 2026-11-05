@@ -28,6 +28,7 @@ remain applicable; the project licence does not replace third-party attribution.
 | Remix lookup data (`assets/remix/remixes.txt`, generated nibble table) | Table transcribed, analyzed and manually compiled by project owner Mr-Roboto from MIDI recordings of all 256 physical Future Retro Orb patterns; historical Kontakt/Luminary source; import details and digest in [assets/remix/README.md](assets/remix/README.md) | Existing local source notice: GPL-3.0-only; provenance clarified by owner, without resolving underlying rights (below) |
 | Everything else in `firmware/src/{app,dsp,seq}`, `host/`, `tests/` | Charles Vestal's X0X and X0X-RMX modifications, retaining existing notices | GPL-3.0-only |
 | The flash parts the storage may use: `firmware/hal/fm1_flash_ok.h`, `tests/host/flash_ok_test.c` | [fm1-base](https://github.com/charlesvestal/fm1-base) (`device/fm1_flash_ok.h`, `tests/flash_ok_test.c`, fm1-base#35), Copyright (C) 2026 Laurens (@profikid) | MPL-2.0 (compatible with the GPL: MPL-2.0 section 3.3) |
+| The update handshake's tests: `tests/ota_hs_test.c`, `tests/host/installer_hs_test.mjs` | [felucca-bsp](https://github.com/hugelton/felucca-bsp)'s `tests/ota_test.c` and [fm1-base](https://github.com/charlesvestal/fm1-base)'s `tests/installer_hs_test.mjs`, Copyright (C) 2026 Charles Vestal | MPL-2.0 (compatible with the GPL: MPL-2.0 section 3.3) |
 
 No recorded breaks are in this tree or in the default firmware: the built-in break loops are
 generated at build time by X0X's own 909 code. `tools/import_breaks.py`,

@@ -532,6 +532,18 @@ int project_load(void)
         proj.sound.v[T_303][1][B303_MIRROR] = 0;
         proj.sound.v[T_303][1][B303_MIRROR_TRANSPOSE] = 24;
     }
+#if defined(X0X_JUNO) && !defined(X0X_WEB)
+    if (sound_ok && proj.set.snd_rev < 9) {
+        /* Old BREAK pots/automation are unrelated to the new synth parameters.
+         * Keep all other sound, mixer, sequence and song data unchanged. */
+        for (int v = 0; v < engine_nvoices(T_BRK); v++)
+            for (int j = 0; j < engine_nparams(T_BRK, v); j++)
+                proj.sound.v[T_BRK][v][j] = engine_param(T_BRK, v, j)->def;
+        for (int k = 0; k < NLANE; k++)
+            if (proj.arr.lane[k].used && proj.arr.lane[k].t == T_BRK)
+                motion_clear(proj.arr.lane, k);
+    }
+#endif
     proj.set.snd_rev = PROJ_SND_REV;
     engine_sound_validate_bass(&proj.sound);
     return bad ? -1 : 0;

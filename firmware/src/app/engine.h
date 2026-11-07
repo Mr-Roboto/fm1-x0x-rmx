@@ -38,6 +38,9 @@ void engine_live_set(int control, int value); /* 0..3: ACID1, ACID2, FEEDBACK, D
 void engine_live_transpose(int semitones);
 void engine_live_quantize(int enabled);
 void engine_live_fills(unsigned mask);
+#ifdef X0X_JUNO
+void engine_juno_preset(int index); /* one audio-thread command for the whole patch */
+#endif
 static inline int engine_oh_hold_ms(int value)
 {
     value = value < 0 ? 0 : value > 127 ? 127 : value;

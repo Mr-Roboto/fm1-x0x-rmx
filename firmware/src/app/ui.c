@@ -13,6 +13,10 @@
 #include "x0x.h"
 #include "../dsp/fastmath.h"
 #include "../dsp/master.h"
+#ifdef X0X_JUNO
+#include "../dsp/alpha_juno.h"
+static uint8_t juno_keys[NKEYS]; /* latch pitches across octave/page changes */
+#endif
 #include "../dsp/bass303.h"                    /* BASS303_* (the 303's pages) */
 #include "../seq/drum_gen.h"
 #include "undo.c"
@@ -24,8 +28,20 @@ static uint8_t WHITE_KEY[16], BLACK_KEY[11];
 
 enum { V_HOME, V_PART, V_GEN, V_FX, V_MIX, V_GLO, V_SONG, V_PERF, V_SEQ, V_LIVE, NVIEWS };
 static const char *const VIEW_N[NVIEWS] = {"HOME", "", "TB-3PO", "FX", "MIX", "GLOBAL", "SONG", "PERF", "SEQ", "LIVE"};
-static const char *const PART_N[NPARTS] = {"909", "808", "303A", "303B", "BREAK"};
-static const char *const PART_S[NPARTS] = {"909", "808", "303A", "303B", "BRK"};   /* 4 chars: lane labels */
+static const char *const PART_N[NPARTS] = {"909", "808", "303A", "303B",
+#ifdef X0X_JUNO
+"JUNO"
+#else
+"BREAK"
+#endif
+};
+static const char *const PART_S[NPARTS] = {"909", "808", "303A", "303B",
+#ifdef X0X_JUNO
+"JUNO"
+#else
+"BRK"
+#endif
+};   /* 4 chars: lane labels */
 
 /* overlays drawn over the main area */
 enum { O_NONE, O_LIST, O_ASK };
@@ -242,7 +258,11 @@ static const x0x_param_t ACT_P[] = {
 static const x0x_param_t STALLS_P = {"STALLS", 1, 0, ONOFF_N};
 static const x0x_param_t MIDICH_P[NPARTS] = {   /* 0 = OFF (no notes in or out), 1-16 */
     {"909 MIDI CH", 16, 10, 0}, {"808 MIDI CH", 16, 11, 0}, {"303A MIDI CH", 16, 2, 0}, {"303B MIDI CH", 16, 3, 0},
+#ifdef X0X_JUNO
+    {"JUNO MIDI CH", 16, 4, 0}};
+#else
     {"BREAK MIDI CH", 16, 4, 0}};
+#endif
 static const char *const OUT_N[] = {"NORMAL", "LOUD"};
 static const x0x_param_t OUT_P = {"OUTPUT", 1, 0, OUT_N};
 static const char *const USBA_N[] = {"FOLLOWS KNOB", "FULL"};
@@ -253,7 +273,11 @@ static const char *const BATT_N[] = {"EMPTY", "1/3", "2/3", "FULL", "USB POWER",
 static const x0x_param_t BATT_P = {"BATTERY", 5, 0, BATT_N};   /* read only (plat_battery) */
 static const x0x_param_t SONG_P[] = {
     {"909", NPAT - 1, 0, 0}, {"808", NPAT - 1, 0, 0}, {"303A", NPAT - 1, 0, 0}, {"303B", NPAT - 1, 0, 0},
+#ifdef X0X_JUNO
+    {"JUNO", NPAT - 1, 0, 0},
+#else
     {"BREAK", NPAT - 1, 0, 0},
+#endif
     {"LENGTH", NSONG, 0, 0},
 };
 
@@ -570,7 +594,11 @@ static const char *pref_name(pref_t r)
                                                          {"808", "808 RV", "808 DL", "808 PAN"},
                                                          {"303 A", "A REV", "A DLY", "A PAN"},
                                                          {"303 B", "B REV", "B DLY", "B PAN"},
+#ifdef X0X_JUNO
+                                                         {"JUNO", "JUNO RV", "JUNO DL", "JUNO PAN"}};
+#else
                                                          {"BREAK", "BRK RV", "BRK DL", "BRK PAN"}};
+#endif
     static const char *const PATN[6][2] = {{"909 LEN", "808 LEN"}, {"909 RATE", "808 RATE"}, {"A LEN", "B LEN"},
                                            {"A RATE", "B RATE"}, {"A DIR", "B DIR"}, {"A TRANSP", "B TRANSP"}};
     static const char *const CHN[MX_NPARAMS] = {"LEVEL", "REV", "DLY", "PAN"};
@@ -579,7 +607,11 @@ static const char *pref_name(pref_t r)
     if (r.kind >= R_DLEN && r.kind <= R_BTRANS)       /* SEQ: the part's own; a list elsewhere: whose */
         return ui.view == V_SEQ ? SEQN[r.kind - R_DLEN] : PATN[r.kind - R_DLEN][r.a & 1];
     if (r.kind == R_ENG && r.a == T_MIX && r.c < MX_NPARAMS &&
-        (ui.view == V_MIX || (ui.view == V_PART && is_303() && r.b == ui.part)))
+        (ui.view == V_MIX || (ui.view == V_PART && (is_303()
+#ifdef X0X_JUNO
+        || ui.part == PART_BRK
+#endif
+        ) && r.b == ui.part)))
         return CHN[r.c];                               /* MIX's PARTS: the picked part's */
     if (r.kind == R_ENG && (r.a == T_909 || r.a == T_808) && r.b == NDRUM && r.c == 1)
         return "ACCENT";                               /* the kits' depth of accents */
@@ -692,6 +724,7 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
             put_s(num, t);
             return;
         }
+#ifndef X0X_JUNO
         if (r.a == T_BRK && r.c == 2) {                  /* the break's FILTER, as the master's: OFF, LP 40%, HP 20% */
             int a = v < 60 ? (60 - v) * 100 / 60 : v > 68 ? (v - 68) * 100 / 59 : 0;
             if (!a)
@@ -702,6 +735,7 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
             }
             return;
         }
+#endif
         if (r.a == T_MIX) {
             if (r.c == 0) {                              /* level: 100 = 0 dB, square law */
                 if (!v)
@@ -885,6 +919,19 @@ static void build_pages(void)
         drum_gen_normalize(&drum_gen_session[k], pat_of(k)->drum[k].len);
     pg.n = pg.nmore = 0;
     pg_grp = GR_NONE;
+#ifdef X0X_JUNO
+    if(p==PART_BRK && (ui.view==V_PART || ui.view==V_SEQ || ui.view==V_GEN)) {
+        static const char *const names[]={"DCO","OSC MIX","PWM","VCF","FILTER","ENV 1","ENV 2","PITCH","LFO","VCA","CHORUS"};
+        pg_grp=GR_SOUND;
+        for(int j=0;j<J_NPARAMS/4;j++) {
+            int k=j*4;
+            add_page(names[j],PR(R_ENG,T_BRK,k/16,k%16),PR(R_ENG,T_BRK,(k+1)/16,(k+1)%16),PR(R_ENG,T_BRK,(k+2)/16,(k+2)%16),PR(R_ENG,T_BRK,(k+3)/16,(k+3)%16));
+        }
+        add_page("MIX",PR(R_ENG,T_MIX,p,MX_LEVEL),PR(R_ENG,T_MIX,p,MX_PAN),PR(R_ENG,T_MIX,p,MX_REV),PR(R_ENG,T_MIX,p,MX_DLY));
+        if (*page_of(ui.view) >= pg.n) *page_of(ui.view) = 0;
+        return;
+    }
+#endif
     switch (ui.view) {
     case V_LIVE:
         add_page("LIVE", PR(R_LIVE,0,0,0), PR(R_LIVE,1,0,0), PR(R_LIVE,2,0,0), PR(R_LIVE,3,0,0));
@@ -2287,8 +2334,18 @@ static void mute_track(int km, int v)                /* one drum track on / off 
 static void key_event(int k, int down)
 {
     int w = KEY_WHITE[k], bl = KEY_BLACK[k], wp = w >= 0 ? ui.pbank * 16 + w : -1;   /* wp: a white key's pattern */
+#ifdef X0X_JUNO
+    /* Note-offs always follow the original pitch, even after changing part/view. */
+    if(!down && juno_keys[k]) {engine_brk_live(juno_keys[k]-1,0);juno_keys[k]=0;return;}
+#endif
     if (ui.overlay == O_ASK || ui.view == V_PERF || perf_testing())
         return;
+#ifdef X0X_JUNO
+    if(ui.part==PART_BRK && (ui.view==V_PART || ui.view==V_SEQ || ui.view==V_GEN) && ui.overlay==O_NONE) {
+        if(down && !juno_keys[k]) {int note=53+k+12*ui.oct;juno_keys[k]=(uint8_t)(note+1);engine_brk_live(note,1);}
+        return;
+    }
+#endif
     if (ui.view == V_LIVE) {
         if (bl >= 5 && bl <= 9) {
             uint8_t bit = (uint8_t)(1u << (bl - 5)), before = ui.live_fills;
@@ -2604,6 +2661,12 @@ static void button_tap(int b)
     case B_OCTUP:
     case B_OCTDN: {
         if (ui.view == V_LIVE) break;
+#ifdef X0X_JUNO
+        if(ui.part==PART_BRK && (ui.view==V_PART || ui.view==V_SEQ || ui.view==V_GEN)) {
+            ui.oct=(int8_t)(ui.oct+(b==B_OCTUP?1:-1));ui.oct=ui.oct < -2 ? -2 : ui.oct > 3 ? 3 : ui.oct;
+            break;
+        }
+#endif
         int up = b == B_OCTUP;
         if (ui.btn & (1u << B_SAVE)) {               /* SAVE + OCT: the bank a copy goes to */
             ui.btn_used |= 1u << B_SAVE;
@@ -2663,6 +2726,37 @@ static void button_tap(int b)
     default: break;
     }
 }
+
+#ifdef X0X_JUNO
+/* Preset identity uses two otherwise unused sound bytes; edits keep their parent name. */
+static int juno_preset_index(void)
+{
+    int n = proj.sound.v[T_BRK][11][14];
+    return proj.sound.v[T_BRK][11][15] == 0xA6 && n < JUNO_PRESET_COUNT ? n : -1;
+}
+static int juno_preset_edited(int index)
+{
+    const uint8_t *values = alpha_juno_preset_values(index);
+    if (!values) return 0;
+    for (int j = 0; j < J_NPARAMS; j++)
+        if (proj.sound.v[T_BRK][j / NPARAMS_MAX][j % NPARAMS_MAX] != values[j]) return 1;
+    return 0;
+}
+static void juno_preset_turn(int delta)
+{
+    int index = juno_preset_index();
+    index = index < 0 ? (delta > 0 ? 0 : JUNO_PRESET_COUNT - 1)
+                     : (index + delta % JUNO_PRESET_COUNT + JUNO_PRESET_COUNT) % JUNO_PRESET_COUNT;
+    const uint8_t *values = alpha_juno_preset_values(index);
+    for (int j = 0; j < J_NPARAMS; j++)
+        proj.sound.v[T_BRK][j / NPARAMS_MAX][j % NPARAMS_MAX] = values[j];
+    proj.sound.v[T_BRK][11][14] = (uint8_t)index;
+    proj.sound.v[T_BRK][11][15] = 0xA6;
+    engine_juno_preset(index);
+    mark_dirty();
+    say("JUNO PRESET", alpha_juno_preset_name(index));
+}
+#endif
 
 static void input(void)
 {
@@ -2749,6 +2843,12 @@ static void input(void)
         }
     }
     if ((e = enc(EN_PRESET)) != 0) {             /* PRESETS: a part's screen, that part; else all five */
+#ifdef X0X_JUNO
+        if (ui.part == PART_BRK && ui.view == V_PART && ui.overlay == O_NONE)
+            juno_preset_turn(e);
+        else
+#endif
+        {
         int part = part_view() ? ui.part : PART_909, c = seq_cue_of(&seq, part);
         int p = (c >= 0 ? c : seq.ppat[part]) + (e > 0 ? 1 : -1);
         p = p < 0 ? 0 : p >= NPAT ? NPAT - 1 : p;
@@ -2756,6 +2856,7 @@ static void input(void)
         manual_pattern(part_view() ? part : -1, p);
         ui.pbank = (uint8_t)(p / 16);                 /* HOME shows the bank it is in */
         build_pages();
+        }
     }
     for (i = 0; i < 4; i++) {
         if ((e = enc(EN_K1 + (int)i)) == 0)
@@ -3390,6 +3491,24 @@ static void draw_303(int band, int gen)
 
 static void draw_break(int band)
 {
+#ifdef X0X_JUNO
+    int o=band*BAND_H;
+    cv_text(8,12-o,&FONT_B,"ALPHA JUNO",part_col());
+    int preset = juno_preset_index();
+    char patch[32], *q = patch;
+    if (preset >= 0) {
+        if (preset < 9) *q++ = '0';
+        q = put_i(q, preset + 1);
+        *q++ = ' ';
+    }
+    q = put_s(q, alpha_juno_preset_name(preset));
+    if (juno_preset_edited(preset)) *q++ = '*';
+    *q = 0;
+    cv_text(8,43-o,&FONT_S,patch,C_WHITE);
+    cv_text(8,72-o,&FONT_S,pg.title[cur_page()],C_GRAY);
+    cv_text(8,101-o,&FONT_XS,"ALL KEYS: PLAY   OCT: RANGE",C_GRAY);
+    return;
+#endif
     const brkpart_t *bp = &cur_pat()->brk;
     int c, ph = seq.playing ? eng_step[TRK_BRK] : -1, slice, bank, div, running;
     uint16_t col = part_col();
@@ -3681,7 +3800,13 @@ static char *put_pct10(char *q, int v)                /* 123 -> "12.3%" */
 }
 static void draw_perf(int band)
 {
-    static const char *const SN[ENG_PROF_N] = {"909", "808", "303A", "303B", "BREAK", "FX", "MASTER", "SEQ"};
+    static const char *const SN[ENG_PROF_N] = {"909", "808", "303A", "303B",
+#ifdef X0X_JUNO
+"JUNO"
+#else
+"BREAK"
+#endif
+, "FX", "MASTER", "SEQ"};
     char t[40], *q;
     int k;
     if (band == 0) {
@@ -3999,6 +4124,10 @@ static uint16_t footer_text(const char **a, const char **b, const char **c)
         *c = "HOME: BACK";
     } else if (ui.view == V_LIVE) {
         *a = "WHITE: TRANSPOSE"; *b = "BLACK: MUTE/FILL"; *c = "LAST: BAR";
+#ifdef X0X_JUNO
+    } else if(ui.part==PART_BRK && (ui.view==V_PART || ui.view==V_SEQ || ui.view==V_GEN)) {
+        *a="KEYS: PLAY";*b="OCT: RANGE";*c="EDIT: PAGE";
+#endif
     } else if (ui.view == V_HOME) {
         *a = "WHITE: PATTERN";
         *b = "TWO: CHAIN";
@@ -4409,6 +4538,9 @@ static void leds(void)
                 if (i % 12u == 7u)                    /* F3 = 0: C4 = 7, C5 = 19 */
                     d |= 1u << i;
         } else if (ui.part == PART_BRK) {
+#ifdef X0X_JUNO
+            for(i=0;i<NKEYS;i++)if(i%12u==7u)d|=1u<<i;
+#else
             int ph = eng_step[TRK_BRK];
             for (i = 0; i < 16; i++) {
                 int on = (cur_pat()->brk.steps >> i) & 1u;
@@ -4419,6 +4551,7 @@ static void leds(void)
             }
             for (i = 0; i < 8; i++)                   /* the slice pads */
                 d |= 1u << BLACK_KEY[i];
+#endif
         }
     }
     uint32_t pressed = ui.keys;
@@ -4445,6 +4578,9 @@ void ui_init(void)
     for (i = 0; i < 4; i++) ui.live[i] = 64;
     ui.live_quantize = 0;
     ui.live_fills = 0;
+#ifdef X0X_JUNO
+    for(i=0;i<NKEYS;i++)juno_keys[i]=0;
+#endif
     ui.view = V_PART;
     ui.prev_view = V_PART;
     ui.part = PART_909;

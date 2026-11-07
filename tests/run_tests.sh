@@ -31,6 +31,8 @@ run hat-velocity sh tests/host/run_hat_velocity.sh
 run bass303-hpf-mirror sh tests/host/run_bass303_hpf_mirror.sh
 run live sh tests/host/run_live.sh
 run live-fills sh tests/host/run_live_fills.sh
+run alpha-juno sh tests/host/run_alpha_juno.sh
+run juno-hardware sh tests/host/run_juno_hardware.sh
 run backup sh tests/host/run_backup.sh
 run tb3po sh tests/host/run_tb3po.sh
 run drum-generator sh tests/host/run_drum_gen.sh
@@ -109,19 +111,14 @@ command -v node >/dev/null 2>&1 && run builtin-breaks node tests/host/builtin_br
 command -v node >/dev/null 2>&1 && run breaks-web node web/test_breaks.mjs   # the browser uploader: upload_breaks.py's bytes
 run host-build sh host/build_host.sh
 if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # the browser build, when it can be built
-    printf 'wav emu_ref.wav\nwait 500\ntapkey b0\ntapkey w0\ntapkey w8\ntap PLAY\nwait 2960\nwavstop\n' > build/host/emu_ref.x0x
-    run emu sh -c "sh web/emu/build.sh >/dev/null 2>&1 && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
-        node tests/host/emu_test.mjs build/emu/x0x.wasm build/host/emu_ref.wav"
-    run p9-emu node tests/host/p9_emu_test.mjs build/emu/x0x.wasm
+    # Web now replaces BREAK with JUNO: native BREAK audio/slot parity is not applicable.
+    run juno-web-build sh web/emu/build.sh
+    run juno-emu node tests/host/juno_emu_test.mjs build/emu/x0x.wasm
     run bass303-extra-emu node tests/host/bass303_extra_emu_test.mjs build/emu/x0x.wasm
     run bass303-hpf-mirror-emu node tests/host/bass303_hpf_mirror_emu_test.mjs build/emu/x0x.wasm
     run live-emu node tests/host/live_emu_test.mjs build/emu/x0x.wasm
     run live-fills-emu node tests/host/live_fills_emu_test.mjs build/emu/x0x.wasm
-    run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
     run scheme-emu node tests/host/scheme_emu_test.mjs build/emu/x0x.wasm
-    mkdir -p build/scenarios/remix_parity
-    run remix-emu sh -c "build/host/x0x_host tests/scenarios/remix_parity.x0x build/scenarios/remix_parity && \
-        node tests/host/remix_emu_test.mjs build/emu/x0x.wasm build/scenarios/remix_parity/remix_parity.wav"
     run drum-generator-emu node tests/host/drum_gen_emu_test.mjs build/emu/x0x.wasm
 fi
 for s in tests/scenarios/*.x0x; do

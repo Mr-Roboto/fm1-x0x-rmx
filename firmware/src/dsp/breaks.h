@@ -75,6 +75,10 @@ typedef struct {
     float trig_acc;                   /* half-speed trigger gate accumulator */
 } brk_perf_t;
 
+#ifdef X0X_JUNO
+/* The web experiment links the Juno bridge instead of the sample player. */
+typedef struct breaks { uint8_t unused; } breaks_t;
+#else
 typedef struct breaks {
     brk_bank_t bank[2];               /* 0 = A, 1 = B */
     brk_voice_t v[2];                 /* the sounding voice and the one fading out */
@@ -116,6 +120,7 @@ typedef struct breaks {
     uint8_t rsv[2];
     float f_g, f_ic1, f_ic2;          /* X0X: FILTER's state-variable filter (breaks_render): g, its two integrators */
 } breaks_t;
+#endif
 
 void breaks_init(breaks_t *b);
 void breaks_set_loop(breaks_t *b, int which /*0 = A, 1 = B*/, const brk_loop_t *loop);   /* NULL = empty (silent) */

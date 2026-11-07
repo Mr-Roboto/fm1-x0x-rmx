@@ -15,11 +15,18 @@
 
 #define X0X_NAME "X0X-HARDER"
 #ifndef X0X_VERSION                     /* a release build passes its own (tools/build.py --release) */
+#ifdef X0X_JUNO
+#define X0X_VERSION "JUNO DEV"
+#else
 #define X0X_VERSION "DEV"
+#endif
 #endif
 #define PROJ_MAGIC 0x50305830u           /* "0X0P" */
 #define PROJ_FORMAT 1u
 #define PROJ_STEREO 2u
+#ifdef X0X_JUNO
+#define PROJ_SND_REV 9u                  /* BREAK replaced by JUNO; persistent sizes unchanged */
+#else
 #define PROJ_SND_REV 8u                  /* 1: the 909 SD has a DECAY pot (index 3; LEVEL.. moved up one);
                                           * 2: the master's one-knob COMP and FILTER, the delay's TAPE;
                                           * 3: the 909 BD has sends (REV, DLY at 8, 9; PAN moved to 10);
@@ -28,6 +35,7 @@
                                           * 6: CH/OH Velocity (pot 8, 127 = unchanged) for both kits;
                                           * 7: 909 OH Hold (pot 9, 0 = original envelope);
                                           * 8: 303 HPF (13), B mirror (14) and transpose (15, centre 24) */
+#endif
 
 typedef struct {
     uint32_t magic, format;

@@ -6,6 +6,10 @@
 #include "../dsp/drum808.h"
 #include "../dsp/bass303.h"
 #include "../dsp/breaks.h"
+#ifdef X0X_JUNO
+#include "../dsp/alpha_juno.h"
+extern alpha_juno_t part_juno;
+#endif
 #include "../dsp/fxbus.h"
 #include "../dsp/master.h"
 #include "../dsp/fastmath.h"
@@ -101,7 +105,13 @@ static void guard_apply(void)
 /* mixer: per part Level, Rev send, Dly send (a drum machine's add to its voices' own sends) */
 static const x0x_param_t MIX_P[MX_NPARAMS] = {{"LEVEL", 127, 100, 0}, {"REV", 127, 0, 0}, {"DLY", 127, 0, 0},
                                                {"PAN", 127, 64, 0}};
-static const char *const PART_NAMES[NPARTS] = {"909", "808", "303 A", "303 B", "BREAK"};
+static const char *const PART_NAMES[NPARTS] = {"909", "808", "303 A", "303 B",
+#ifdef X0X_JUNO
+"JUNO"
+#else
+"BREAK"
+#endif
+};
 static float mix_level[NPARTS], mix_rev[NPARTS], mix_dly[NPARTS];
 /* pan: a balance law. Centre is full level on both sides (a centred mix is the mono one exactly);
  * turning toward a side fades the other out along a quarter cosine, the near side stays at 1 */
@@ -219,6 +229,9 @@ int engine_nvoices(int t)
     case T_909: return DR_NUM + 1;
     case T_808: return D8_NUM + 1;
     case T_303: return NBASS;
+#ifdef X0X_JUNO
+    case T_BRK: return (J_NPARAMS + NPARAMS_MAX - 1) / NPARAMS_MAX;
+#endif
     case T_FX: return (fxbus_nparams() + NPARAMS_MAX - 1) / NPARAMS_MAX;
     case T_MIX: return NPARTS;
     default: return 1;
@@ -231,7 +244,11 @@ int engine_nparams(int t, int v)
     case T_909: return v == DR_OH ? OH_HOLD + 1 : hat_slot(t, v) >= 0 ? HAT_VELOCITY + 1 : drum909_nparams(v);
     case T_808: return hat_slot(t, v) >= 0 ? HAT_VELOCITY + 1 : drum808_nparams(v);
     case T_303: return v == 1 ? B303_MIRROR_TRANSPOSE + 1 : B303_HPF + 1;
+#ifdef X0X_JUNO
+    case T_BRK: { int n=J_NPARAMS-v*NPARAMS_MAX; return n<0?0:n>NPARAMS_MAX?NPARAMS_MAX:n; }
+#else
     case T_BRK: return 3;                                /* Level, Pitch, Filter (sends: the mixer's; the rest: the pattern's) */
+#endif
     case T_FX: {
         const int n = fxbus_nparams() - v * NPARAMS_MAX;
         return v < 0 || n < 0 ? 0 : n > NPARAMS_MAX ? NPARAMS_MAX : n;
@@ -257,7 +274,11 @@ const x0x_param_t *engine_param(int t, int v, int i)
     case T_909: return drum909_param(v, i);
     case T_808: return drum808_param(v, i);
     case T_303: return bass303_param(i);
+#ifdef X0X_JUNO
+    case T_BRK: return alpha_juno_param(v*NPARAMS_MAX+i);
+#else
     case T_BRK: return breaks_param(BRK_NSET + i);
+#endif
     case T_FX: return fxbus_param(fx_param_at(v, i));
     case T_MIX: return (i >= 0 && i < MX_NPARAMS) ? &MIX_P[i] : 0;
     case T_MST: return master_param(i);
@@ -275,7 +296,11 @@ const char *engine_voice_name(int t, int v)
     case T_808: return (v >= 0 && v <= D8_NUM) ? N808[v] : "";
     case T_303: return v ? "303 B" : "303 A";
     case T_MIX: return (v >= 0 && v < NPARTS) ? PART_NAMES[v] : "";
+#ifdef X0X_JUNO
+    case T_BRK: return "JUNO";
+#else
     case T_BRK: return "BREAK";
+#endif
     case T_FX: return "FX";
     case T_MST: return "MASTER";
     default: return "";
@@ -332,7 +357,11 @@ static int apply_param(int t, int v, int i, int val)    /* ISR */
             bass_waves = base | ((uint32_t)b303[0].wave << 4) | ((uint32_t)b303[1].wave << 6);
         } else bass303_set(&b303[v], i, val);
         break;
+#ifdef X0X_JUNO
+    case T_BRK: alpha_juno_set(&part_juno,v*NPARAMS_MAX+i,val); break;
+#else
     case T_BRK: breaks_set(&brk, BRK_NSET + i, val); break;
+#endif
     case T_FX: {
         int param = fx_param_at(v, i);
         if (param == FX_DL_FDBK) {
@@ -372,6 +401,12 @@ void engine_live_set(int control, int value) { cq_put(C_LIVE, (uint32_t)control,
 void engine_live_transpose(int semitones) { cq_put(C_LIVE, 4, 0, (uint32_t)(semitones + 24)); }
 void engine_live_quantize(int enabled) { cq_put(C_LIVE, 5, 0, (uint32_t)(enabled != 0)); }
 void engine_live_fills(unsigned mask) { cq_put(C_LIVE, 6, 0, mask & 31u); }
+#ifdef X0X_JUNO
+void engine_juno_preset(int index)
+{
+    if (index >= 0 && index < JUNO_PRESET_COUNT) cq_put(C_LIVE, 7, 0, (uint32_t)index);
+}
+#endif
 
 /* the output's scale: Felucca's -6 dBFS ceiling of the 24-bit codec (2^22), or its full scale (LOUD); the
  * clamp keeps an over from wrapping (normal: the codec's own full scale, as before) */
@@ -432,7 +467,9 @@ void engine_sound_defaults(sound_t *s)
     s->v[T_909][DR_OH][1] = 60;
     s->v[T_MIX][PART_808][MX_LEVEL] = 112;
     s->v[T_808][D8_KIT][0] = 127;                    /* kit level */
+#ifndef X0X_JUNO
     s->v[T_BRK][0][0] = 127;                         /* the break: full level, part a little over unity */
+#endif
     s->v[T_MIX][PART_BRK][MX_LEVEL] = 120;
     s->v[T_MIX][PART_BRK][MX_REV] = 25;
     for (v = 0; v < NBASS; v++) {                    /* acid: low cutoff, high resonance, a long sweep, RAT */
@@ -684,8 +721,12 @@ static void midi_in(uint32_t pkt)
                 bass_held[k] = 0;
             }
         }
+#ifdef X0X_JUNO
+    if(seq.ch[TRK_BRK]==ch)alpha_juno_midi(&part_juno,ty,d1,d2);
+#else
     if (seq.ch[TRK_BRK] == ch && (ty == 0x90 || ty == 0x80) && d1 >= 36 && d1 <= 43)   /* the break's slices */
         breaks_live(&brk, d1 - 36, ty == 0x90);
+#endif
 }
 
 /* ---------------------------------------------------------------- render --- */
@@ -714,6 +755,9 @@ static void live_command(uint32_t control, uint32_t value)
     } else if (control == 4u) seq_live_request(&seq, (int)value - 24, &SINK);
     else if (control == 5u) seq_live_quantize(&seq, value != 0, &SINK);
     else if (control == 6u) seq_live_fills(&seq, value);
+#ifdef X0X_JUNO
+    else if (control == 7u) alpha_juno_preset(&part_juno, (int)value);
+#endif
 }
 
 static void live_filter_render(live_filter_t *f, float *x, uint32_t n)
@@ -896,6 +940,10 @@ static void core2_job(uint32_t arg)
     if (!brk_hold) {
         brk_silent_now = breaks_silent(&brk);             /* the render writes zeros: nothing to mix */
         breaks_render(&brk, kbuf, (int)n);
+#ifdef X0X_JUNO
+        if (seq.mute & (1u << MUTE_BRK))
+            for (uint32_t j = 0; j < n; j++) kbuf[j] = 0.0f;
+#endif
     }
     if (timed)
         PROF_ADD(PR_BRK, pt);
@@ -976,6 +1024,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
     if (filter_drums) {
         /* Complete just the drum/break bus, including its sends, before adding
          * either 303. At neutral the original summation order stays bit exact. */
+#ifndef X0X_JUNO
         if (!brk_hold && !brk_silent_now) {
             float g = mix_level[PART_BRK]; mix_targets(PART_BRK, g);
             add_glide(dry_l, kbuf, &mix_glide[PART_BRK][GL_L], n);
@@ -984,6 +1033,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
             add_glide(dly, kbuf, &mix_glide[PART_BRK][GL_DLY], n);
             meter(PART_BRK, kbuf, g, n);
         }
+#endif
         live_filter_render(&live_drums[0], dry_l, n); live_filter_render(&live_drums[1], dry_r, n);
         live_filter_render(&live_drums[2], rev, n); live_filter_render(&live_drums[3], dly, n);
     }
@@ -998,7 +1048,11 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
         add_glide(dly, bb[b], &mix_glide[p][GL_DLY], n);
         meter(p, bb[b], mix_level[p], n);
     }
+#ifdef X0X_JUNO
+    if (!brk_hold && !brk_silent_now) {
+#else
     if (!filter_drums && !brk_hold && !brk_silent_now) {
+#endif
         float g = mix_level[PART_BRK];
         mix_targets(PART_BRK, g);
         add_glide(dry_l, kbuf, &mix_glide[PART_BRK][GL_L], n);
@@ -1090,6 +1144,7 @@ static uint8_t loop_bars(uint32_t ns, uint32_t rate)
     return bars;
 }
 
+#ifndef X0X_JUNO
 #include "x0x_break_bank.h"              /* tools/gen_break_bank.py: the built-in loops */
 
 static const brk_loop_t *brk_builtin(int k)
@@ -1204,9 +1259,6 @@ int engine_brk_outline(int which, uint8_t *peaks, int n)
         peaks[col] = 0;
     return 1;
 }
-float engine_gr_db(void) { return mst.gr_view; }
-void engine_master_format(int i, char *buf) { master_format(&mst, i, buf); }
-
 void engine_brk_loops(void)
 {
     const brkpart_t *bp = &seq.pat[seq.ppat[TRK_BRK]].brk;
@@ -1232,6 +1284,18 @@ void engine_brk_loops(void)
     }
     brk_hold = 0;
 }
+
+#else
+int engine_brk_nslots(void){return 1;}
+const char *const *engine_brk_slot_names(void){static const char *const n[]={"JUNO"};return n;}
+int engine_brk_slice(void){return -1;}
+void engine_brk_state(int *s,int *b,int *d,int *r){*s=-1;*b=0;*d=1;*r=alpha_juno_active(&part_juno);}
+int engine_brk_outline(int w,uint8_t *p,int n){(void)w;for(int i=0;i<n;i++)p[i]=0;return 1;}
+void engine_brk_loops(void){}
+#endif
+
+float engine_gr_db(void) { return mst.gr_view; }
+void engine_master_format(int i, char *buf) { master_format(&mst, i, buf); }
 
 void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t *base)
 {

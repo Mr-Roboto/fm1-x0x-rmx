@@ -582,7 +582,7 @@ static inline float blep(float t, float dt)
     return 0.0f;
 }
 
-#if BASS303_OS == 4                     /* (at 2x run_decim runs the sections in its own loop) */
+#if BASS303_OS > 1                     /* Morph retains the scalar decimator at 2x too. */
 static inline float hb(bass303_ap_t *s, float a, float x)
 {
     float y = a * (x - s->y1) + s->x1;

@@ -99,16 +99,24 @@ hash scenarios match the unchanged upstream goldens. Morph waveform tests pass a
 passes all 264 renderer cases. Assertions were enabled throughout the final run.
 
 Three external reference engines and package-dependent update checks were skipped
-for missing prerequisites, as listed below. Emscripten checks were not run because
-Emscripten is absent. Detailed logs are under `build/host/`, including
+for missing prerequisites, as listed below. Detailed logs are under `build/host/`, including
 `integration-final.log`, `dsp-hash-selected.log` and `waveform-selected.log`.
+
+The browser simulator was subsequently built with portable Emscripten 4.0.20.
+Its host-audio parity, P9 settings/startup persistence, both 303 EXTRA pages,
+color schemes, Remix audio parity and Grids emulator checks all passed. The
+browser/host audio difference was at most 3.05e-5, within the tests' 1e-4 limit.
+The user confirmed that the interactive simulator works at
+`http://127.0.0.1:8765/`. Its generated files and portable build tools remain
+under ignored `build/`; `build/emu/build-info.json` records the compiled revision,
+compiler and WebAssembly checksum. The local preview is labelled as a development
+integration, and no public website was deployed.
 
 Remaining release gates:
 
 - Build with the JieLi toolchain and AC79 SDK; inspect image, `.data + .bss`, pool
   and stack limits. They are unavailable in the current Windows environment;
   Docker's Linux engine is not running.
-- Rebuild and run the browser emulator with Emscripten, which is unavailable here.
 - Run external 9W9, 8W8 and Open303 reference comparisons when their checkouts are
   available. The local unchanged engine goldens provide an additional comparison.
 - Validate on a physical FM-1: high-load audio, both cores, Morph, long 909 tails,

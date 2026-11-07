@@ -430,6 +430,10 @@ static void fm1_main(void)
     uint8_t last_pat = 0xFF;
     {
         uint32_t f = irq_save();
+        /* Upstream f295356: use the stock firmware supply levels before loading either core. */
+        fm1_vdc14_raise(7);
+        fm1_sysvdd_raise(15);
+        plat_vdc14_level = (uint8_t)fm1_vdc14();
         flash_ok = FM1B_FLASH_JEDEC_OK(FL_FAR(fl_jedec_ram)());   /* a known 1 MiB part, else RAM only */
         irq_restore(f);
         if (flash_ok) {

@@ -73,7 +73,9 @@ static void controls(void)
 
 static void legacy(void)
 {
-    bass303_t dut, ref;
+    bass303_t dut;
+    /* The pinned pre-optimization engine has a larger, private instance layout. */
+    union { double align; unsigned char bytes[4096]; } ref;
     float a[256], b[256];
     int wave, drive, block, mismatch = 0;
     for (wave = 0; wave < 2; wave++) for (drive = 0; drive < 3; drive++) {

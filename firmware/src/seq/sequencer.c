@@ -173,7 +173,7 @@ static int next_pos(seq_t *s, int t, int p, int commit)
 static uint32_t next_swing_delay(seq_t *s, int t, int p, int rate, uint32_t L)
 {
     int odd;
-    switch (is_bass(t) ? bpart(s, t - TRK_BASS0)->dir & 3 : DIR_FWD) {
+    switch (is_bass(t) ? bpart(s, t - TRK_BASS0)->dir : DIR_FWD) {
     case DIR_REV:                                    /* by position, from where it starts: its last step */
         odd = (seq_part_len(s, t) - 1 - next_pos(s, t, p, 0)) & 1;
         break;

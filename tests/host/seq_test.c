@@ -151,7 +151,7 @@ static void swing_setup(int dir, int len, int rate)
  * starts (its last step), a random one's by count. */
 static int odd_step(int is303, int dir, int len, int pos, int k)
 {
-    if (!is303 || dir == DIR_FWD || dir == DIR_PINGPONG)
+    if (!is303 || dir == DIR_FWD || dir == DIR_PINGPONG || dir == DIR_MREV)
         return pos & 1;
     return dir == DIR_REV ? (len - 1 - pos) & 1 : k & 1;
 }

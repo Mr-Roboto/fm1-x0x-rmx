@@ -45,7 +45,9 @@ void render_case(int voice, int pitch, int dist, int block, int edge, float *out
         state[4*i] = d.smp[i].pos;
         state[4*i+1] = d.smp[i].frac;
         state[4*i+2] = d.smp[i].mute;
-        state[4*i+3] = d.smp[i].out.left;
+        /* Once the sample is exhausted its envelope cannot affect the output;
+         * the upstream optimization skips advancing it until a hit resets it. */
+        state[4*i+3] = d.smp[i].pos < d.smp[i].len ? d.smp[i].out.left : 0;
     }
 }
 

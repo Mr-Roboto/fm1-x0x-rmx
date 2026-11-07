@@ -142,7 +142,8 @@ def main():
                 # Fractional interpolation into the zero guard at the sample end.
                 for lib, audio, state in zip(libs, arrays, states):
                     lib.render_case(voice, pitch, 0, 17, 1, audio, state)
-                assert bytes(arrays[0]) == bytes(arrays[1]) and bytes(states[0]) == bytes(states[1])
+                assert bytes(arrays[0]) == bytes(arrays[1]), (voice, pitch, "end-guard audio")
+                assert bytes(states[0]) == bytes(states[1]), (voice, pitch, "end-guard state")
                 cases += 1
         print(f"PASS: {cases} bit-exact renderer cases (pitch, 7 distortions, 3 block sizes, choke/retrigger, stereo/sends, end guard/state)")
         if args.benchmark:

@@ -1,5 +1,10 @@
 ![X0X-RMX — Orb-inspired Remix for the FM-1](docs/img/x0x-rmx-banner-1280x320.png)
 
+**Development integration:** this branch combines the v1.1.0 RMX features with
+selected upstream performance improvements and bug fixes. It has not been
+validated on an FM-1. See the [integration report](docs/UPSTREAM_FIXES_INTEGRATION.md)
+for scope, resolved collisions, tests and remaining hardware/build checks.
+
 X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x),
 a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
 knob motion, reverb, tape delay and master compression.

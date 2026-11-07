@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- X0X-RMX: cream hardware, lilac X marks and a dark central display. -->
+  <!-- X0X-HARDER: cream hardware, lilac X marks and a dark central display. -->
   <rect x="2" y="2" width="60" height="60" rx="13" fill="#eee5d3"/>
   <g fill="none" stroke="#796096" stroke-width="6" stroke-linecap="round">
     <path d="m11 15 10 16m0-16L11 31m32-16 10 16m0-16L43 31"/>

@@ -22,6 +22,8 @@ void seq_init(seq_t *s, pattern_t *patterns)
         p[i] = 0;
     s->pat = patterns;
     s->remix_apply = REMIX_BEAT;
+    s->bass_mirror_transpose = 24;
+    s->live_pending = -128;
     for (i = 0; i < NTRACKS; i++)
         s->pcue[i] = 0xFF;
     s->bpm = 125.0f;
@@ -199,13 +201,58 @@ static void bass_release(seq_t *s, int b, const seq_sink_t *o)
     if (tr->sounding) {
         o->bass_off(o->ctx, b);
         tr->sounding = 0;
-        if (s->send_notes && s->bass_notes_out[b]) {
+        if (s->bass_midi_active & (1u << b)) {
             if (s->ch[TRK_BASS0 + b] != SEQ_CH_OFF)    /* (switched OFF while it sounded: 0x80 | 0xFF is a reset) */
                 midi(o, (uint8_t)(0x80 | s->ch[TRK_BASS0 + b]), s->bass_notes_out[b], 0);
             s->bass_notes_out[b] = 0;
+            s->bass_midi_active &= (uint8_t)~(1u << b);
         }
     }
     tr->to_off = 0;
+}
+
+static void live_apply(seq_t *s, int value, const seq_sink_t *o)
+{
+    s->live_transpose = (int8_t)value;
+    s->live_pending = -128;
+    s->live_retuning = 1;
+    for (int b = 0; b < NBASS; b++) {
+        seq_track_t *tr = &s->t[TRK_BASS0 + b];
+        if (!tr->sounding) continue;
+        int note = (int)s->live_note[b] + value;
+        note = note < 0 ? 0 : note > 127 ? 127 : note;
+        o->bass_on(o->ctx, b, note, (s->live_accent >> b) & 1u, 1);
+        if ((s->bass_midi_active & (1u << b)) && s->ch[TRK_BASS0 + b] != SEQ_CH_OFF) {
+            uint8_t old = s->bass_notes_out[b];
+            if (old != note) {
+                midi(o, (uint8_t)(0x90 | s->ch[TRK_BASS0 + b]), (uint8_t)note, (s->live_accent >> b & 1u) ? 127 : 90);
+                midi(o, (uint8_t)(0x80 | s->ch[TRK_BASS0 + b]), old, 0);
+                s->bass_notes_out[b] = (uint8_t)note;
+            }
+        }
+        tr->held_note = (uint8_t)((tr->held_note & 0x80u) | note);
+    }
+    s->live_retuning = 0;
+}
+
+void seq_live_request(seq_t *s, int semitones, const seq_sink_t *o)
+{
+    semitones = semitones < -24 ? -24 : semitones > 24 ? 24 : semitones;
+    if (semitones == s->live_transpose) { s->live_pending = -128; return; }
+    if (s->live_quantize && s->playing) s->live_pending = (int8_t)semitones;
+    else live_apply(s, semitones, o);
+}
+
+void seq_live_quantize(seq_t *s, int enabled, const seq_sink_t *o)
+{
+    s->live_quantize = (uint8_t)(enabled != 0);
+    if (!enabled && s->live_pending != -128) live_apply(s, s->live_pending, o);
+}
+
+static void live_clock(seq_t *s, const seq_sink_t *o)
+{
+    if (!s->live_phase && s->live_pending != -128) live_apply(s, s->live_pending, o);
+    s->live_phase = (uint8_t)((s->live_phase + 1u) % 96u);
 }
 
 static void fire_drum(seq_t *s, int k, int p, const seq_sink_t *o)
@@ -228,11 +275,11 @@ static void fire_drum(seq_t *s, int k, int p, const seq_sink_t *o)
     }
 }
 
-static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, const seq_sink_t *o)
+static void fire_bass_from(seq_t *s, int b, int source, int p, uint32_t step_q8, uint32_t carry, const seq_sink_t *o)
 {
     seq_track_t *tr = &s->t[TRK_BASS0 + b];
-    bpart_t *bp = bpart(s, b);
-    const bstep_t *st = &bp->step[seq_source_step(s, TRK_BASS0 + b, p)];
+    bpart_t *bp = bpart(s, source);
+    const bstep_t *st = &bp->step[seq_source_step(s, TRK_BASS0 + source, p)];
     int gate = bstep_gate(st), note, hold, nx;
     uint8_t prev_slide = tr->held_note & 0x80u;     /* bit 7: the step that sounded slides on */
     if (s->mute & (1u << (MUTE_BASS0 + b)))
@@ -244,21 +291,31 @@ static void fire_bass(seq_t *s, int b, int p, uint32_t step_q8, uint32_t carry, 
     }
     note = st->note + (int)bp->transpose - 24;
     note = note < 0 ? 0 : note > 127 ? 127 : note;
+    if (b != source)
+        note += (int)s->bass_mirror_transpose - 24;
+    note = note < 0 ? 0 : note > 127 ? 127 : note;
     if (gate == G_NOTE || !tr->sounding) {
         int slide = tr->sounding && prev_slide;
+        s->live_note[b] = (uint8_t)note;
+        s->live_accent = (uint8_t)((s->live_accent & ~(1u << b)) | ((st->flags & BS_ACCENT) ? 1u << b : 0));
+        note += s->live_transpose;
+        note = note < 0 ? 0 : note > 127 ? 127 : note;
         o->bass_on(o->ctx, b, note, (st->flags & BS_ACCENT) != 0, slide);
         if (s->send_notes && s->ch[TRK_BASS0 + b] != SEQ_CH_OFF) {
             uint8_t old = s->bass_notes_out[b];
             midi(o, (uint8_t)(0x90 | s->ch[TRK_BASS0 + b]), (uint8_t)note, (st->flags & BS_ACCENT) ? 127 : 90);
-            if (old && old != note)
+            if ((s->bass_midi_active & (1u << b)) && old != note)
                 midi(o, (uint8_t)(0x80 | s->ch[TRK_BASS0 + b]), old, 0);   /* legato: the new note first */
             s->bass_notes_out[b] = (uint8_t)note;
+            s->bass_midi_active |= (uint8_t)(1u << b);
         }
         tr->sounding = 1;
     }
-    nx = next_pos(s, TRK_BASS0 + b, p, 0);
-    nx = seq_source_step(s, TRK_BASS0 + b, nx);
+    nx = next_pos(s, TRK_BASS0 + source, p, 0);
+    nx = seq_source_step(s, TRK_BASS0 + source, nx);
     hold = (st->flags & BS_SLIDE) || bstep_gate(&bp->step[nx]) == G_TIE;
+    note = (int)s->live_note[b] + s->live_transpose;
+    note = note < 0 ? 0 : note > 127 ? 127 : note;
     tr->held_note = (uint8_t)((note & 0x7F) | ((st->flags & BS_SLIDE) ? 0x80 : 0));
     tr->to_off = hold ? 0 : carry + step_q8 / 2u;
 }
@@ -414,8 +471,20 @@ static uint32_t fire_step(seq_t *s, int t, const seq_sink_t *o)
         if (o->brk)
             o->brk(o->ctx, p, tr->bars, (float)L / 256.0f,
                    (s->pat[s->ppat[TRK_BRK]].brk.steps >> p & 1u) && !(s->mute & (1u << MUTE_BRK)));
-    } else
-        fire_bass(s, t - TRK_BASS0, p, L, carry, o);
+    } else {
+        fire_bass_from(s, t - TRK_BASS0, t - TRK_BASS0, p, L, carry, o);
+        if (t == TRK_BASS0 && s->bass_mirror_active) {
+            seq_track_t *bt = &s->t[TRK_BASS0 + 1];
+            /* Both previous gates fall before either new mirrored note fires. */
+            if (bt->to_off && bt->to_off < 256u)
+                bass_release(s, 1, o);
+            bt->pos = (uint8_t)p;
+            bt->started = 1;
+            bt->bars = tr->bars;
+            if (o->step) o->step(o->ctx, TRK_BASS0 + 1, p);
+            fire_bass_from(s, 1, 0, p, L, carry, o);
+        }
+    }
     if (s->ext) {
         tr->to_next = NEVER;                         /* the clock arms the next one */
     } else {
@@ -451,6 +520,7 @@ static void do_start(seq_t *s, int from_top, const seq_sink_t *o)
     int t;
     if (from_top)
         bar_end(s, 1);                                /* cues, or the song's start bar */
+    if (from_top) { s->live_phase = 0; s->live_tick = 0; }
     for (t = 0; t < NTRACKS; t++) {
         seq_track_t *tr = &s->t[t];
         int rate = part_rate(s, t);
@@ -489,7 +559,7 @@ static void do_stop(seq_t *s, const seq_sink_t *o)
 }
 
 /* external clock ticks: arm the steps they complete */
-static void ext_ticks(seq_t *s)
+static void ext_ticks(seq_t *s, const seq_sink_t *o)
 {
     int t;
     uint32_t n = s->ext_pending;
@@ -503,6 +573,7 @@ static void ext_ticks(seq_t *s)
         s->ext_since = 0;
         if (!s->playing)
             continue;
+        live_clock(s, o);
         for (t = 0; t < NTRACKS; t++) {
             seq_track_t *tr = &s->t[t];
             int rate = part_rate(s, t), tps = TICKS_PER_STEP[rate];
@@ -528,13 +599,15 @@ uint32_t seq_until_event(seq_t *s, uint32_t n)
     if (!s->playing)
         return n;
     for (t = 0; t < NTRACKS; t++) {
-        if (s->t[t].to_next != NEVER && (e = s->t[t].to_next >> 8) < m)
+        if (!(t == TRK_BASS0 + 1 && s->bass_mirror_active) &&
+            s->t[t].to_next != NEVER && (e = s->t[t].to_next >> 8) < m)
             m = e;
         if (s->t[t].to_off && (e = s->t[t].to_off >> 8) < m)
             m = e;
     }
     if (!s->ext && s->send_clock && (e = s->clk_to_next >> 8) < m)
         m = e;
+    if (!s->ext && s->live_pending != -128 && (e = s->live_tick >> 8) < m) m = e;
     return m ? m : 1;
 }
 
@@ -542,6 +615,14 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
 {
     int t, guard;
     uint32_t dq = k << 8;
+    if (s->bass_mirror_active != s->bass_mirror) {
+        bass_release(s, 1, o);
+        s->bass_mirror_active = s->bass_mirror;
+        s->t[TRK_BASS0 + 1].started = 0;
+        s->t[TRK_BASS0 + 1].held_note = 0;
+        s->t[TRK_BASS0 + 1].to_next = s->ext ? NEVER : 0;
+        s->t[TRK_BASS0 + 1].ext_ticks = (uint8_t)(TICKS_PER_STEP[part_rate(s, TRK_BASS0 + 1)] - 1);
+    }
     s->ext_since += k;
     if (s->ext_pending)
         s->ext = 1;
@@ -568,8 +649,9 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
         do_start(s, 0, o);
     }
     if (s->ext_pending)
-        ext_ticks(s);
+        ext_ticks(s, o);
     if (!s->playing) {
+        if (s->live_pending != -128) live_apply(s, s->live_pending, o);
         if (!s->ext)
             s->clk_to_next = 0;
         for (t = 0; t < NTRACKS; t++)                /* stopped: a cue takes effect at once */
@@ -580,6 +662,16 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
         for (t = 0; t < NKIT + NBASS; t++)
             remix_sync(s, t);
         return;
+    }
+    if (!s->ext) {
+        /* Keep a true four-quarter bar even with short/long or shuffled patterns.
+         * Only pending transposes add clock events to the audio block splitter. */
+        int32_t cursor = (int32_t)s->live_tick - (int32_t)dq;
+        while (cursor < 256) {
+            live_clock(s, o);
+            cursor += (int32_t)(seq_step_q8(s, RATE_16) / 6u);
+        }
+        s->live_tick = (uint32_t)cursor;
     }
     for (t = 0; t < NKIT + NBASS; t++)
         remix_sync(s, t);
@@ -601,7 +693,7 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
                 bass_release(s, t - TRK_BASS0, o);
                 fired = 1;
             }
-            if (tr->to_next < 256u) {
+            if (!(t == TRK_BASS0 + 1 && s->bass_mirror_active) && tr->to_next < 256u) {
                 uint32_t ch = fire_step(s, t, o);
                 if (ch)
                     restart(s, ch);                   /* a part's new pattern starts on step 1 */

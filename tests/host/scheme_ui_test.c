@@ -132,9 +132,9 @@ static void legacy_appearance(void)
                     assert(!strcmp(pg.title[0], "MAP"));
                     assert(!strcmp(pref_desc(pg.r[0][0])->name, "X"));
                 } else if (appearance_views[v] == V_PART && (part == PART_303A || part == PART_303B)) {
-                    /* EXTRA adds a third page dot and shifts the tag. Normalize only
+                    /* EXTRA/MIX add page dots and shift the tag. Normalize only
                      * that navigation strip to keep every original TONE pixel checked. */
-                    assert(pg.n == 3 && !strcmp(pg.title[2], "EXTRA"));
+                    assert(pg.n == 4 && !strcmp(pg.title[2], "EXTRA") && !strcmp(pg.title[3], "MIX"));
                     pg.n = 2;
                     draw_knobs();
                     assert(screen_hash() == original_lcd[p][part][v]);

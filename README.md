@@ -1,20 +1,26 @@
-![X0X-RMX — Orb-inspired Remix for the FM-1](docs/img/x0x-rmx-banner-1280x320.png)
+# X0X-HARDER
 
 **Development integration:** this branch combines the v1.1.0 RMX features with
-selected upstream performance improvements and bug fixes. It has not been
-validated on an FM-1. See the [integration report](docs/UPSTREAM_FIXES_INTEGRATION.md)
+selected upstream performance improvements and bug fixes. Development builds are
+being tested on an FM-1. See the [integration report](docs/UPSTREAM_FIXES_INTEGRATION.md)
 for scope, resolved collisions, tests and remaining hardware/build checks.
 
-X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x),
-a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
+X0X-HARDER builds on [Mr-Roboto's X0X-RMX v1.1.0](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0)
+with selected performance improvements and fixes from [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
+It is a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
 knob motion, reverb, tape delay and master compression.
 
 ![X0X-RMX browser emulator in Cream & Lilac, with a 909 pattern and Device color selector](docs/img/p82/01-overview-cream.png)
 
 *The default Cream & Lilac exterior, shown with the WHITE LILAC LCD scheme.*
 
-This fork adds:
+This build includes:
 
+- **Hat velocity:** knob 3 on the 909/808 CH and OH sound pages sets hit strength
+  from 0–127. Hold a sequencer step on EDIT and turn it to add a velocity p-lock.
+- **909 open-hat hold:** knob 4 holds the hit's initial envelope level for
+  0–500 ms before decay, with p-locks and normal closed-hat choking. Zero keeps
+  the original envelope.
 - **Orb-inspired Remix:** independent Bank A–P / Pattern 1–16 selections for 909, 808,
   303A and 303B; A1 is sequential and BREAK is unaffected.
 - **Grids MAP/EUCLID drum generation:** write or mutate kick, snare and closed-hat rhythms
@@ -37,10 +43,12 @@ See the [release notes](docs/RELEASE_1.1.0.md) and
 **Saved-direction compatibility for v1.0.0 upgrades:** old PING becomes MREV; old RND becomes PING.
 Reselect the desired direction and save affected patterns. The storage layout is unchanged.
 
-Charles' hosted emulator, installer and releases belong to upstream and do not contain this fork.
+The hosted emulators, installers and releases below belong to the base projects;
+they do not contain the X0X-HARDER development changes. Run this branch's local
+browser simulator at [localhost](http://127.0.0.1:8765/).
 
-- **Project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
-- **Play in your browser:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), with sound, Remix, Grids and both 303 EXTRA pages.
+- **Base project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
+- **Base release emulator:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), with sound, Remix, Grids and both 303 EXTRA pages.
 - **Read online:** [manual](https://mr-roboto.github.io/fm1-x0x-rmx/manual/) and [version history](https://mr-roboto.github.io/fm1-x0x-rmx/new/).
 
 [Install v1.1.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/) with Chrome or Edge,
@@ -117,7 +125,7 @@ Select Saw or Square on the current Morph voice before transferring Morph to the
 
 Morph remains experimental. Dedicated Morph worst-case timing and listening tests were not
 separately reported; the successful release hardware run is not a universal benchmark.
-See the [manual](docs/MANUAL.md#6-303a-and-303b) for the three EDIT pages, parameter behavior
+See the [manual](docs/MANUAL.md#6-303a-and-303b) for the four EDIT pages, parameter behavior
 and ownership rules; the [waveform specification](docs/TB303_WAVEFORMS_DESIGN.md) retains
 the DSP mathematics and known quality limits.
 

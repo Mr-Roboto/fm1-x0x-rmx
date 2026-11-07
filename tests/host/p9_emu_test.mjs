@@ -55,5 +55,5 @@ turn(1,4); turn(2,1); tap(7);
 assert.equal(settings()[4+32],6,'startup restores actual playing pattern before next manual choice');
 tap(5); turn(0,100); turn(0,-1); tap(1); render(40);
 const version=JSON.parse(fs.readFileSync('build/emu/build-info.json','utf8')).version;
-assert(Buffer.from(mem.buffer).includes(Buffer.from(`X0X ${version}  MEM `)),'actual ABOUT text carries the built version');
+assert(Buffer.from(mem.buffer).includes(Buffer.from(`X0X-HARDER ${version}`)),'actual ABOUT text carries the product name and built version');
 console.log('P9 WASM: all four Remix arrangements, 303 page order/KEYS, USB default, APPLY, five manual patterns and reboot passed');

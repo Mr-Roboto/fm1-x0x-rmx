@@ -167,7 +167,7 @@ page. SEQ, EDIT and ARP show the part you choose with ALGORITHM.
 | LFO | The mixer and the master. Hold while pressing keys: a slide. |
 | EDIT | The selected part's sound. The keys still write its steps. |
 | GLO | The settings. Press again to close. |
-| HOME | The pattern: all five parts, which pattern they play, mutes. Again: the song, and again back. In a list, back; in a question, no. |
+| HOME | Cycles Pattern → Song → Live → Pattern. From another screen, three presses reach Live. In a list, back; in a question, no. |
 | SAVE | Save everything (while playing: when you stop). Hold it to copy the pattern; then a white key pastes it. |
 | ARP | GRIDS on 909/808; TB-3PO on 303A/303B. Again: the next generator page. |
 | SEQ | The selected part's steps, with its LENGTH and RATE (on a 303 also DIRECTION and TRANSPOSE). |
@@ -286,6 +286,26 @@ The 909's hats and cymbals are samples, as on the original machine; every other 
 machines is synthesized. On the 808, a track's SOUND setting switches it between tom and conga,
 rim and claves, or clap and maracas. On both, the closed hat cuts off the open hat.
 
+**X0X-HARDER hat velocity:** on each 909/808 CH or OH EDIT page, KNOB 3 is
+**VELOCITY** (0–127). 127 keeps the original hit strength; lower values soften
+the hit and 0 skips it without choking the other hat. Each of the four hats has
+its own value. Accent and the kit's velocity response still apply to the original
+hit; this control independently scales its level, even at zero kit sensitivity.
+Hold a white step key on EDIT and turn KNOB 3 to give that step its own velocity;
+hold SAVE as well and turn KNOB 3 to clear that lock. Knob motion, Undo/Redo and
+project saving work as for the other sound controls. Older projects load with
+all four velocity controls at 127; existing sound controls keep their indices.
+
+**909 OH HOLD:** KNOB 4 on the 909 open-hat EDIT page sets a 0–500 ms hold
+before its decay begins. The hold stays at that hit's initial level, including
+its velocity/accent, and DECAY still sets the decay stage's length. The display
+shows milliseconds. HOLD is p-lockable with a held step and supports recorded
+motion, Undo and saving, just like VELOCITY. Each new hit latches the current
+HOLD setting. The closed hat still chokes the open hat immediately; retriggering
+the open hat starts a fresh hold. Zero restores the original envelope, including
+when loading older projects. This holds the playback envelope; the recorded
+sample still has its own natural decay and ends at its normal playback length.
+
 **Writing a beat.** Press a black key to pick a track; while the pattern is stopped you hear it
 too. (While it plays, picking is silent so you don't add a stray hit; GLO > KEY SOUND = ALWAYS
 changes that.) Then press white keys: an empty step turns on, and a tap on a step that's on
@@ -400,15 +420,16 @@ you can try lines and turn EDIT's knobs as you go; the top line says FREE PLAY. 
 written until you press REC, which records as above. Set FREE PLAY back to OFF for the steps.
 Each 303 has its own, and both are off at power-on.
 
-**The pages.** Both 303A and 303B have three EDIT pages. Press EDIT repeatedly to cycle
-**TONE → VOICE → EXTRA → TONE**, or turn SELECT to move between pages (SELECT stops at
-TONE and EXTRA). Each voice remembers its own page.
+**The pages.** Both 303A and 303B have four EDIT pages. Press EDIT repeatedly to cycle
+**TONE → VOICE → EXTRA → MIX → TONE**, or turn SELECT to move between pages (SELECT stops at
+TONE and MIX). Each voice remembers its own page.
 
 | EDIT page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 |
 |---|---|---|---|---|
 | TONE | CUTOFF | RESO | ENVMOD | DECAY |
 | VOICE | ACCENT | WAVE | DRIVE | SLIDE |
 | EXTRA | MORPH | ACCDEC | DRVTYPE | TUNE |
+| MIX | HPF | PAN | REV | DLY |
 
 ![X0X-RMX: 303A TONE controls CUTOFF, RESO, ENVMOD and DECAY](img/p82/20-303a-tone.png)
 ![X0X-RMX: 303A VOICE controls ACCENT, WAVE, DRIVE and SLIDE; Saw is selected](img/p82/21-303a-voice-saw.png)
@@ -418,8 +439,30 @@ WAVE offers **Saw, Square and Morph**. EXTRA uses the existing Morph, accent dec
 drive type (off, soft or RAT) and tuning controls, with unchanged ranges and defaults.
 ACCDEC sets accented-note decay (30–3000 ms). DRVTYPE chooses Off, Soft or RAT;
 DRIVE on VOICE sets the amount (0–127), with 0 bypassing drive. TUNE sets the reference pitch,
-not the pattern transpose. SEL lists these with the page parameters in the same order; only VOLUME remains under
-**MORE**. SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION and TRANSPOSE.
+not the pattern transpose. SEL lists these with the page parameters in the same order.
+**MORE** contains VOLUME on both voices. MIX puts **HPF**, **PAN**, **REV** and **DLY**
+on four knobs. Pan and sends are the same controls as the part's mixer, so changes
+in either place stay in sync. All four support held-step p-locks and recorded knob
+motion: press PLAY and REC, then turn DLY to record a delay throw; turn it back down
+to record the return. Hold a white step and turn any MIX knob for a single-step lock.
+SAVE plus the held step and knob clears that lock; Undo/Redo and project saves keep
+the automation as for other sound controls.
+
+HPF is an independent 12 dB/octave
+high-pass after the voice's drive and before its mixer level, pan and effect sends.
+It defaults to OFF; turning it up sweeps from 20 Hz to 10 kHz. It uses the normal
+sound-control motion/lock, Undo and project-saving paths.
+
+On **303B → SEL → MORE**, **MIRROR A** makes B play A's current sequence, including
+its pattern changes, Remix, rate, direction, rests, accents, ties and slides.
+**MIRROR TRANSPOSE** adds −24 to +24 semitones relative to A's played pitch
+(0 is unison; +12 is an octave up); pitches are limited to MIDI 0–127.
+B keeps its own sound, HPF, mixer, mute and MIDI channel. Muting A does not mute B.
+B's sequence settings and saved notes are left intact and resume from their first
+step when mirroring is disabled. Mirror mode and transpose are saved with the sound;
+older projects load with mirror and both HPFs OFF and mirror transpose at 0.
+
+SEQ has the line's LENGTH (1–64 steps), RATE, DIRECTION and TRANSPOSE.
 Direction choices are **FWD → REV → MREV → PING → RND**. FWD plays forwards; REV starts
 at the last step and plays backwards. **MREV (Musical Reverse)** starts at step 1, then
 plays the remaining steps backwards: `1 → 16 → 15 → … → 2 → 1` for length 16.
@@ -834,7 +877,8 @@ Each part counts its own passes, from 1 again whenever you press PLAY or it chan
 ![Original X0X: SONG](img/screen-song.png)
 
 A song is a list of up to 192 bars. Each bar says which pattern each part plays and which
-parts are muted. To open the song, press HOME twice (HOME again comes back to the pattern).
+parts are muted. To open the song from a part screen, press HOME twice (HOME again
+opens Live; the following press comes back to the pattern).
 
 - **Write bars:** press a white key. The selected bar gets that pattern for all five parts,
   and the next bar is selected. Pressing keys at the end of the song adds new bars.
@@ -904,6 +948,39 @@ machines, PARTS (with the part picked) for the 303s and the break.
 | FILTER | One knob: in the middle it's off; to the left a low-pass closes down, to the right a high-pass opens up. |
 
 FILTER and PUMP are also on HOME's PERFORM page, for playing live.
+
+### Live mode
+
+Press HOME three times from a part screen: **Pattern → Song → Live**. Its four
+centred knobs are performance offsets over the currently sounding controls:
+
+| Knob | Control | What it does |
+|---|---|---|
+| 1 | ACID1 | Adds/subtracts 303A cutoff and a small amount of resonance. |
+| 2 | ACID2 | The same, independently for 303B. |
+| 3 | FEEDBACK | Adds/subtracts the main delay's feedback. |
+| 4 | DRUMS | Left: low-pass; centre: OFF; right: high-pass, on 909 + 808 + BREAK only. |
+
+ACID and FEEDBACK show a signed percentage; 0% leaves the underlying controls
+unchanged. The offsets follow subsequent edits and p-lock/motion values instead of
+replacing them. DRUMS filters the drum/break dry signal and their effect sends;
+the 303s and existing shared reverb/delay tails stay unaffected. All values clamp
+to their normal parameter ranges. Hold ENV and turn a knob to return it to neutral.
+
+White keys transpose **both 303 sequences** by one semitone per key: keys 1–16
+are **−7 through +8**, and **key 8 is unison (0)**. The current key stays lit.
+The first five black keys retain the usual part mutes. The rightmost black key
+toggles change timing: **unlit = immediate**, **lit = next bar**. In bar mode,
+the newly selected key flashes while the current key stays lit. A further choice
+replaces the queued change; choosing the current key cancels it. Turning bar mode
+off applies a pending choice immediately. While stopped, a choice applies immediately.
+
+The Live bar is four quarter-note beats (96 MIDI clocks), independent of any part's
+pattern length or rate. Held/slide notes retune without restarting their envelopes;
+the transpose also follows each part's outgoing MIDI notes. Mirrored B keeps its
+interval above/below A. Live controls remain active when leaving this screen;
+they are session-only and reset on reboot or factory reset. They do not alter
+saved sounds, patterns, recorded automation or the mirror-transpose setting.
 
 > **The factory mix is set up for big beat:** the break up front with the 909 kick under it, the
 > 303s through RAT distortion into a tape delay, reverb on the clap. For a clean mix, set COMP and

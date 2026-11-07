@@ -164,7 +164,7 @@ static void ed_handle(const uint8_t *f, uint32_t n)
     ed_begin(cmd);
     switch (cmd) {
     case ED_INFO:
-        ed_str("X0X " X0X_VERSION, 24);
+        ed_str(X0X_NAME " " X0X_VERSION, 24);
         ed_b(0);                                      /* no engines / parameters over this protocol */
         ed_b(0);
         ed_b(0);

@@ -13,17 +13,21 @@
 #include "../dsp/breaks.h"
 #include "../dsp/fxbus.h"            /* FX_* param indices (the send pages) */
 
+#define X0X_NAME "X0X-HARDER"
 #ifndef X0X_VERSION                     /* a release build passes its own (tools/build.py --release) */
 #define X0X_VERSION "DEV"
 #endif
 #define PROJ_MAGIC 0x50305830u           /* "0X0P" */
 #define PROJ_FORMAT 1u
 #define PROJ_STEREO 2u
-#define PROJ_SND_REV 5u                  /* 1: the 909 SD has a DECAY pot (index 3; LEVEL.. moved up one);
+#define PROJ_SND_REV 8u                  /* 1: the 909 SD has a DECAY pot (index 3; LEVEL.. moved up one);
                                           * 2: the master's one-knob COMP and FILTER, the delay's TAPE;
                                           * 3: the 909 BD has sends (REV, DLY at 8, 9; PAN moved to 10);
                                           * 4: the 808 BD too (REV, DLY at 7, 8; PAN moved to 9);
-                                          * 5: the break's FILTER (pot 2, 64 = off; was unused, 0) */
+                                          * 5: the break's FILTER (pot 2, 64 = off; was unused, 0);
+                                          * 6: CH/OH Velocity (pot 8, 127 = unchanged) for both kits;
+                                          * 7: 909 OH Hold (pot 9, 0 = original envelope);
+                                          * 8: 303 HPF (13), B mirror (14) and transpose (15, centre 24) */
 
 typedef struct {
     uint32_t magic, format;

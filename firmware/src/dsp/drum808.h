@@ -200,6 +200,7 @@ typedef struct drum808 drum808_t;
 
 void drum808_init(drum808_t *d);                          /* 8W8 defaults */
 void drum808_trigger(drum808_t *d, int track, float vel); /* vel 0..1, 1.0 = accent */
+void drum808_trigger_scaled(drum808_t *d, int track, float vel, float gain); /* independent per-hit level */
 void drum808_render(drum808_t *d, float *dry, float *rev, float *dly, int n);
 /* X0X stereo: each track placed by its PAN into dry_l / dry_r (sends mono); all centred, both are
  * drum808_render's dry exactly */

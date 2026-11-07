@@ -30,7 +30,7 @@ from pathlib import Path
 
 wasm = Path("build/emu/x0x.wasm")
 info = {
-    "project": "X0X-RMX",
+    "project": "X0X-HARDER",
     "version": os.environ.get("X0X_VERSION", "DEV").upper(),
     "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
     "branch": subprocess.check_output(["git", "branch", "--show-current"], text=True).strip(),

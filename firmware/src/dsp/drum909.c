@@ -338,6 +338,7 @@ void drum909_init(drum909_t *d)
     for (int i = 0; i < 4; ++i) {
         d9_smp_t *s = &d->smp[i];
         s->volume = vols[i];
+        s->hit_gain = 1.0f;
         s->decay = decs[i];
         s->drive = 0.2f;
         s->dist_type = 0;
@@ -424,6 +425,11 @@ static void d9_tom_trigger(d9_tom_t *t, const d9_bt_t *p, float accent)
 
 void drum909_trigger(drum909_t *d, int voice, float vel)
 {
+    drum909_trigger_scaled(d, voice, vel, 1.0f);
+}
+
+void drum909_trigger_scaled(drum909_t *d, int voice, float vel, float gain)
+{
     if (voice < 0 || voice >= DR_NUM)
         return;
     if (!(vel >= 0.0f)) vel = 0.0f;
@@ -483,6 +489,7 @@ void drum909_trigger(drum909_t *d, int voice, float vel)
     }
     default: {
         d9_smp_t *s = &d->smp[voice - DR_CH];
+        s->hit_gain = gain;             /* after envelope/drive: level does not alter decay or tone */
         if (voice == DR_CH || voice == DR_OH) {
             /* one pair of cymbals: each choke the other with a 3 ms fade */
             d9_smp_t *o = &d->smp[voice == DR_CH ? DR_OH - DR_CH : 0];
@@ -503,6 +510,30 @@ void drum909_trigger(drum909_t *d, int voice, float vel)
 /* ===================================================================== */
 /* Rendering                                                              */
 /* ===================================================================== */
+
+void drum909_open_hat_hold(drum909_t *d, uint32_t milliseconds)
+{
+    d9_smp_t *s = &d->smp[DR_OH - DR_CH];
+    if (!milliseconds || !s->playing || s->out.left <= 0)
+        return;
+    if (milliseconds > 500u) milliseconds = 500u;
+    int32_t samples = (int32_t)((milliseconds * 44100u + 500u) / 1000u);
+    /* k still holds the prepared decay's length. A negative left counts the
+     * hold before that decay, without adding per-voice RAM. A choke calls
+     * d9_env_exp and replaces left, so it always takes effect immediately. */
+    s->out.left = -samples;
+    s->mute += samples;
+}
+
+static inline float d9_sample_envelope(d9_env_t *e)
+{
+    if (e->left < 0) {
+        if (++e->left == 0) e->left = e->k;
+        e->cur = e->v;
+        return e->v;
+    }
+    return d9_env_tick(e);
+}
 typedef struct {
     float *dry, *rev, *dly;   /* rev / dly are 0 when the voice's send is 0 */
     float srev, sdly;
@@ -734,7 +765,8 @@ static void d9_render_smp(d9_smp_t *s, const d9_bus_t *bus, int n)
     if (s->pos >= len && (!drive || s->shape.type == 0 || s->shape.type == 2 || s->shape.type == 4
                           || s->shape.type == 5))
         return;
-    d9_env_anchor(&s->out);
+    if (s->out.left > 0)
+        d9_env_anchor(&s->out);
     const float pre = 1.0f + s->drive * 0.5f;
     const uint8_t *buf = s->buf;
     if (s->incf == 0u && s->frac == 0u && !drive) {
@@ -748,8 +780,8 @@ static void d9_render_smp(d9_smp_t *s, const d9_bus_t *bus, int n)
                 v = (float)x0x_mulaw[buf[p]] * (1.0f / 32768.0f);
                 p += inc;
             }
-            v *= d9_env_tick(&s->out);
-            d9_emit(bus, i, v);
+            v *= d9_sample_envelope(&s->out);
+            d9_emit(bus, i, v * s->hit_gain);
         }
         s->pos = p;
         return;
@@ -765,10 +797,10 @@ static void d9_render_smp(d9_smp_t *s, const d9_bus_t *bus, int n)
             s->pos += s->inc + (f2 < s->frac);
             s->frac = f2;
         }
-        v *= d9_env_tick(&s->out);
+        v *= d9_sample_envelope(&s->out);
         if (drive)
             v = d9_shape(&s->shape, v * pre, s->crush_st);
-        d9_emit(bus, i, v);
+        d9_emit(bus, i, v * s->hit_gain);
     }
 }
 

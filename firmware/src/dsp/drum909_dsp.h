@@ -70,7 +70,7 @@ typedef struct {
     float l2r;      /* log2(v1 / v0)                         */
     float t1;       /* ramp length in samples (9W9's t1)     */
     int32_t k;      /* ramp length in ticks before v1        */
-    int32_t left;   /* ticks of ramp left (0 = constant)     */
+    int32_t left;   /* ticks of ramp left (0 = constant); sampled OH alone may use negative ticks for HOLD */
 } d9_env_t;
 
 static inline void d9_env_set(d9_env_t *e, float v)

@@ -75,7 +75,7 @@ earlier:;
 }
 
 /* Index order is backup.c's six objects. Only RMX format-2 packed projects and
- * absent/default streams are supported. Sound revisions 0..5 use project_load's
+ * absent/default streams are supported. Sound revisions 0..8 use project_load's
  * existing migrations; an older format-1 backup is safely refused. */
 static int project_backup_check(const uint32_t len[6], int (*read)(uint32_t, void *, uint32_t))
 {

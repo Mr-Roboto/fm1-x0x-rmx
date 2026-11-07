@@ -65,7 +65,7 @@ static void persistence(void)
 {
     setup();
     assert(sizeof(settings_t) == 36 && sizeof(sound_t) == 1344 && sizeof(project_t) == 30952);
-    assert(sizeof(pattern_t) == 528 && RAW_LEN == 29572 && PROJ_SND_REV == 5);
+    assert(sizeof(pattern_t) == 528 && RAW_LEN == 29572 && PROJ_SND_REV == 8);
     for (int p = 0; p < NPAT; ++p) {
         for (int part = 0; part < 4; ++part) {
             pattern_set_remix_selection(&proj.pat[p], part, p & 15, part + 3);
@@ -106,7 +106,7 @@ static void persistence(void)
         proj.sound.v[T_BRK][0][3] = 93; /* another unused byte: must survive */
         assert(project_save() == 0);
         project_t expected = proj;
-        expected.set.snd_rev = 5; expected.sound.v[T_BRK][0][2] = 64;
+        expected.set.snd_rev = PROJ_SND_REV; expected.sound.v[T_BRK][0][2] = 64;
         project_defaults(); assert(project_load() == 0);
         assert(!memcmp(&proj, &expected, sizeof proj));
         assert(project_save() == 0); assert(project_load() == 0);
@@ -128,7 +128,7 @@ static void historical(void)
         fclose(f);
         if (short_settings) store_len[OBJ_SET] = 20; /* before snd_rev existed */
         assert(project_load() == 0);
-        assert(proj.set.snd_rev == 5 && proj.sound.v[T_BRK][0][2] == 64);
+        assert(proj.set.snd_rev == PROJ_SND_REV && proj.sound.v[T_BRK][0][2] == 64);
     }
     store_len[OBJ_SOUND] = -1;
     assert(project_load() == -1 && proj.sound.v[T_BRK][0][2] == 64);

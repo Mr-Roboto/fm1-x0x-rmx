@@ -71,7 +71,7 @@ static void extra_pages(void)
     for (int v = 0; v < 2; v++) {
         ui.part = PART_303A + v; ui.view = V_PART; ui.overlay = O_NONE;
         build_pages();
-        assert(pg.n == 3 && pg.nmore == 1);
+        assert(pg.n == 4 && pg.nmore == (v ? 3 : 1));
         assert(pg.more[0].kind == R_ENG && pg.more[0].a == T_303 && pg.more[0].b == v && pg.more[0].c == BASS303_VOLUME);
         for (int page = 0; page < 3; page++) {
             assert(cur_page() == page && !strcmp(pg.title[page], names[page]) && pg.group[page] == GR_SOUND);
@@ -86,27 +86,36 @@ static void extra_pages(void)
             page_shot(v, page == 0 ? "tone" : page == 1 ? "voice" : "extra");
             panel_tap(B_EDIT);
         }
+        assert(cur_page() == 3 && !strcmp(pg.title[3], "MIX"));
+        page_shot(v, "mix"); panel_tap(B_EDIT);
         assert(cur_page() == 0); /* EDIT wraps; SELECT retains its established clamping. */
         panel_turn(EN_SELECT, -1); assert(cur_page() == 0);
         panel_turn(EN_SELECT, 1); assert(cur_page() == 1);
         panel_turn(EN_SELECT, 1); assert(cur_page() == 2);
-        panel_turn(EN_SELECT, 1); assert(cur_page() == 2);
+        panel_turn(EN_SELECT, 1); assert(cur_page() == 3);
+        panel_turn(EN_SELECT, 1); assert(cur_page() == 3);
+        panel_turn(EN_SELECT, -1); assert(cur_page() == 2);
         panel_turn(EN_SELECT, -1); assert(cur_page() == 1);
         panel_turn(EN_SELECT, 1);
         panel_tap(B_SEL);
-        assert(ui.overlay == O_LIST && ui.list_n == 14);
+        assert(ui.overlay == O_LIST && ui.list_n == (v ? 20 : 18));
         for (int i = 0; i < 12; i++) {
             pref_t r = list_rows[i];
             assert(r.kind == R_ENG && r.a == T_303 && r.b == v && r.c == params[i / 4][i % 4]);
             for (int j = 0; j < i; j++) assert(list_rows[j].c != r.c);
         }
-        assert(list_rows[12].kind == R_HDR && list_rows[12].a == GR_MORE);
-        assert(list_rows[13].kind == R_ENG && list_rows[13].c == BASS303_VOLUME);
+        assert(list_rows[12].kind == R_ENG && list_rows[12].c == B303_HPF);
+        assert(list_rows[16].kind == R_HDR && list_rows[16].a == GR_MORE);
+        assert(list_rows[17].kind == R_ENG && list_rows[17].c == BASS303_VOLUME);
+        if (v) {
+            assert(list_rows[18].c == B303_MIRROR);
+            assert(list_rows[19].c == B303_MIRROR_TRANSPOSE);
+        }
         ui.list_sel = 8; ui.list_top = 8; page_shot(v, "sel-extra");
-        ui.list_sel = 13; page_shot(v, "sel-volume");
-        int volume = pref_get(list_rows[13]);
-        panel_turn(EN_ALGO, -1); assert(pref_get(list_rows[13]) == volume - 1);
-        panel_turn(EN_ALGO, 1); assert(pref_get(list_rows[13]) == volume);
+        ui.list_sel = 17; ui.list_top = 12; page_shot(v, "sel-volume");
+        int volume = pref_get(list_rows[17]);
+        panel_turn(EN_ALGO, -1); assert(pref_get(list_rows[17]) == volume - 1);
+        panel_turn(EN_ALGO, 1); assert(pref_get(list_rows[17]) == volume);
         panel_tap(B_HOME); assert(ui.overlay == O_NONE && cur_page() == 2);
         undo_start();
         sound_t before = proj.sound, edited;
@@ -164,17 +173,84 @@ static void extra_pages(void)
     ui.part = PART_303B; build_pages(); assert(cur_page() == 2);
     panel_turn(EN_SELECT, -1); panel_turn(EN_K2, 1); assert(pref_get(wave_ref(1)) == 2);
 }
+static void check_mix_runtime(int part, int knob, int value)
+{
+    if (knob == 0) assert(bass_hpf[part - PART_303A].value == value);
+    else if (knob == 1) {
+        float l, r; x0x_pan_gains(value, &l, &r);
+        assert(mix_pl[part] == l && mix_pr[part] == r);
+    } else if (knob == 2) assert(mix_rev[part] == (float)value / 127.0f);
+    else assert(mix_dly[part] == (float)value / 127.0f);
+}
+static void mix_page_motion(void)
+{
+    const int param[4] = {B303_HPF, MX_PAN, MX_REV, MX_DLY};
+    const char *const labels[4] = {"HPF", "PAN", "REV", "DLY"};
+    for (int v = 0; v < 2; v++) for (int knob = 0; knob < 4; knob++) {
+        setup(); ui.part = PART_303A + v; ui.view = V_PART; ui.page[V_PART][ui.part] = 3; build_pages();
+        pref_t r = pg.r[3][knob]; int part = ui.part;
+        assert(r.kind == R_ENG && r.a == (knob ? T_MIX : T_303));
+        assert(r.b == (knob ? part : v) && r.c == param[knob]);
+        assert(!strcmp(caps_of(pref_name(r)), labels[knob]) && lockable(r));
+        pref_set(r, 20); flush();
+        /* Real held white step + physical encoder, with the base left intact. */
+        bass_step_key(0, 1); panel_turn(EN_K1 + knob, 20);
+        int lane = motion_find(proj.arr.lane, 0, part, r.a, r.b, r.c);
+        assert(lane >= 0 && proj.arr.lane[lane].val[0] == 40 && pref_get(r) == 20);
+        check_mix_runtime(part, knob, 40);
+        bass_step_key(0, 0); flush(); check_mix_runtime(part, knob, 20);
+        motion_step(&mot, part, 0, 0, 1, 16); check_mix_runtime(part, knob, 40);
+        motion_step(&mot, part, 0, 1, 2, 16); check_mix_runtime(part, knob, 20);
+        motion_release(&mot);
+        bass_step_key(0, 1); held_btn = 1u << B_SAVE; ui_input_only();
+        panel_turn(EN_K1 + knob, 1); held_btn = 0; ui_input_only(); bass_step_key(0, 0); flush();
+        assert(!proj.arr.lane[lane].used);
+        /* Record a throw up, then down to zero, using the same encoder path. */
+        undo_start(); ui.rec = 1; seq.playing = 1;
+        panel_turn(EN_K1 + knob, 60);
+        lane = motion_find(proj.arr.lane, 0, part, r.a, r.b, r.c);
+        assert(lane >= 0 && mot.rt[lane].rec_req);
+        motion_step(&mot, part, 0, 0, 1, 16);
+        panel_turn(EN_K1 + knob, -80); motion_step(&mot, part, 0, 1, 2, 16);
+        seq.playing = 0; ui.rec = 0; motion_release(&mot);
+        assert(proj.arr.lane[lane].val[0] == 80 && proj.arr.lane[lane].val[1] == 0);
+        assert(undo_commit(&undo) == 1);
+        do_undo(0); flush(); assert(pref_get(r) == 20 && !proj.arr.lane[lane].used);
+        do_undo(1); flush(); assert(pref_get(r) == 0 && proj.arr.lane[lane].val[0] == 80);
+        assert(project_save() == 0 && project_load() == 0);
+        assert(proj.arr.lane[lane].val[0] == 80 && proj.arr.lane[lane].val[1] == 0);
+        motion_step(&mot, part, 0, 0, 1, 16); check_mix_runtime(part, knob, 80);
+        motion_step(&mot, part, 0, 1, 2, 16); check_mix_runtime(part, knob, 0);
+        motion_release(&mot);
+    }
+    /* In mirror mode B's send recording follows A's actual sequencer clock. */
+    setup(); ui.part = PART_303B; ui.view = V_PART; ui.page[V_PART][ui.part] = 3; build_pages();
+    pref_set(PR(R_ENG, T_303, 1, B303_MIRROR), 1);
+    pref_set(pg.r[3][3], 0); flush();
+    seq_start(&seq); seq_advance(&seq, 0, &SINK); ui.rec = 1;
+    panel_turn(EN_K4, 80);
+    int lane = motion_find(proj.arr.lane, 0, PART_303B, T_MIX, PART_303B, MX_DLY);
+    assert(lane >= 0 && seq.bass_mirror_active);
+    uint32_t samples = (seq_step_q8(&seq, proj.pat[0].bass[0].rate) + 255u) >> 8;
+    seq_advance(&seq, samples, &SINK);
+    assert(proj.arr.lane[lane].val[seq.t[PART_303A].pos] == 80 && mix_dly[PART_303B] == 80.0f / 127.0f);
+    panel_turn(EN_K4, -80); seq_advance(&seq, samples, &SINK);
+    assert(proj.arr.lane[lane].val[seq.t[PART_303A].pos] == 0 && mix_dly[PART_303B] == 0);
+    assert(eng_step[PART_303A] == eng_step[PART_303B]);
+    ui.rec = 0; seq_stop(&seq); seq_advance(&seq, 0, &SINK); motion_release(&mot);
+    puts("303 MIX: both voices, four step locks/clear, recorded throws including zero and mirrored B, audio-owned values, Undo/Redo and save/load passed");
+}
 static void selections(void)
 {
     setup();
     assert(sizeof(sound_t) == NTARGETS * NVOICES_MAX * 16);
-    assert(engine_nparams(T_303, 0) == 13 && BASS303_MORPH == 12);
+    assert(engine_nparams(T_303, 0) == 14 && engine_nparams(T_303, 1) == 16 && BASS303_MORPH == 12);
     const x0x_param_t *p = engine_param(T_303, 0, BASS303_WAVE);
     assert(p->max == 2 && !strcmp(p->names[0], "Saw") && !strcmp(p->names[1], "Square") && !strcmp(p->names[2], "Morph"));
     for (int v = 0; v < 2; v++) {
         ui.view = V_PART; ui.part = PART_303A + v;
         build_pages();
-        assert(pg.n == 3 && pg.r[2][0].kind == R_ENG && pg.r[2][0].a == T_303 &&
+        assert(pg.n == 4 && pg.r[2][0].kind == R_ENG && pg.r[2][0].a == T_303 &&
                pg.r[2][0].b == v && pg.r[2][0].c == BASS303_MORPH);
         assert(pref_get(morph_ref(v)) == 64);
         pref_set(morph_ref(v), v ? 127 : 0);
@@ -421,7 +497,7 @@ static void conflict_notice(void)
 
 int main(void)
 {
-    extra_pages(); selections(); automation(); persistence();
+    extra_pages(); mix_page_motion(); selections(); automation(); persistence();
     directions(); mrev_probability(); conflict_notice();
     puts("bass303 EXTRA pages/knobs/SEL/Undo and command exclusion/motion/persistence: PASS");
     return 0;

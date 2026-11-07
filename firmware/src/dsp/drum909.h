@@ -75,7 +75,7 @@ typedef struct {
 } d9_clap_t;
 
 typedef struct {
-    float decay, volume, pitch, drive;
+    float decay, volume, pitch, drive, hit_gain;
     int32_t dist_type;
     d9_shape_t shape;
     const uint8_t *buf;           /* mu-law (x0x_mulaw) */
@@ -108,6 +108,9 @@ typedef struct drum909 drum909_t;
 
 void drum909_init(drum909_t *d);
 void drum909_trigger(drum909_t *d, int voice, float vel);
+void drum909_trigger_scaled(drum909_t *d, int voice, float vel, float gain); /* sampler voices: independent per-hit level */
+/* After an OH trigger, delay its envelope's decay. Choking/retriggering replaces the hold. */
+void drum909_open_hat_hold(drum909_t *d, uint32_t milliseconds);
 void drum909_render(drum909_t *d, float *dry, float *rev, float *dly, int n);
 /* X0X stereo: each voice placed by its PAN into dry_l / dry_r (sends mono); all centred, both are
  * drum909_render's dry exactly */

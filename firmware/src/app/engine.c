@@ -29,9 +29,19 @@ volatile uint32_t eng_scope_w;
 static drum909_t d909 POOL;
 static drum808_t d808 POOL;
 static bass303_t b303[NBASS] POOL;
+typedef struct { float g, target, ic1, ic2, wet; uint8_t value; } bass_hpf_t;
+static bass_hpf_t bass_hpf[NBASS] POOL;
+static int8_t live_acid[NBASS], live_feedback;
+static uint8_t live_cutoff[NBASS], live_reso[NBASS], live_fb_base;
+typedef struct { float g, ic1, ic2, wet; } live_filter_t;
+static live_filter_t live_drums[4] POOL; /* drum/break dry L/R and their two sends */
+static uint8_t live_drums_mode, live_drums_enabled;
+static float live_drums_target;
 static breaks_t brk POOL;
 static fxbus_t fx POOL;
 static master_t mst;
+static uint8_t hat_velocity[NKIT][2] POOL;  /* audio-owned CH/OH trigger strength, 127 = unchanged */
+static uint8_t oh_hold POOL;              /* 909 OH hold, latched by each trigger */
 #define DLY_LEN 88200
 static int16_t dly_buf[DLY_LEN] POOL;
 static volatile uint8_t brk_hold;      /* main loop is rewriting the break loops: ISR leaves it alone */
@@ -100,7 +110,7 @@ static float mix_pl[NPARTS] = {1, 1, 1, 1, 1}, mix_pr[NPARTS] = {1, 1, 1, 1, 1};
 /* ------------------------------------------------------- command queue --- */
 /* uint32 commands, single producer (main loop) / single consumer (audio ISR):
  * type:4 | a:8 | b:8 | c:12 */
-enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_BWAVES, C_BWAVE_USER };
+enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_BWAVES, C_BWAVE_USER, C_LIVE };
 #define CQ 1024u
 static uint32_t cq[CQ];
 static volatile uint32_t cq_w, cq_r;
@@ -149,6 +159,53 @@ void engine_sound_validate_bass(sound_t *s)
 }
 
 /* ------------------------------------------------------------ params --- */
+static int hat_slot(int t, int v)
+{
+    if (t == T_909)
+        return v == DR_CH ? 0 : v == DR_OH ? 1 : -1;
+    if (t == T_808)
+        return v == D8_CH ? 0 : v == D8_OH ? 1 : -1;
+    return -1;
+}
+static const x0x_param_t HAT_VELOCITY_P = {"Velocity", 127, 127, 0};
+static const x0x_param_t OH_HOLD_P = {"Hold", 127, 0, 0};
+static const x0x_param_t B303_HPF_P = {"HPF", 127, 0, 0};
+static const char *const MIRROR_NAMES[] = {"OFF", "ON"};
+static const x0x_param_t B303_MIRROR_P = {"MIRROR A", 1, 0, MIRROR_NAMES};
+static const x0x_param_t B303_MIRROR_TRANSPOSE_P = {"MIRROR TRANSPOSE", 48, 24, 0};
+
+int engine_bass_hpf_hz(int value)
+{
+    if (value <= 0) return 0;
+    if (value > 127) value = 127;
+    return (int)(20.0f * fm_exp2f((float)(value - 1) * (8.9657843f / 126.0f)) + 0.5f);
+}
+
+/* Post-drive, before the part's pan and sends: 12 dB/octave Butterworth HPF.
+ * OFF is bit-exact bypass; wet ramps in/out and cutoff glides between blocks. */
+static void bass_hpf_render(bass_hpf_t *h, float *out, int n)
+{
+    if (!h->value && h->wet == 0.0f) {
+        h->ic1 = h->ic2 = 0.0f;
+        return;
+    }
+    if (h->value) h->g += (h->target - h->g) * 0.5f;
+    const float g = h->g, k = 1.41421356f;
+    const float a1 = 1.0f / (1.0f + g * (g + k));
+    for (int i = 0; i < n; i++) {
+        float x = out[i], v3 = x - h->ic2;
+        float v1 = a1 * h->ic1 + g * a1 * v3;
+        float v2 = h->ic2 + g * v1;
+        h->ic1 = 2.0f * v1 - h->ic1;
+        h->ic2 = 2.0f * v2 - h->ic2;
+        h->wet += h->value ? 1.0f / 256.0f : -1.0f / 256.0f;
+        if (h->wet > 1.0f) h->wet = 1.0f;
+        if (h->wet < 0.0f) h->wet = 0.0f;
+        out[i] = x + h->wet * (-k * v1 - v2);
+    }
+    h->ic1 = fm_flush(h->ic1); h->ic2 = fm_flush(h->ic2);
+}
+
 /* Return fxbus.h's parameter at T_FX's voice v, index i (engine.h), or -1 if there is none. */
 static int fx_param_at(int v, int i)
 {
@@ -171,9 +228,9 @@ int engine_nvoices(int t)
 int engine_nparams(int t, int v)
 {
     switch (t) {
-    case T_909: return drum909_nparams(v);
-    case T_808: return drum808_nparams(v);
-    case T_303: return bass303_nparams();
+    case T_909: return v == DR_OH ? OH_HOLD + 1 : hat_slot(t, v) >= 0 ? HAT_VELOCITY + 1 : drum909_nparams(v);
+    case T_808: return hat_slot(t, v) >= 0 ? HAT_VELOCITY + 1 : drum808_nparams(v);
+    case T_303: return v == 1 ? B303_MIRROR_TRANSPOSE + 1 : B303_HPF + 1;
     case T_BRK: return 3;                                /* Level, Pitch, Filter (sends: the mixer's; the rest: the pattern's) */
     case T_FX: {
         const int n = fxbus_nparams() - v * NPARAMS_MAX;
@@ -187,6 +244,15 @@ int engine_nparams(int t, int v)
 
 const x0x_param_t *engine_param(int t, int v, int i)
 {
+    if (t == T_303) {
+        if (i == B303_HPF) return &B303_HPF_P;
+        if (v == 1 && i == B303_MIRROR) return &B303_MIRROR_P;
+        if (v == 1 && i == B303_MIRROR_TRANSPOSE) return &B303_MIRROR_TRANSPOSE_P;
+    }
+    if (t == T_909 && v == DR_OH && i == OH_HOLD)
+        return &OH_HOLD_P;
+    if (i == HAT_VELOCITY && hat_slot(t, v) >= 0)
+        return &HAT_VELOCITY_P;
     switch (t) {
     case T_909: return drum909_param(v, i);
     case T_808: return drum808_param(v, i);
@@ -218,11 +284,39 @@ const char *engine_voice_name(int t, int v)
 
 static int apply_param(int t, int v, int i, int val)    /* ISR */
 {
+    if (t == T_909 && v == DR_OH && i == OH_HOLD) {
+        oh_hold = (uint8_t)(val < 0 ? 0 : val > 127 ? 127 : val);
+        return 1;
+    }
+    int h = hat_slot(t, v);
+    if (i == HAT_VELOCITY && h >= 0) {
+        hat_velocity[t][h] = (uint8_t)(val < 0 ? 0 : val > 127 ? 127 : val);
+        return 1;
+    }
     switch (t) {
     case T_909: drum909_set(&d909, v, i, val); break;
     case T_808: drum808_set(&d808, v, i, val); break;
     case T_303:
         if (v < 0 || v >= NBASS) return 0;
+        if (i == BASS303_CUTOFF || i == BASS303_RESO) {
+            if (i == BASS303_CUTOFF) live_cutoff[v] = (uint8_t)val;
+            else live_reso[v] = (uint8_t)val;
+            val += i == BASS303_CUTOFF ? 2 * live_acid[v] : live_acid[v] / 4;
+            val = val < 0 ? 0 : val > 127 ? 127 : val;
+        }
+        if (i == B303_HPF) {
+            bass_hpf_t *h = &bass_hpf[v];
+            h->value = (uint8_t)(val < 0 ? 0 : val > 127 ? 127 : val);
+            if (h->value) {
+                h->target = fm_tanf(FM_PI * (float)engine_bass_hpf_hz(h->value) / 44100.0f);
+                if (h->g == 0.0f) h->g = h->target;
+            }
+            break;
+        }
+        if (v == 1 && i == B303_MIRROR) { seq.bass_mirror = (uint8_t)(val != 0); break; }
+        if (v == 1 && i == B303_MIRROR_TRANSPOSE) {
+            seq.bass_mirror_transpose = (uint8_t)(val < 0 ? 0 : val > 48 ? 48 : val); break;
+        }
         if (i == BASS303_WAVE) {
             uint32_t base = bass_waves & 15u;
             int peer = v ^ 1;
@@ -239,7 +333,15 @@ static int apply_param(int t, int v, int i, int val)    /* ISR */
         } else bass303_set(&b303[v], i, val);
         break;
     case T_BRK: breaks_set(&brk, BRK_NSET + i, val); break;
-    case T_FX: fxbus_set(&fx, fx_param_at(v, i), val); break;
+    case T_FX: {
+        int param = fx_param_at(v, i);
+        if (param == FX_DL_FDBK) {
+            live_fb_base = (uint8_t)val;
+            val += 2 * live_feedback;
+            val = val < 0 ? 0 : val > 127 ? 127 : val;
+        }
+        fxbus_set(&fx, param, val); break;
+    }
     case T_MIX:
         if (v < 0 || v >= NPARTS)
             break;
@@ -266,6 +368,9 @@ void engine_set(int t, int v, int i, int val)
     }
     cq_put((uint32_t)t, (uint32_t)v, (uint32_t)i, (uint32_t)val);
 }
+void engine_live_set(int control, int value) { cq_put(C_LIVE, (uint32_t)control, 0, (uint32_t)value); }
+void engine_live_transpose(int semitones) { cq_put(C_LIVE, 4, 0, (uint32_t)(semitones + 24)); }
+void engine_live_quantize(int enabled) { cq_put(C_LIVE, 5, 0, (uint32_t)(enabled != 0)); }
 
 /* the output's scale: Felucca's -6 dBFS ceiling of the 24-bit codec (2^22), or its full scale (LOUD); the
  * clamp keeps an over from wrapping (normal: the codec's own full scale, as before) */
@@ -361,7 +466,7 @@ void engine_sound_centre_drum_pans(sound_t *s)
     int t, v;
     for (t = T_909; t <= T_808; t++)
         for (v = 0; v < NDRUM && v < NVOICES_MAX; v++) {
-            int i = engine_nparams(t, v) - 1;           /* PAN is every voice's last pot */
+            int i = (t == T_909 ? drum909_nparams(v) : drum808_nparams(v)) - 1; /* DSP's last pot is PAN */
             const x0x_param_t *p = engine_param(t, v, i);
             if (p && p->def == 64 && p->max == 127)
                 s->v[t][v][i] = 64;
@@ -418,27 +523,35 @@ static int prob_skip(int part, int v)                 /* ISR: 1 = this hit does 
 static void s_drum(void *x, int kit, int v, float vel);
 static int s_drum_seq(void *x, int kit, int v, float vel)
 {
-    if (prob_skip(kit, v))
+    int h = hat_slot(kit, v);
+    if (prob_skip(kit, v) || (h >= 0 && !hat_velocity[kit][h]))
         return 0;
     s_drum(x, kit, v, vel);
     return 1;
 }
 static void s_drum(void *x, int kit, int v, float vel)
 {
+    int h = hat_slot(kit, v);
+    float gain = h >= 0 ? (float)hat_velocity[kit][h] / 127.0f : 1.0f;
+    if (gain == 0.0f)
+        return;                         /* a silent lock does not retrigger/choke either hat */
     (void)x;
     if (v == 0)                          /* BD (both kits' track 1): the master's PUMP key */
         master_key(&mst, kit, vel);
     if ((unsigned)kit < NKIT && (unsigned)v < NDRUM)   /* MIX's drum pages: the track's meter jumps */
-        eng_hit[kit][v] = (uint8_t)(vel >= 1.0f ? 255 : (int)(vel * 255.0f));
-    if (kit == 0)
-        drum909_trigger(&d909, v, vel);
-    else                                 /* the 808's unaccented hit sits at D8_VEL_NORMAL, not at our 909 level */
-        drum808_trigger(&d808, v, vel >= 0.999f ? 1.0f : vel * (D8_VEL_NORMAL / (88.0f / 127.0f)));
+        eng_hit[kit][v] = (uint8_t)(vel * gain >= 1.0f ? 255 : (int)(vel * gain * 255.0f));
+    if (kit == 0) {
+        drum909_trigger_scaled(&d909, v, vel, gain);
+        if (v == DR_OH && oh_hold)
+            drum909_open_hat_hold(&d909, (uint32_t)engine_oh_hold_ms(oh_hold));
+    } else                               /* the 808's unaccented hit sits at D8_VEL_NORMAL, not at our 909 level */
+        drum808_trigger_scaled(&d808, v, vel >= 0.999f ? 1.0f : vel * (D8_VEL_NORMAL / (88.0f / 127.0f)), gain);
 }
 static void s_bon(void *x, int p, int note, int acc, int sl)
 {
     (void)x;
-    if (prob_skip(PART_303A + p, 0))                  /* skipped: a rest */
+    if (seq.live_retuning && !b303[p].gate) return; /* a probability-skipped note stays silent */
+    if (!seq.live_retuning && prob_skip(PART_303A + p, 0)) /* skipped: a rest */
         bass303_note_off(&b303[p]);
     else
         bass303_note_on(&b303[p], note, acc, sl);
@@ -573,6 +686,49 @@ static void midi_in(uint32_t pkt)
 }
 
 /* ---------------------------------------------------------------- render --- */
+static void live_command(uint32_t control, uint32_t value)
+{
+    if (control < 2u) {
+        live_acid[control] = (int8_t)((int)(value > 128u ? 128u : value) - 64);
+        apply_param(T_303, (int)control, BASS303_CUTOFF, live_cutoff[control]);
+        apply_param(T_303, (int)control, BASS303_RESO, live_reso[control]);
+    } else if (control == 2u) {
+        live_feedback = (int8_t)((int)(value > 128u ? 128u : value) - 64);
+        apply_param(T_FX, FX_DL_FDBK / NPARAMS_MAX, FX_DL_FDBK % NPARAMS_MAX, live_fb_base);
+    } else if (control == 3u) {
+        uint8_t mode, cutoff;
+        master_djf_pots((int)(value > 127u ? 127u : value), &mode, &cutoff);
+        live_drums_enabled = mode != 0;
+        if (mode) {
+            live_drums_mode = mode;
+            float fc = 30.0f * fm_exp2f((float)cutoff * (9.23f / 127.0f));
+            live_drums_target = fm_tanf(FM_PI * fm_minf(fc, 19000.0f) / 44100.0f);
+            for (int i = 0; i < 4; i++) if (live_drums[i].wet == 0.0f) {
+                live_drums[i].g = live_drums_target;
+                live_drums[i].ic1 = live_drums[i].ic2 = 0.0f;
+            }
+        }
+    } else if (control == 4u) seq_live_request(&seq, (int)value - 24, &SINK);
+    else if (control == 5u) seq_live_quantize(&seq, value != 0, &SINK);
+}
+
+static void live_filter_render(live_filter_t *f, float *x, uint32_t n)
+{
+    if (!live_drums_enabled && f->wet == 0.0f) { f->ic1 = f->ic2 = 0.0f; return; }
+    f->g += (live_drums_target - f->g) * 0.5f;
+    const float g = f->g, k = 1.41421356f, a1 = 1.0f / (1.0f + g * (g + k));
+    for (uint32_t i = 0; i < n; i++) {
+        float dry = x[i], v3 = dry - f->ic2;
+        float v1 = a1 * f->ic1 + g * a1 * v3, v2 = f->ic2 + g * v1;
+        f->ic1 = 2.0f * v1 - f->ic1; f->ic2 = 2.0f * v2 - f->ic2;
+        float filtered = live_drums_mode == 1 ? v2 : dry - k * v1 - v2;
+        f->wet += live_drums_enabled ? 1.0f / 256.0f : -1.0f / 256.0f;
+        f->wet = f->wet < 0.0f ? 0.0f : f->wet > 1.0f ? 1.0f : f->wet;
+        x[i] = dry + f->wet * (filtered - dry);
+    }
+    f->ic1 = fm_flush(f->ic1); f->ic2 = fm_flush(f->ic2);
+}
+
 static void drain(void)
 {
     uint32_t r = cq_r, pkt;
@@ -610,6 +766,8 @@ static void drain(void)
             bass_waves = (v ? (uint32_t)wa | ((uint32_t)wb << 2) : bass_waves & 15u)
                        | ((uint32_t)wa << 4) | ((uint32_t)wb << 6);
         }
+        else if (type == C_LIVE)
+            live_command(a, v);
         else if (type == C_DRUM)
             s_drum(0, (int)a, (int)b, (float)v / 4095.0f);
         else if (type == C_BON && a < NBASS)
@@ -780,6 +938,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
         PROF_T(pb);
         idle[b] = b303[b].idle;                           /* idle: the render writes zeros */
         bass303_render(&b303[b], bb[b], (int)n);
+        bass_hpf_render(&bass_hpf[b], bb[b], (int)n);
         PROF_ADD(2 + b, pb);
     }
     pt = plat_cycles();
@@ -809,6 +968,21 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
             t0[i] = (t0[i] + tr[i]) * 0.5f;
         kit_sends(PART_808, t0, n);
     }
+    int filter_drums = live_drums_enabled || live_drums[0].wet > 0.0f;
+    if (filter_drums) {
+        /* Complete just the drum/break bus, including its sends, before adding
+         * either 303. At neutral the original summation order stays bit exact. */
+        if (!brk_hold && !brk_silent_now) {
+            float g = mix_level[PART_BRK]; mix_targets(PART_BRK, g);
+            add_glide(dry_l, kbuf, &mix_glide[PART_BRK][GL_L], n);
+            add_glide(dry_r, kbuf, &mix_glide[PART_BRK][GL_R], n);
+            add_glide(rev, kbuf, &mix_glide[PART_BRK][GL_REV], n);
+            add_glide(dly, kbuf, &mix_glide[PART_BRK][GL_DLY], n);
+            meter(PART_BRK, kbuf, g, n);
+        }
+        live_filter_render(&live_drums[0], dry_l, n); live_filter_render(&live_drums[1], dry_r, n);
+        live_filter_render(&live_drums[2], rev, n); live_filter_render(&live_drums[3], dly, n);
+    }
     for (b = 0; b < NBASS; b++) {
         int p = PART_303A + b;
         if (idle[b])
@@ -820,7 +994,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
         add_glide(dly, bb[b], &mix_glide[p][GL_DLY], n);
         meter(p, bb[b], mix_level[p], n);
     }
-    if (!brk_hold && !brk_silent_now) {
+    if (!filter_drums && !brk_hold && !brk_silent_now) {
         float g = mix_level[PART_BRK];
         mix_targets(PART_BRK, g);
         add_glide(dry_l, kbuf, &mix_glide[PART_BRK][GL_L], n);
@@ -1058,15 +1232,32 @@ void engine_brk_loops(void)
 void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t *base)
 {
     int p;
+    oh_hold = 0;
+    live_acid[0] = live_acid[1] = live_feedback = 0;
+    live_drums_mode = live_drums_enabled = 0; live_drums_target = 0.0f;
+    for (p = 0; p < 4; p++) {
+        live_drums[p].g = live_drums[p].ic1 = live_drums[p].ic2 = live_drums[p].wet = 0.0f;
+    }
+    for (p = 0; p < NBASS; p++) {
+        bass_hpf[p].g = bass_hpf[p].target = bass_hpf[p].ic1 = bass_hpf[p].ic2 = bass_hpf[p].wet = 0.0f;
+        bass_hpf[p].value = 0;
+    }
+    for (p = 0; p < NKIT; p++)
+        hat_velocity[p][0] = hat_velocity[p][1] = 127;
     for (p = 0; p < NPARTS * NDRUM; p++)
         prob[p / NDRUM][p % NDRUM] = 100;             /* every step plays, until a lane says */
     drum909_init(&d909);
     drum808_init(&d808);
     bass303_init(&b303[0]);
     bass303_init(&b303[1]);
+    for (p = 0; p < NBASS; p++) {
+        live_cutoff[p] = (uint8_t)bass303_get(&b303[p], BASS303_CUTOFF);
+        live_reso[p] = (uint8_t)bass303_get(&b303[p], BASS303_RESO);
+    }
     bass_waves = 0;
     breaks_init(&brk);
     fxbus_init(&fx, dly_buf, DLY_LEN);
+    live_fb_base = (uint8_t)fxbus_get(&fx, FX_DL_FDBK);
     master_init(&mst);
     seq_init(&seq, patterns);
     seq.song = song;

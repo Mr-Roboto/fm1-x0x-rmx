@@ -114,7 +114,7 @@ int main(void)
     proj.set.snd_rev = 4; proj.sound.v[T_BRK][0][2] = 0;
     assert(project_save() == 0); check_current(); to_nor(); backup(0); memcpy(img, got, got_n); img_n = got_n;
     assert(restore() == 0); from_nor(); assert(project_load() == 0);
-    assert(proj.set.snd_rev == 5 && proj.sound.v[T_BRK][0][2] == 64);
+    assert(proj.set.snd_rev == PROJ_SND_REV && proj.sound.v[T_BRK][0][2] == 64);
     puts("PASS: revision-4 RMX backup loads with BREAK FILTER OFF");
     /* Correct transport CRC cannot make malformed project contents valid. */
     uint32_t len[6]; for (int i = 0; i < 6; i++) len[i] = (uint32_t)store_len[bu_obj(i)];

@@ -28,6 +28,20 @@ enum { PART_909, PART_808, PART_303A, PART_303B, PART_BRK, NPARTS };
 enum { MX_LEVEL, MX_REV, MX_DLY, MX_PAN, MX_NPARAMS };
 #define NVOICES_MAX 12                 /* a drum machine: 11 tracks + the kit */
 #define NPARAMS_MAX 16                 /* params per (target, voice) */
+#define HAT_VELOCITY 8                 /* appended CH/OH engine pot; existing DSP pot indices stay fixed */
+#define OH_HOLD 9                      /* 909 OH only: appended after Velocity */
+#define B303_HPF 13                    /* app-level post-drive filter; 0 = bypass */
+#define B303_MIRROR 14                 /* 303B follows A's sequencer events */
+#define B303_MIRROR_TRANSPOSE 15        /* 0..48 = -24..+24 semitones */
+int engine_bass_hpf_hz(int value);
+void engine_live_set(int control, int value); /* 0..3: ACID1, ACID2, FEEDBACK, DRUMS */
+void engine_live_transpose(int semitones);
+void engine_live_quantize(int enabled);
+static inline int engine_oh_hold_ms(int value)
+{
+    value = value < 0 ? 0 : value > 127 ? 127 : value;
+    return (value * 500 + 63) / 127;
+}
 
 /* the sound of a project: every pot of every engine, mirrored here by the main loop */
 typedef struct {

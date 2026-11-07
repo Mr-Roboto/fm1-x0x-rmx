@@ -140,6 +140,12 @@ typedef struct {
     volatile uint8_t ext;             /* 1 = following an external clock */
     volatile uint8_t send_clock;      /* 1 = emit MIDI clock + transport when internal */
     volatile uint8_t send_notes;      /* 1 = echo the sequence on MIDI, on each part's channel */
+    uint8_t bass_mirror, bass_mirror_active, bass_mirror_transpose; /* B follows A; transpose centred at 24 */
+    uint8_t bass_midi_active;          /* note 0 is valid: don't use its pitch as the active flag */
+    volatile int8_t live_transpose, live_pending; /* performance transpose; -128 = no pending key */
+    uint8_t live_quantize, live_phase, live_retuning, live_accent;
+    uint8_t live_note[NBASS];          /* held pitches before the live transpose */
+    uint32_t live_tick;               /* independent 24-ppqn clock: one bar = 96 ticks */
     volatile uint8_t ch[NTRACKS];     /* each part's MIDI channel, 0-15 (in and out); SEQ_CH_OFF = none */
     uint8_t song_rep;                 /* the song bar playing: its passes still to play (SONG_REP) */
     volatile uint32_t mute;           /* MUTE_* bits */
@@ -181,6 +187,8 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o);
 void seq_start(seq_t *s);             /* from step 1 of the current (or cued) pattern */
 void seq_stop(seq_t *s);
 void seq_continue(seq_t *s);
+void seq_live_request(seq_t *s, int semitones, const seq_sink_t *o);
+void seq_live_quantize(seq_t *s, int enabled, const seq_sink_t *o);
 void seq_ext_clock(seq_t *s);         /* one 24-ppqn tick (USB MIDI 0xF8) */
 void seq_cue(seq_t *s, int pattern);  /* every part, at the end of the bar (now, if stopped) */
 void seq_cue_part(seq_t *s, int part, int pattern);

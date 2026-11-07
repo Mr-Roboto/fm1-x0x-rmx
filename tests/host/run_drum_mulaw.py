@@ -126,7 +126,11 @@ def main():
             lib.benchmark.argtypes = [ctypes.c_int]
             lib.benchmark.restype = ctypes.c_double
             libs.append(lib)
-        assert libs[0].engine_bytes() == libs[1].engine_bytes(), "engine RAM layout changed"
+        # HARDER adds one float of per-hit gain per sampler (host pointer alignment
+        # can add padding); the rest of the engine must retain its size.
+        sampler_growth = libs[1].sampler_bytes() - libs[0].sampler_bytes()
+        assert sampler_growth in (4, 8), "unexpected sampler RAM growth"
+        assert libs[1].engine_bytes() - libs[0].engine_bytes() == 4 * sampler_growth, "unexpected engine RAM growth"
         arrays = [(ctypes.c_float * (60000 * 4))() for _ in libs]
         states = [(ctypes.c_uint32 * 16)() for _ in libs]
         cases = 0

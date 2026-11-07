@@ -146,6 +146,11 @@ static int load_settings(settings_t *dst)
         return -1;
     for (i = 0; i + 4u < (uint32_t)n; i++)
         ((uint8_t *)dst)[i] = io_buf[4u + i];
+    /* Stock X0X 1.2.1 has 32-byte settings and revision 6, but no hat velocity.
+     * HARDER revision 6 has the full settings including start_pat. Run the hat
+     * migration for the stock layout without changing genuine HARDER zeros. */
+    if (n == 36 && dst->snd_rev == 6)
+        dst->snd_rev = 5;
     if ((uint32_t)n == sizeof *dst + 4u) {           /* exactly what a save of these settings writes */
         stored_known[OBJ_SET] = 1;
         stored_hash[OBJ_SET] = hash_of(io_buf, (uint32_t)n);
@@ -513,6 +518,20 @@ int project_load(void)
         sound_rev2();
     if (sound_ok && proj.set.snd_rev < 5)             /* before the break FILTER: its unused pot was 0 */
         proj.sound.v[T_BRK][0][2] = engine_param(T_BRK, 0, 2)->def;
+    if (sound_ok && proj.set.snd_rev < 6) {
+        proj.sound.v[T_909][7][HAT_VELOCITY] = 127;     /* CH/OH, previously unused slots */
+        proj.sound.v[T_909][8][HAT_VELOCITY] = 127;
+        proj.sound.v[T_808][9][HAT_VELOCITY] = 127;
+        proj.sound.v[T_808][10][HAT_VELOCITY] = 127;
+    }
+    if (sound_ok && proj.set.snd_rev < 7)
+        proj.sound.v[T_909][8][OH_HOLD] = 0;          /* previously unused: original envelope */
+    if (sound_ok && proj.set.snd_rev < 8) {
+        proj.sound.v[T_303][0][B303_HPF] = 0;
+        proj.sound.v[T_303][1][B303_HPF] = 0;
+        proj.sound.v[T_303][1][B303_MIRROR] = 0;
+        proj.sound.v[T_303][1][B303_MIRROR_TRANSPOSE] = 24;
+    }
     proj.set.snd_rev = PROJ_SND_REV;
     engine_sound_validate_bass(&proj.sound);
     return bad ? -1 : 0;

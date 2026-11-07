@@ -52,6 +52,7 @@ void render_case(int voice, int pitch, int dist, int block, int edge, float *out
 }
 
 unsigned engine_bytes(void) { return sizeof(drum909_t); }
+unsigned sampler_bytes(void) { return sizeof(d9_smp_t); }
 
 static volatile float bench_sink;
 

@@ -1574,6 +1574,11 @@ static float lane_hz(int s, float tune) { return d8_midicps(k_base_note[s] + tun
 
 void drum808_trigger(drum808_t *d, int track, float vel)
 {
+    drum808_trigger_scaled(d, track, vel, 1.0f);
+}
+
+void drum808_trigger_scaled(drum808_t *d, int track, float vel, float gain)
+{
     int s, lane;
     float vgain, volts, soft, tune, decay;
     const float *pv;
@@ -1670,6 +1675,7 @@ void drum808_trigger(drum808_t *d, int track, float vel)
         cy_trigger(&d->cy, decay, 4.0f);
         break;
     }
+    d->lane[lane].hit *= gain;             /* independent of the kit's accent depth and circuit voltage */
 }
 
 static int voice_active(const drum808_t *d, int l)

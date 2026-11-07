@@ -52,12 +52,14 @@ for (const voice of ['a', 'b']) {
   compare(`303${voice}-tone`);
   tap(4); compare(`303${voice}-voice`);
   tap(4); compare(`303${voice}-extra`);
+  tap(4); compare(`303${voice}-mix`);
   tap(4); compare(`303${voice}-tone`); // EDIT wrap
-  steps(0, 2); compare(`303${voice}-extra`);
-  turn(0, 1); compare(`303${voice}-extra`); // SELECT clamp
-  tap(1); steps(0, 12); compare(`303${voice}-sel-volume`, true);
+  steps(0, 3); compare(`303${voice}-mix`);
+  turn(0, 1); compare(`303${voice}-mix`); // SELECT clamp
+  turn(0, -1); compare(`303${voice}-extra`);
+  tap(1); steps(0, 16); compare(`303${voice}-sel-volume`, true);
   turn(1, -1); turn(1, 1); // VOLUME under MORE still edits
-  steps(0, -4); compare(`303${voice}-sel-extra`, true);
+  steps(0, -8); compare(`303${voice}-sel-extra`, true);
   tap(6);
   for (let k = 0; k < 4; k++) turn(3 + k, k === 2 ? -1 : 1);
   compare(`303${voice}-extra-edited`);

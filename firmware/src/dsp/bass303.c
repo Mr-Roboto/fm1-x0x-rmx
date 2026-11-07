@@ -599,7 +599,7 @@ static inline float hb(bass303_ap_t *s, float a, float x)
  * 20 kHz). 8 / 4 coefficients (-99 / -81 dB) measured the same alias floor in
  * tests/host/run_bass303.sh: what reaches the decimator is already low-passed by the ladder.
  * Paths: even coefficients take the newer sample, odd ones the older. */
-#if BASS303_OS == 4
+#if BASS303_OS > 1
 static inline float decim_hb1(bass303_ap_t *s, float x_old, float x_new)
 {
     float a = x_new, c = x_old;

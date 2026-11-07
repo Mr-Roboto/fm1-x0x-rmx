@@ -14,6 +14,7 @@ void baseline_bass303_note_off(void *b);
 void baseline_bass303_render(void *b, float *out, int n);
 void baseline_bass303_set_lite(void *b, int on);
 void oracle_bass303_render(bass303_t *b, float *out, int n);
+void oracle_bass303_init(bass303_t *b);
 
 static int fails;
 #define CHECK(c, label) do { if (!(c)) { puts("FAIL: " label); fails++; } } while (0)
@@ -154,6 +155,9 @@ static void voice(void)
 }
 int main(void)
 {
+    bass303_t warmup;
+    /* The separately compiled oracle owns its own shared coefficient table. */
+    oracle_bass303_init(&warmup);
     oscillator(); controls(); legacy(); voice();
     printf("bass303 waveform OS%d CTRL%d: %s; instance %zu B\n", BASS303_OS, BASS303_CTRL,
            fails ? "FAIL" : "PASS", sizeof(bass303_t));

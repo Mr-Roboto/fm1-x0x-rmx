@@ -54,6 +54,7 @@
 #define TRK_BASS0 NKIT
 #define TRK_BRK (NKIT + NBASS)
 #define NTRACKS (NKIT + NBASS + 1)
+#define LIVE_FILL_VOICES 4            /* 909 snare/high tom; 808 clap/snare */
 /* mute bits: kit k voice v = k * NDRUM + v; then 303 A, 303 B, BREAK */
 #define MUTE_BASS0 (NKIT * NDRUM)
 #define MUTE_BRK (MUTE_BASS0 + NBASS)
@@ -146,6 +147,9 @@ typedef struct {
     uint8_t live_quantize, live_phase, live_retuning, live_accent;
     uint8_t live_note[NBASS];          /* held pitches before the live transpose */
     uint32_t live_tick;               /* independent 24-ppqn clock: one bar = 96 ticks */
+    uint8_t live_fills, live_firing;   /* five held performance keys; callback bypasses sequence chance */
+    uint8_t live_fill_vel[LIVE_FILL_VOICES]; /* merged live hits at this event timestamp */
+    uint16_t live_drum_seen[NKIT];     /* accepted stored hits take priority over a coincident live hit */
     volatile uint8_t ch[NTRACKS];     /* each part's MIDI channel, 0-15 (in and out); SEQ_CH_OFF = none */
     uint8_t song_rep;                 /* the song bar playing: its passes still to play (SONG_REP) */
     volatile uint32_t mute;           /* MUTE_* bits */
@@ -189,6 +193,7 @@ void seq_stop(seq_t *s);
 void seq_continue(seq_t *s);
 void seq_live_request(seq_t *s, int semitones, const seq_sink_t *o);
 void seq_live_quantize(seq_t *s, int enabled, const seq_sink_t *o);
+void seq_live_fills(seq_t *s, unsigned mask);
 void seq_ext_clock(seq_t *s);         /* one 24-ppqn tick (USB MIDI 0xF8) */
 void seq_cue(seq_t *s, int pattern);  /* every part, at the end of the bar (now, if stopped) */
 void seq_cue_part(seq_t *s, int part, int pattern);

@@ -965,11 +965,25 @@ ACID and FEEDBACK show a signed percentage; 0% leaves the underlying controls
 unchanged. The offsets follow subsequent edits and p-lock/motion values instead of
 replacing them. DRUMS filters the drum/break dry signal and their effect sends;
 the 303s and existing shared reverb/delay tails stay unaffected. All values clamp
-to their normal parameter ranges. Hold ENV and turn a knob to return it to neutral.
+to their normal parameter ranges. Hold ENV and turn a knob to return it to neutral. Tap ENV in Live to reset
+FEEDBACK and DRUMS to neutral together, keeping ACID1/2 as they are.
 
 White keys transpose **both 303 sequences** by one semitone per key: keys 1–16
 are **−7 through +8**, and **key 8 is unison (0)**. The current key stays lit.
-The first five black keys retain the usual part mutes. The rightmost black key
+The first five black keys retain the usual part mutes. Hold black keys **6–10**
+for momentary fills: **R1** (909 snare eighths), **R2** (snare sixteenths), **R3**
+(snare thirty-seconds), **P1** (808 clap/snare pickups) and **P2** (909 high tom with 808 clap accents). Their labels and LEDs light while held. Any combination layers;
+overlapping live hits use the highest velocity, with one trigger per drum.
+Fills join the existing bar phase at their next grid point. Releasing stops new
+hits and lets the tails decay. Leaving Live or stopping transport clears them;
+pressing while stopped does not arm a fill. Sequenced part/voice mutes do not
+mute the fills, but normal drum levels, pan, sends and effects still apply. A
+coincident stored hit retains its velocity and parameter locks. Nothing is
+written into the stored pattern. P2's live 909 high-tom hits receive a +9 dB lift to
+stand out in the mix; ordinary sequenced levels are unchanged.
+See [Live drum fills](LIVE_DRUM_FILLS.md).
+
+The rightmost black key
 toggles change timing: **unlit = immediate**, **lit = next bar**. In bar mode,
 the newly selected key flashes while the current key stays lit. A further choice
 replaces the queued change; choosing the current key cancels it. Turning bar mode

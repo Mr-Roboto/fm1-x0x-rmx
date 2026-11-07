@@ -30,6 +30,7 @@ run env-reset sh tests/host/run_env_reset.sh
 run hat-velocity sh tests/host/run_hat_velocity.sh
 run bass303-hpf-mirror sh tests/host/run_bass303_hpf_mirror.sh
 run live sh tests/host/run_live.sh
+run live-fills sh tests/host/run_live_fills.sh
 run backup sh tests/host/run_backup.sh
 run tb3po sh tests/host/run_tb3po.sh
 run drum-generator sh tests/host/run_drum_gen.sh
@@ -115,6 +116,7 @@ if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # 
     run bass303-extra-emu node tests/host/bass303_extra_emu_test.mjs build/emu/x0x.wasm
     run bass303-hpf-mirror-emu node tests/host/bass303_hpf_mirror_emu_test.mjs build/emu/x0x.wasm
     run live-emu node tests/host/live_emu_test.mjs build/emu/x0x.wasm
+    run live-fills-emu node tests/host/live_fills_emu_test.mjs build/emu/x0x.wasm
     run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
     run scheme-emu node tests/host/scheme_emu_test.mjs build/emu/x0x.wasm
     mkdir -p build/scenarios/remix_parity

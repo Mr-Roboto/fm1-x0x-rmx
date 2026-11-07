@@ -3,6 +3,8 @@
 #include "sequencer.h"
 #include "remix.h"
 #include "tb3po.h"
+#include "../dsp/drum909.h"            /* existing voice identifiers for Live fills */
+#include "../dsp/drum808.h"
 
 #define NEVER 0xFFFFFFFFu
 
@@ -249,9 +251,64 @@ void seq_live_quantize(seq_t *s, int enabled, const seq_sink_t *o)
     if (!enabled && s->live_pending != -128) live_apply(s, s->live_pending, o);
 }
 
+void seq_live_fills(seq_t *s, unsigned mask)
+{
+    s->live_fills = (uint8_t)((s->playing || s->req_start || s->req_cont) && !s->req_stop ? mask & 31u : 0u);
+}
+
+/* The shared 24-ppqn transport gives a 1/32 grid every three ticks.
+ * All patterns index the bar phase, never the time their key was pressed. */
+static void live_fill_tick(seq_t *s)
+{
+    static const uint8_t r1[8] = {95,70,85,75,105,75,90,80};
+    static const uint8_t r2[16] = {95,70,80,65,100,75,85,70,105,75,90,70,110,80,95,85};
+    static const uint8_t r3[8] = {110,65,85,70,100,65,90,75};
+    static const uint8_t clap[16] = {0,0,95,0,0,0,90,0,0,0,105,0,0,0,110,0};
+    static const uint8_t snare[16] = {0,0,0,65,0,0,0,0,0,0,0,70,0,0,0,85};
+    static const uint8_t low[16] = {100,0,0,70,0,0,0,75,0,0,100,0,0,0,110,0};
+    static const uint8_t high[16] = {0,0,80,0,0,0,95,0,0,85,0,0,0,80,0,100};
+    static const uint8_t rim[16] = {0,0,0,0,85,0,0,0,0,0,0,0,95,0,0,0};
+    unsigned grid = s->live_phase / 3u, step = grid / 2u, mask = s->live_fills;
+    uint8_t *v = s->live_fill_vel, sn = 0;
+    if ((mask & 1u) && !(grid & 3u)) sn = r1[grid / 4u];
+    if ((mask & 2u) && !(grid & 1u) && r2[step] > sn) sn = r2[step];
+    if ((mask & 4u) && r3[grid & 7u] > sn) sn = r3[grid & 7u];
+    if (!(grid & 1u)) {
+        if (mask & 8u) {
+            if (clap[step] > v[1]) v[1] = clap[step];
+            if (snare[step] > v[3]) v[3] = snare[step];
+        }
+        if (mask & 16u) {
+            if (low[step] > v[2]) v[2] = low[step];
+            if (high[step] > v[2]) v[2] = high[step];
+            if (rim[step] > v[1]) v[1] = rim[step];
+        }
+    }
+    if (sn > v[0]) v[0] = sn;
+}
+
+static void live_fill_fire(seq_t *s, const seq_sink_t *o)
+{
+    static const uint8_t kit[LIVE_FILL_VOICES] = {0,1,0,1};
+    static const uint8_t voice[LIVE_FILL_VOICES] = {DR_SD,D8_CP,DR_HT,D8_SD};
+    s->live_firing = 1;
+    for (int i = 0; i < LIVE_FILL_VOICES; i++) {
+        int k = kit[i], v = voice[i];
+        uint8_t velocity = s->live_fill_vel[i];
+        if (!velocity || (s->live_drum_seen[k] & (1u << v))) continue;
+        if (!o->drum(o->ctx, k, v, (float)velocity / 127.0f)) continue;
+        if (s->send_notes && s->ch[k] != SEQ_CH_OFF) {
+            midi(o, (uint8_t)(0x90 | s->ch[k]), GM_DRUM[k][v], velocity);
+            midi(o, (uint8_t)(0x80 | s->ch[k]), GM_DRUM[k][v], 0);
+        }
+    }
+    s->live_firing = 0;
+}
+
 static void live_clock(seq_t *s, const seq_sink_t *o)
 {
     if (!s->live_phase && s->live_pending != -128) live_apply(s, s->live_pending, o);
+    if (s->live_fills && s->live_phase % 3u == 0) live_fill_tick(s);
     s->live_phase = (uint8_t)((s->live_phase + 1u) % 96u);
 }
 
@@ -267,6 +324,7 @@ static void fire_drum(seq_t *s, int k, int p, const seq_sink_t *o)
             continue;
         if (!o->drum(o->ctx, k, v, vel))
             continue;                                /* its chance said no: no MIDI either */
+        if (s->live_fills) s->live_drum_seen[k] |= (uint16_t)(1u << v);
         if (s->send_notes && s->ch[k] != SEQ_CH_OFF) {
             uint8_t mv = (uint8_t)(vel * 127.0f);
             midi(o, (uint8_t)(0x90 | s->ch[k]), GM_DRUM[k][v], mv);
@@ -548,6 +606,7 @@ static void do_stop(seq_t *s, const seq_sink_t *o)
 {
     int b, t;
     s->playing = 0;
+    s->live_fills = 0;
     for (b = 0; b < NBASS; b++)
         bass_release(s, b, o);
     if (o->brk_stop)
@@ -608,6 +667,13 @@ uint32_t seq_until_event(seq_t *s, uint32_t n)
     if (!s->ext && s->send_clock && (e = s->clk_to_next >> 8) < m)
         m = e;
     if (!s->ext && s->live_pending != -128 && (e = s->live_tick >> 8) < m) m = e;
+    if (!s->ext && s->live_fills) {
+        /* Only the common 1/32 boundary needs an extra render split; the
+         * intervening 24-ppqn ticks advance silently in seq_advance(). */
+        uint32_t ticks = (3u - s->live_phase % 3u) % 3u;
+        e = (s->live_tick + ticks * (seq_step_q8(s, RATE_16) / 6u)) >> 8;
+        if (e < m) m = e;
+    }
     return m ? m : 1;
 }
 
@@ -615,6 +681,8 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
 {
     int t, guard;
     uint32_t dq = k << 8;
+    for (t = 0; t < LIVE_FILL_VOICES; t++) s->live_fill_vel[t] = 0;
+    for (t = 0; t < NKIT; t++) s->live_drum_seen[t] = 0;
     if (s->bass_mirror_active != s->bass_mirror) {
         bass_release(s, 1, o);
         s->bass_mirror_active = s->bass_mirror;
@@ -707,6 +775,7 @@ void seq_advance(seq_t *s, uint32_t k, const seq_sink_t *o)
         midi(o, 0xF8, 0, 0);
         s->clk_to_next += seq_step_q8(s, RATE_16) / 6u;           /* 24 ppqn */
     }
+    if (s->live_fills) live_fill_fire(s, o);
 }
 
 void seq_start(seq_t *s) { s->req_start = 1; }

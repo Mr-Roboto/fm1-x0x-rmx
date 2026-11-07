@@ -41,7 +41,7 @@ typedef struct {
     uint8_t mixsel;                    /* MIX's PARTS: the part the knobs set (black keys 1-5) */
     int8_t oct;
     uint8_t rec;
-    uint8_t live[4], live_quantize;
+    uint8_t live[4], live_quantize, live_fills;
     uint8_t freeplay[NBASS];           /* SEQ > FREE PLAY: the keys play the 303, nothing written (not saved) */
     uint8_t wpos[NBASS];
     int8_t held_step;
@@ -88,6 +88,7 @@ static void live_reset(void)
 {
     for (int i = 0; i < 4; i++) { ui.live[i] = 64; engine_live_set(i, 64); }
     ui.live_quantize = 0; engine_live_quantize(0); engine_live_transpose(0);
+    ui.live_fills = 0; engine_live_fills(0);
 }
 #define FOOT_GAP 7                     /* between the footer's parts */
 static uint16_t footer_text(const char **a, const char **b, const char **c);
@@ -1840,6 +1841,10 @@ static int32_t accel(int role, int32_t s, int range)
 
 static void set_view(int v)
 {
+    if (ui.view == V_LIVE && v != V_LIVE) {
+        ui.live_fills = 0;
+        engine_live_fills(0);
+    }
     if (ui.view == V_GLO) {
         ui.global_sel = ui.list_sel;
         ui.global_top = ui.list_top;
@@ -2285,6 +2290,15 @@ static void key_event(int k, int down)
     if (ui.overlay == O_ASK || ui.view == V_PERF || perf_testing())
         return;
     if (ui.view == V_LIVE) {
+        if (bl >= 5 && bl <= 9) {
+            uint8_t bit = (uint8_t)(1u << (bl - 5)), before = ui.live_fills;
+            if (down && (seq.playing || seq.req_start || seq.req_cont) && !seq.req_stop)
+                ui.live_fills |= bit;
+            else if (!down)
+                ui.live_fills &= (uint8_t)~bit;
+            if (before != ui.live_fills) engine_live_fills(ui.live_fills);
+            return;
+        }
         if (!down) return;
         if (w >= 0) engine_live_transpose(w - 7); /* key 8 is unison; adjacent keys are semitones */
         else if (bl == 10) {
@@ -2493,6 +2507,14 @@ static void button_tap(int b)
         return;
     }
     switch (b) {
+    case B_ENV:
+        if (ui.view == V_LIVE && ui.overlay == O_NONE) {
+            ui.live[2] = ui.live[3] = 64;
+            engine_live_set(2, 64);
+            engine_live_set(3, 64);
+            say("FEEDBACK + DRUMS RESET", 0);
+        }
+        break;
     case B_PLAY:
         if (ui.btn & (1u << B_HOME)) {               /* HOME + PLAY: redo */
             ui.btn_used |= 1u << B_HOME;
@@ -2646,6 +2668,10 @@ static void input(void)
 {
     uint32_t btn = plat_buttons(), keys = plat_keys(), ch, i;
     int e;
+    if (ui.live_fills && ((!seq.playing && !seq.req_start && !seq.req_cont) || seq.req_stop)) {
+        ui.live_fills = 0;
+        engine_live_fills(0);
+    }
     ch = btn ^ ui.btn;
     for (i = 0; i < NB; i++) {
         uint32_t m = 1u << i;
@@ -3972,7 +3998,7 @@ static uint16_t footer_text(const char **a, const char **b, const char **c)
         *b = "ALGO: CHANGE";
         *c = "HOME: BACK";
     } else if (ui.view == V_LIVE) {
-        *a = "WHITE: TRANSPOSE"; *b = "BLACK: MUTE"; *c = "LAST: BAR";
+        *a = "WHITE: TRANSPOSE"; *b = "BLACK: MUTE/FILL"; *c = "LAST: BAR";
     } else if (ui.view == V_HOME) {
         *a = "WHITE: PATTERN";
         *b = "TWO: CHAIN";
@@ -4047,10 +4073,13 @@ static void draw_live(int band)
         for (int i = 0; i < 16; i++) {
             int on = i - 7 == current, queued = i - 7 == pending;
             uint16_t col = on ? C_HI : queued && (ui.frame & 8u) ? C_AMB : C_LINE;
-            box(4 + i * 14, 23, 12, i == 7 ? 13 : 9, col);
+            box(4 + i * 14, 21, 12, i == 7 ? 9 : 6, col);
         }
         for (int p = 0; p < NPARTS; p++)
-            text_c(24 + p * 48, 47, &FONT_XS, PART_S[p], part_muted(p) ? C_DIM : PART_COL[p]);
+            text_c(24 + p * 48, 34, &FONT_XS, PART_S[p], part_muted(p) ? C_DIM : PART_COL[p]);
+        static const char *const fills[] = {"R1", "R2", "R3", "P1", "P2"};
+        for (int p = 0; p < 5; p++)
+            text_c(24 + p * 48, 53, &FONT_T, fills[p], ui.live_fills & (1u << p) ? C_AMB : C_DIM);
     }
 }
 
@@ -4311,6 +4340,10 @@ static void leds(void)
                 else k |= 1u << BLACK_KEY[i];
             }
             if (ui.live_quantize) k |= 1u << BLACK_KEY[10];
+            for (i = 0; i < 5; i++) {
+                if (ui.live_fills & (1u << i)) k |= 1u << BLACK_KEY[5 + i];
+                else d |= 1u << BLACK_KEY[5 + i];
+            }
         } else if (ui.view == V_HOME || ui.view == V_SONG) {
             const song_t *sg = song();
             int bar = ui.view == V_SONG && ui.song_sel < sg->len;
@@ -4388,7 +4421,10 @@ static void leds(void)
                 d |= 1u << BLACK_KEY[i];
         }
     }
-    k |= ui.keys;
+    uint32_t pressed = ui.keys;
+    if (ui.view == V_LIVE)
+        for (i = 0; i < 5; i++) pressed &= ~(1u << BLACK_KEY[5 + i]);
+    k |= pressed; /* Live fill LEDs show armed state, including stop/exit cleanup. */
     plat_keys_dim(d & ~k);
     plat_glow(proj.set.keyled == 1);
     plat_play_red(ui.rec);                           /* PLAY green; red while recording */
@@ -4408,6 +4444,7 @@ void ui_init(void)
     corners_init();
     for (i = 0; i < 4; i++) ui.live[i] = 64;
     ui.live_quantize = 0;
+    ui.live_fills = 0;
     ui.view = V_PART;
     ui.prev_view = V_PART;
     ui.part = PART_909;

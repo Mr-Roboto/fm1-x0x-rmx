@@ -371,6 +371,7 @@ void engine_set(int t, int v, int i, int val)
 void engine_live_set(int control, int value) { cq_put(C_LIVE, (uint32_t)control, 0, (uint32_t)value); }
 void engine_live_transpose(int semitones) { cq_put(C_LIVE, 4, 0, (uint32_t)(semitones + 24)); }
 void engine_live_quantize(int enabled) { cq_put(C_LIVE, 5, 0, (uint32_t)(enabled != 0)); }
+void engine_live_fills(unsigned mask) { cq_put(C_LIVE, 6, 0, mask & 31u); }
 
 /* the output's scale: Felucca's -6 dBFS ceiling of the 24-bit codec (2^22), or its full scale (LOUD); the
  * clamp keeps an over from wrapping (normal: the codec's own full scale, as before) */
@@ -524,7 +525,7 @@ static void s_drum(void *x, int kit, int v, float vel);
 static int s_drum_seq(void *x, int kit, int v, float vel)
 {
     int h = hat_slot(kit, v);
-    if (prob_skip(kit, v) || (h >= 0 && !hat_velocity[kit][h]))
+    if ((!seq.live_firing && prob_skip(kit, v)) || (h >= 0 && !hat_velocity[kit][h]))
         return 0;
     s_drum(x, kit, v, vel);
     return 1;
@@ -533,6 +534,8 @@ static void s_drum(void *x, int kit, int v, float vel)
 {
     int h = hat_slot(kit, v);
     float gain = h >= 0 ? (float)hat_velocity[kit][h] / 127.0f : 1.0f;
+    if (seq.live_firing && kit == T_909 && v == DR_HT)
+        gain *= 2.8183829f;             /* +9 dB for P2 only; retain the stored voice/mixer settings */
     if (gain == 0.0f)
         return;                         /* a silent lock does not retrigger/choke either hat */
     (void)x;
@@ -710,6 +713,7 @@ static void live_command(uint32_t control, uint32_t value)
         }
     } else if (control == 4u) seq_live_request(&seq, (int)value - 24, &SINK);
     else if (control == 5u) seq_live_quantize(&seq, value != 0, &SINK);
+    else if (control == 6u) seq_live_fills(&seq, value);
 }
 
 static void live_filter_render(live_filter_t *f, float *x, uint32_t n)

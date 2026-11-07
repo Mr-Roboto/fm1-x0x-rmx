@@ -461,6 +461,7 @@ void drum909_trigger_scaled(drum909_t *d, int voice, float vel, float gain)
     }
     case DR_LT: case DR_MT: case DR_HT:
         d9_tom_trigger(&d->tom[voice - DR_LT], &d->bt[voice], vgain);
+        d->tom[voice - DR_LT].out_gain *= gain; /* per-hit level, after the tom circuit */
         break;
     case DR_RS: {
         d9_rim_t *r = &d->rim;

@@ -37,6 +37,7 @@ int engine_bass_hpf_hz(int value);
 void engine_live_set(int control, int value); /* 0..3: ACID1, ACID2, FEEDBACK, DRUMS */
 void engine_live_transpose(int semitones);
 void engine_live_quantize(int enabled);
+void engine_live_fills(unsigned mask);
 static inline int engine_oh_hold_ms(int value)
 {
     value = value < 0 ? 0 : value > 127 ? 127 : value;

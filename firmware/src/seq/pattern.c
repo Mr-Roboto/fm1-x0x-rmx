@@ -38,6 +38,9 @@ void pattern_init(pattern_t *p, uint32_t seed_a, uint32_t seed_b)
         p->brk.set[i] = BRK_DEFAULTS[i];
     p->brk.slot_a = 0;                /* the built-in bank's first two: the groove, and the fill for B */
     p->brk.slot_b = 1;
+#ifdef X0X_JUNO
+    pattern_juno_prepare(&p->brk);
+#endif
 }
 
 #define REMIX_MARKER 0xA4u
@@ -99,4 +102,47 @@ void pattern_set_remix_enabled(pattern_t *p, int part, int enabled)
     state = part < NKIT ? &p->drum[part].rsv[1] : &p->rsv[2];
     bit = (uint8_t)(1u << (part < NKIT ? 0 : part - NKIT));
     *state = (uint8_t)((*state & ~bit) | (enabled ? bit : 0));
+}
+
+void pattern_juno_prepare(brkpart_t *p)
+{
+    if (p->rsv[0] != 0x4A || p->rsv[1] != 0x53) {
+        p->steps = 0;
+        for (int i = 0; i < 16; i++) p->slice[i] = 0;
+        p->set[0] = 0; p->set[1] = TB3PO_DEFAULT_SCALE;
+        p->set[2] = 3; p->set[3] = 75;
+        p->rsv[0] = 0x4A; p->rsv[1] = 0x53;
+    }
+    if (p->set[0] > 11) p->set[0] = 0;
+    if (p->set[1] >= TB3PO_NSCALES) p->set[1] = TB3PO_DEFAULT_SCALE;
+    if (p->set[2] > 6) p->set[2] = 3;
+    if (p->set[3] > 100) p->set[3] = 75;
+    for (int i = 0; i < 16; i++) {
+        if ((p->slice[i] & JSEQ_DEGREE) > 10) p->slice[i] &= ~JSEQ_DEGREE;
+        if ((p->slice[i] & (JSEQ_UP | JSEQ_DOWN)) == (JSEQ_UP | JSEQ_DOWN))
+            p->slice[i] &= ~(JSEQ_UP | JSEQ_DOWN);
+    }
+}
+int pattern_juno_note(const brkpart_t *p, unsigned step)
+{
+    unsigned value = p->slice[step & 15];
+    int n = 12 * (p->set[2] + 1) + p->set[0] + tb3po_scale_degree(p->set[1], value & JSEQ_DEGREE);
+    n += (value & JSEQ_UP) ? 12 : (value & JSEQ_DOWN) ? -12 : 0;
+    while (n < 0) n += 12;
+    while (n > 127) n -= 12;
+    return n;
+}
+
+int pattern_juno_target(const brkpart_t *p, unsigned step, int *distance)
+{
+    for (int d = 1; d <= 16; d++) {
+        unsigned next = (step + (unsigned)d) & 15;
+        if (!(p->steps & (1u << next))) break;
+        if (!(p->slice[next] & JSEQ_TIE)) {
+            *distance = d;
+            return pattern_juno_note(p, next);
+        }
+    }
+    *distance = 0;
+    return -1;
 }

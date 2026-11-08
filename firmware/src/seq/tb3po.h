@@ -21,3 +21,5 @@ void tb3po_generate(bpart_t *b);
 void tb3po_mutate(bpart_t *b, uint32_t *rng);
 /* a new seed from any entropy (time, key presses) */
 uint32_t tb3po_new_seed(uint32_t entropy);
+
+int tb3po_scale_degree(unsigned scale, unsigned degree);

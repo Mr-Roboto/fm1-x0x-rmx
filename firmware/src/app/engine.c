@@ -8,6 +8,7 @@
 #include "../dsp/breaks.h"
 #ifdef X0X_JUNO
 #include "../dsp/alpha_juno.h"
+#include "../dsp/juno_part.h"
 extern alpha_juno_t part_juno;
 #endif
 #include "../dsp/fxbus.h"
@@ -230,7 +231,7 @@ int engine_nvoices(int t)
     case T_808: return D8_NUM + 1;
     case T_303: return NBASS;
 #ifdef X0X_JUNO
-    case T_BRK: return (J_NPARAMS + NPARAMS_MAX - 1) / NPARAMS_MAX;
+    case T_BRK: return 4;
 #endif
     case T_FX: return (fxbus_nparams() + NPARAMS_MAX - 1) / NPARAMS_MAX;
     case T_MIX: return NPARTS;
@@ -245,7 +246,7 @@ int engine_nparams(int t, int v)
     case T_808: return hat_slot(t, v) >= 0 ? HAT_VELOCITY + 1 : drum808_nparams(v);
     case T_303: return v == 1 ? B303_MIRROR_TRANSPOSE + 1 : B303_HPF + 1;
 #ifdef X0X_JUNO
-    case T_BRK: { int n=J_NPARAMS-v*NPARAMS_MAX; return n<0?0:n>NPARAMS_MAX?NPARAMS_MAX:n; }
+    case T_BRK: { if(v==JUNO_EXTRA_BANK)return JX_NPARAMS; int n=J_NPARAMS-v*NPARAMS_MAX; return n<0?0:n>NPARAMS_MAX?NPARAMS_MAX:n; }
 #else
     case T_BRK: return 3;                                /* Level, Pitch, Filter (sends: the mixer's; the rest: the pattern's) */
 #endif
@@ -275,7 +276,7 @@ const x0x_param_t *engine_param(int t, int v, int i)
     case T_808: return drum808_param(v, i);
     case T_303: return bass303_param(i);
 #ifdef X0X_JUNO
-    case T_BRK: return alpha_juno_param(v*NPARAMS_MAX+i);
+    case T_BRK: return v==JUNO_EXTRA_BANK?juno_part_param(i):alpha_juno_param(v*NPARAMS_MAX+i);
 #else
     case T_BRK: return breaks_param(BRK_NSET + i);
 #endif
@@ -358,7 +359,10 @@ static int apply_param(int t, int v, int i, int val)    /* ISR */
         } else bass303_set(&b303[v], i, val);
         break;
 #ifdef X0X_JUNO
-    case T_BRK: alpha_juno_set(&part_juno,v*NPARAMS_MAX+i,val); break;
+    case T_BRK:
+        if(v==JUNO_EXTRA_BANK){juno_part_set(i,val);seq.performance_div=(uint8_t)juno_part_division();}
+        else alpha_juno_set(&part_juno,v*NPARAMS_MAX+i,val);
+        break;
 #else
     case T_BRK: breaks_set(&brk, BRK_NSET + i, val); break;
 #endif
@@ -499,6 +503,17 @@ void engine_sound_defaults(sound_t *s)
     s->v[T_FX][1][0] = (uint8_t)(16 + s->v[T_FX][0][FX_DL_WEAR] * 111 / 127);   /* TAPE (ui.c R_TAPE): on, its wear */
 }
 
+#ifdef X0X_JUNO
+void engine_sound_validate_juno(sound_t *s)
+{
+    if(s->v[T_BRK][JUNO_EXTRA_BANK][15]!=JUNO_EXTRA_TAG) {
+        for(int i=0;i<JX_NPARAMS;i++)s->v[T_BRK][JUNO_EXTRA_BANK][i]=juno_part_param(i)->def;
+        s->v[T_BRK][JUNO_EXTRA_BANK][15]=JUNO_EXTRA_TAG;
+        if(s->v[T_BRK][11][15]==0xA6 && s->v[T_BRK][11][14]==32 && s->v[T_BRK][1][4]==2)
+            s->v[T_BRK][1][4]=70;
+    }
+}
+#endif
 void engine_sound_centre_drum_pans(sound_t *s)
 {
     int t, v;
@@ -515,6 +530,9 @@ void engine_apply_sound(sound_t *s)
 {
     int t, v, i;
     engine_sound_validate_bass(s);
+#ifdef X0X_JUNO
+    engine_sound_validate_juno(s);
+#endif
     /* A whole sound replaces both Waves in a single audio command. In particular
      * a previous B owner cannot prevent A from winning a conflicting cold load. */
     cq_put(C_BWAVES, s->v[T_303][0][BASS303_WAVE], s->v[T_303][1][BASS303_WAVE], s == mot_base_snd);
@@ -597,10 +615,24 @@ static void s_bon(void *x, int p, int note, int acc, int sl)
         bass303_note_on(&b303[p], note, acc, sl);
 }
 static void s_boff(void *x, int p) { (void)x; bass303_note_off(&b303[p]); }
+#ifndef X0X_JUNO
 static uint8_t brk_applied[BRK_NSET];  /* the pattern settings the break was last given */
+#endif
 static void s_brk(void *x, int s16, int bar, float spb, int en)
 {
     const brkpart_t *bp = &seq.pat[seq.ppat[TRK_BRK]].brk;
+#ifdef X0X_JUNO
+    (void)x; (void)bar; (void)spb;
+    int len = bp->set[3] ? bp->set[3] : 1, distance;
+    unsigned flags = bp->slice[s16 & 15];
+    int target = pattern_juno_target(bp, s16, &distance);
+    int next = (s16 + 1) & 15;
+    int hold = (bp->steps & (1u << next)) && (bp->slice[next] & JSEQ_TIE);
+    if (en && !(flags & JSEQ_TIE) && prob_skip(PART_BRK, 0)) en = 0;
+    juno_part_sequence_step(en ? pattern_juno_note(bp, s16) : -1,
+                           (int)(seq_sixteenth_span(&seq, s16, 1) * (float)len / 100.0f), flags, hold,
+                           target, (int)seq_sixteenth_span(&seq, s16, distance));
+#else
     int i;
     if (en && prob_skip(PART_BRK, 0))
         en = 0;
@@ -615,8 +647,16 @@ static void s_brk(void *x, int s16, int bar, float spb, int en)
         }
     breaks_pin(&brk, (int)bp->slice[s16 & 15] - 1);   /* the step's own slice, if it has one */
     breaks_step(&brk, s16, bar, spb, en);
+#endif
 }
 static void s_brkstop(void *x) { (void)x; breaks_stop(&brk); }
+#ifdef X0X_JUNO
+static void s_juno_clock(void *x,unsigned tick)
+{
+    juno_part_transport(seq_tempo(&seq),1);
+    juno_part_tick(x,tick);
+}
+#endif
 static void s_midi(void *x, uint8_t st, uint8_t d1, uint8_t d2)
 {
     uint32_t cin = st >= 0xF0 ? 0x0Fu : (uint32_t)(st >> 4);
@@ -722,7 +762,7 @@ static void midi_in(uint32_t pkt)
             }
         }
 #ifdef X0X_JUNO
-    if(seq.ch[TRK_BRK]==ch)alpha_juno_midi(&part_juno,ty,d1,d2);
+    if(seq.ch[TRK_BRK]==ch)juno_part_midi(ty,d1,d2);
 #else
     if (seq.ch[TRK_BRK] == ch && (ty == 0x90 || ty == 0x80) && d1 >= 36 && d1 <= 43)   /* the break's slices */
         breaks_live(&brk, d1 - 36, ty == 0x90);
@@ -939,6 +979,9 @@ static void core2_job(uint32_t arg)
     }
     if (!brk_hold) {
         brk_silent_now = breaks_silent(&brk);             /* the render writes zeros: nothing to mix */
+#ifdef X0X_JUNO
+        juno_part_transport(seq_tempo(&seq),seq.playing);
+#endif
         breaks_render(&brk, kbuf, (int)n);
 #ifdef X0X_JUNO
         if (seq.mute & (1u << MUTE_BRK))
@@ -1328,6 +1371,9 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     live_fb_base = (uint8_t)fxbus_get(&fx, FX_DL_FDBK);
     master_init(&mst);
     seq_init(&seq, patterns);
+#ifdef X0X_JUNO
+    seq.performance_clock=s_juno_clock;
+#endif
     seq.song = song;
     motion_init(&mot, lanes);
     mot.base = mot_base;

@@ -31,6 +31,7 @@ int main(int argc, char **argv)
     seq.bpm=125;project_apply_io();assert(project_save()==0);
     project_t expected=proj;
     expected.set.snd_rev=9;
+    expected.sound.v[T_BRK][JUNO_EXTRA_BANK][15]=JUNO_EXTRA_TAG;
     for(int v=0;v<engine_nvoices(T_BRK);v++)
         for(int j=0;j<engine_nparams(T_BRK,v);j++)
             expected.sound.v[T_BRK][v][j]=engine_param(T_BRK,v,j)->def;
@@ -55,6 +56,7 @@ int main(int argc, char **argv)
         int old_revision=store[0][rev_offset];assert(old_revision==8);
         store[0][rev_offset]=9;assert(project_load()==0);expected=proj;
         store[0][rev_offset]=(uint8_t)old_revision;
+        expected.sound.v[T_BRK][JUNO_EXTRA_BANK][15]=JUNO_EXTRA_TAG;
         for(int v=0;v<engine_nvoices(T_BRK);v++)
             for(int j=0;j<engine_nparams(T_BRK,v);j++)
                 expected.sound.v[T_BRK][v][j]=engine_param(T_BRK,v,j)->def;

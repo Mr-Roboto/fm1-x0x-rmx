@@ -58,14 +58,16 @@ enum {
 };
 typedef struct {
     float phase, subphase, env, env_from, env_to, env_step, vel;
-    float ic1[2], ic2[2], g, k, inc, amp, age;
+    float ic1[2], ic2[2], g, k, inc, amp, age, pitch;
+    float seq_target, seq_delta;
+    uint32_t seq_left;
     uint32_t serial;
-    uint8_t note, gate, stage, active, sustained;
+    uint8_t note, gate, stage, active, sustained, sequenced;
 } juno_voice_t;
 typedef struct {
     juno_voice_t voice[JUNO_VOICES];
-    uint8_t value[J_NPARAMS], sustain;
-    float lfo, pwm, chorus, hp_x, hp_y, bend, wheel, pressure;
+    uint8_t value[J_NPARAMS], sustain, control_phase;
+    float lfo, pwm, chorus, hp_x, hp_y, bend, wheel, pressure, glide;
     float delay[JUNO_CHORUS_LEN];
     uint32_t serial, rng, write;
 } alpha_juno_t;
@@ -81,3 +83,4 @@ int alpha_juno_active(const alpha_juno_t *s);
 const char *alpha_juno_preset_name(int index);
 const uint8_t *alpha_juno_preset_values(int index);
 void alpha_juno_preset(alpha_juno_t *s, int index);
+void alpha_juno_mono(alpha_juno_t *s, int note, int velocity, int legato);

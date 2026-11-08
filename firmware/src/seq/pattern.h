@@ -105,3 +105,12 @@ uint8_t pattern_remix_selection(const pattern_t *p, int part);
 int pattern_remix_enabled(const pattern_t *p, int part);
 void pattern_set_remix_selection(pattern_t *p, int part, int bank, int pattern);
 void pattern_set_remix_enabled(pattern_t *p, int part, int enabled);
+
+/* Juno reuses the retired break settings and slice bytes, without changing storage. */
+void pattern_juno_prepare(brkpart_t *p);
+int pattern_juno_note(const brkpart_t *p, unsigned step);
+
+/* Juno slice byte: scale degree plus independent continuation/slide/octave flags. */
+enum { JSEQ_DEGREE = 15, JSEQ_TIE = 16, JSEQ_SLIDE = 32, JSEQ_UP = 64, JSEQ_DOWN = 128 };
+/* Next pitched note through ties; a rest ends the connection. Includes loop wrap. */
+int pattern_juno_target(const brkpart_t *p, unsigned step, int *distance);

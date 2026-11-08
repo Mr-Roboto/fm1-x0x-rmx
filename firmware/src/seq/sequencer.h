@@ -146,6 +146,8 @@ typedef struct {
     volatile int8_t live_transpose, live_pending; /* performance transpose; -128 = no pending key */
     uint8_t live_quantize, live_phase, live_retuning, live_accent;
     uint8_t live_note[NBASS];          /* held pitches before the live transpose */
+    void (*performance_clock)(void *ctx,unsigned tick);
+    uint8_t performance_div;
     uint32_t live_tick;               /* independent 24-ppqn clock: one bar = 96 ticks */
     uint8_t live_fills, live_firing;   /* five held performance keys; callback bypasses sequence chance */
     uint8_t live_fill_vel[LIVE_FILL_VOICES]; /* merged live hits at this event timestamp */
@@ -206,3 +208,6 @@ uint32_t seq_step_q8(const seq_t *s, int rate);
 float seq_tempo(const seq_t *s);      /* the tempo in effect (internal or measured) */
 int seq_part_len(const seq_t *s, int t);         /* steps in part t's pattern */
 int seq_next_step(seq_t *s, int t, int p);       /* the step after p (direction; no commit) */
+
+/* Elapsed samples between sixteenth slots, including their swing offsets. */
+float seq_sixteenth_span(const seq_t *s, unsigned start, unsigned count);

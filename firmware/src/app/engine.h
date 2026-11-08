@@ -51,6 +51,9 @@ static inline int engine_oh_hold_ms(int value)
 typedef struct {
     uint8_t v[NTARGETS][NVOICES_MAX][NPARAMS_MAX];
 } sound_t;
+#ifdef X0X_JUNO
+void engine_sound_validate_juno(sound_t *s);
+#endif
 
 extern seq_t seq;                      /* the sequencer (its pattern pointer is the project's) */
 /* render stages (the PERF screen): 909, 808, 303 A, 303 B, BREAK, FX, MASTER, SEQ */

@@ -9,6 +9,11 @@ Both the web build and the hardware build now replace BREAK with JUNO.
 The standard native host build retains BREAK for its existing reference tests;
 `run_juno_hardware.sh` compiles the Juno hardware profile explicitly.
 
+## Performance controls
+
+JUNO now has mono/legato, glide, editable trance gate, a six-pattern arp and
+a DJ filter on MIX. See [controls and saving](JUNO_PERFORMANCE.md).
+
 ## Playing
 
 Choose **JUNO** with ALGORITHM. EDIT cycles through the sound pages; SELECT moves
@@ -27,6 +32,11 @@ SAVE stores the patch, mixer and project in a separate browser storage namespace
 `x0x-emu-juno-store-v1`. The earlier emulator project and uploaded break samples
 remain in their original storage. This prototype plays JUNO from the keyboard;
 the former break step/slice pattern does not trigger synth notes.
+
+## Oscillator update
+
+The saw gates and companion pulse/sub relationships now follow the raw June-21
+DCO equations. See [the correction and reference checks](JUNO_SAW.md).
 
 ## Presets
 
@@ -49,7 +59,7 @@ are preserved. See [the complete bank](JUNO_PRESETS.md).
 | LFO | Rate | Delay | Fade | Shape |
 | VCA | ENV / gate / velocity modes | Velocity depth | Pressure depth | Drive |
 | CHORUS | On/off | Rate | Depth | Mix |
-| MIX | Part level | Pan | Reverb send | Delay send |
+| MIX | Part level | DJ filter | Reverb send | Delay send |
 
 The envelope travels through L1, L2 and L3 over T1, T2 and T3, sustains at L3,
 then releases to zero over T4. Normal/inverted and velocity-scaled envelope

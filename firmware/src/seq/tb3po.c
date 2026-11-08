@@ -39,6 +39,12 @@ const char *const TB3PO_SCALE_NAMES[TB3PO_NSCALES] = {
     "ROMN", "BHAI", "MARV", "PURV", "TODI", "ARAB",
 };
 
+int tb3po_scale_degree(unsigned scale, unsigned degree)
+{
+    const scale_t *sc = &SCALES[scale < TB3PO_NSCALES ? scale : TB3PO_DEFAULT_SCALE];
+    return 12 * (degree / sc->len) + sc->deg[degree % sc->len];
+}
+
 static uint32_t rng_u32(uint32_t *r)                 /* xorshift32, as schwung-tb3po */
 {
     uint32_t x = *r;

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "alpha_juno.h"
+#include "alpha_juno_wave.h"
 #include "fastmath.h"
 typedef struct {
     char name[18];
@@ -165,12 +166,32 @@ void alpha_juno_note(alpha_juno_t *s, int note, int velocity)
                 pick = i;
     }
     juno_voice_t *v = &s->voice[pick];
+    float previous = v->serial ? v->pitch : (float)note;
     juno_zero(v, sizeof *v);
+    v->pitch = s->glide > 0.0f ? previous : (float)note;
     v->active = v->gate = 1;
     v->note = (uint8_t)note;
     v->vel = clamp((float)velocity / 127.0f, 0, 1);
     v->serial = ++s->serial;
     stage(s, v, 0);
+}
+void alpha_juno_mono(alpha_juno_t *s, int note, int velocity, int legato)
+{
+    juno_voice_t *v = &s->voice[0];
+    if (legato && v->active) {
+        v->sequenced = 0; v->seq_left = 0;
+        v->note = (uint8_t)note;
+        v->vel = clamp((float)velocity / 127.0f, 0, 1);
+        v->gate = 1; v->sustained = 0;
+        if (s->glide == 0.0f) v->pitch = (float)note;
+        return;
+    }
+    float previous = v->serial ? v->pitch : (float)note;
+    juno_zero(v, sizeof *v);
+    v->pitch = s->glide > 0.0f ? previous : (float)note;
+    v->active = v->gate = 1; v->note = (uint8_t)note;
+    v->vel = clamp((float)velocity / 127.0f, 0, 1);
+    v->serial = ++s->serial; stage(s, v, 0);
 }
 void alpha_juno_off(alpha_juno_t *s, int note)
 {
@@ -191,6 +212,7 @@ void alpha_juno_all_off(alpha_juno_t *s, int immediate)
     for (int i = 0; i < JUNO_VOICES; i++) {
         juno_voice_t *v = &s->voice[i];
         v->gate = v->sustained = 0;
+        v->seq_left = 0;
         if (immediate)
             v->active = 0;
         else if (v->active)
@@ -252,6 +274,7 @@ void alpha_juno_render(alpha_juno_t *s, float *out, int n)
     float cr = (0.1f + (float)p[J_CHORATE] * 0.025f) / 44100.0f;
     float hfc = p[J_HPF] ? 40.0f * fm_exp2f((float)p[J_HPF] * 1.7f) : 15.0f;
     float hp = 1.0f / (1.0f + 6.2831853f * hfc / 44100.0f);
+    float glide = s->glide > 0.0f ? 1.0f - fm_expf(-1.0f / (44100.0f * s->glide)) : 1.0f;
     for (int k = 0; k < n; k++) {
         s->lfo = frac(s->lfo + lr);
         s->pwm = frac(s->pwm + pr);
@@ -269,6 +292,12 @@ void alpha_juno_render(alpha_juno_t *s, float *out, int n)
             if (!v->active)
                 continue;
             v->age += 1.0f / 44100.0f;
+            if (v->sequenced) {
+                if (v->seq_left) {
+                    --v->seq_left;
+                    v->pitch = v->seq_target - v->seq_delta * (float)v->seq_left;
+                }
+            } else v->pitch += ((float)v->note - v->pitch) * glide;
             if (v->stage < 4) {
                 v->amp = clamp(v->amp + v->env_step, 0, 1);
                 v->env = v->env_from + (v->env_to - v->env_from) * v->amp;
@@ -283,12 +312,14 @@ void alpha_juno_render(alpha_juno_t *s, float *out, int n)
                     }
                 }
             }
-            if (!(k & 15)) {
+            /* Sequencer boundaries split render calls: keep modulation cadence in synth time,
+             * so ties cannot force extra pitch/filter updates. New voices update immediately. */
+            if (!s->control_phase || v->inc == 0.0f) {
                 float ld = clamp((v->age - (p[J_LFODELAY] ? seconds(p[J_LFODELAY]) : 0)) /
                                      seconds(p[J_LFOFADE]),
                                  0, 1);
                 float mod = lfo * ld;
-                float pitch = (float)v->note + 12.0f * ((int)p[J_RANGE] - 2) +
+                float pitch = v->pitch + 12.0f * ((int)p[J_RANGE] - 2) +
                               (p[J_TUNE] - 50) * 0.02f + s->bend * p[J_BEND];
                 pitch +=
                     envmod(v->env, p[J_DCOMODE], v->vel) * (float)p[J_DCOENV] * (24.0f / 127.0f);
@@ -312,33 +343,13 @@ void alpha_juno_render(alpha_juno_t *s, float *out, int n)
                         : p[J_PWMSOURCE] == 1 ? 2 * v->env - 1
                                               : 0;
             pw = clamp(pw + pwm * (float)p[J_PWM] / 127.0f * 0.45f, 0.03f, 0.97f);
-            float saw = 2 * ph - 1;
-            switch (p[J_SAW]) {
-            case 0:
-                saw = 0;
-                break;
-            case 2:
-                saw *= frac(ph * 2) < 0.5f ? 1 : -1;
-                break;
-            case 3:
-                saw *= frac(ph * 2) < pw ? 1 : -1;
-                break;
-            case 4:
-                saw *= frac(ph * 8) < 0.5f ? 1 : 0;
-                break;
-            case 5:
-                saw *= ((frac(ph * 8) < 0.5f) != (frac(ph * 2) < 0.5f)) ? 1 : 0;
-                break;
-            }
+            float saw = juno_saw_wave(ph, pw, p[J_SAW]);
             float pulse = 0;
             if (p[J_PULSE]) {
-                float width = p[J_PULSE] == 1 ? 0.5f : p[J_PULSE] == 2 ? 0.25f : pw;
-                pulse = ph < width ? 1 : -1;
+                float width = p[J_PULSE] == 1 ? 0.5f : p[J_PULSE] == 2 ? 0.75f : pw;
+                pulse = juno_pulse_wave(ph, width);
             }
-            float subph = p[J_SUB] >= 4 ? v->subphase : frac(v->subphase * 2);
-            float sub = subph < ((p[J_SUB] == 1 || p[J_SUB] == 5) ? 0.25f : 0.5f) ? 1 : -1;
-            if (p[J_SUB] == 2 || p[J_SUB] == 3)
-                sub = (sub > 0 && frac(ph * (p[J_SUB] == 2 ? 2 : 4)) < 0.5f) ? 1 : -1;
+            float sub = juno_sub_wave(v->subphase, ph, p[J_SUB]);
             float x = (saw + pulse + sub * (float)p[J_SUBLEVEL] / 127.0f +
                        noise * (float)p[J_NOISE] / 127.0f) *
                       0.3f;
@@ -367,5 +378,6 @@ void alpha_juno_render(alpha_juno_t *s, float *out, int n)
             sum = sum * (1 - m) + wet * m;
         }
         out[k] = sum;
+        s->control_phase = (uint8_t)((s->control_phase + 1u) & 15u);
     }
 }

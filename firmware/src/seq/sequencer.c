@@ -133,6 +133,15 @@ static uint32_t swing_q8(const seq_t *s, int rate, uint32_t step_q8)
     return step_q8 / 200u * sw;                     /* 100 -> half a step late = 75 % (32-bit: no __udivdi3) */
 }
 
+float seq_sixteenth_span(const seq_t *s, unsigned start, unsigned count)
+{
+    uint32_t length = seq_step_q8(s, RATE_16);
+    int32_t span = (int32_t)(count * length);
+    int change = (int)((start + count) & 1u) - (int)(start & 1u);
+    span += change * (int32_t)swing_q8(s, RATE_16, length);
+    return (float)span / 256.0f;
+}
+
 static uint32_t rng_next(uint32_t *r)
 {
     uint32_t x = *r ? *r : 1;
@@ -309,6 +318,7 @@ static void live_clock(seq_t *s, const seq_sink_t *o)
 {
     if (!s->live_phase && s->live_pending != -128) live_apply(s, s->live_pending, o);
     if (s->live_fills && s->live_phase % 3u == 0) live_fill_tick(s);
+    if(s->performance_clock)s->performance_clock(o->ctx,s->live_phase);
     s->live_phase = (uint8_t)((s->live_phase + 1u) % 96u);
 }
 
@@ -673,6 +683,12 @@ uint32_t seq_until_event(seq_t *s, uint32_t n)
         uint32_t ticks = (3u - s->live_phase % 3u) % 3u;
         e = (s->live_tick + ticks * (seq_step_q8(s, RATE_16) / 6u)) >> 8;
         if (e < m) m = e;
+    }
+    if(!s->ext && s->performance_div) {
+        unsigned div=s->performance_div;
+        unsigned ticks=(div-s->live_phase%div)%div;
+        e=(s->live_tick+ticks*(seq_step_q8(s,RATE_16)/6u))>>8;
+        if(e<m)m=e;
     }
     return m ? m : 1;
 }

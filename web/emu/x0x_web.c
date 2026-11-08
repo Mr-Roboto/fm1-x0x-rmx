@@ -14,6 +14,8 @@ static void web_audio(const int32_t *blk, uint32_t n);
 #undef __attribute__
 #include "../../firmware/src/dsp/alpha_juno.h"
 extern alpha_juno_t part_juno;
+__attribute__((used, visibility("default"))) int web_juno_extra(int i) { return i>=0&&i<JX_NPARAMS?proj.sound.v[T_BRK][JUNO_EXTRA_BANK][i]:-1; }
+__attribute__((used, visibility("default"))) unsigned web_juno_gate_mask(void) { return juno_gate_mask(); }
 __attribute__((used, visibility("default"))) int web_juno_preset_index(void) { return juno_preset_index(); }
 __attribute__((used, visibility("default"))) int web_juno_preset_edited(void) { return juno_preset_edited(juno_preset_index()); }
 
@@ -21,7 +23,7 @@ __attribute__((used, visibility("default"))) int web_juno_preset_edited(void) { 
 __attribute__((used, visibility("default"))) int web_juno_param(int i) { return i >= 0 && i < J_NPARAMS ? part_juno.value[i] : -1; }
 __attribute__((used, visibility("default"))) int web_juno_note(int i) { return i >= 0 && i < JUNO_VOICES && part_juno.voice[i].active ? part_juno.voice[i].note : -1; }
 __attribute__((used, visibility("default"))) int web_juno_gate(int i) { return i >= 0 && i < JUNO_VOICES ? part_juno.voice[i].gate : 0; }
-__attribute__((used, visibility("default"))) void web_juno_midi(int type, int d1, int d2) { alpha_juno_midi(&part_juno, type & 0xf0, d1 & 127, d2 & 127); }
+__attribute__((used, visibility("default"))) void web_juno_midi(int type, int d1, int d2) { juno_part_midi(type & 0xf0, d1 & 127, d2 & 127); }
 
 /* output ring, stereo float, filled by run_ms, drained by web_render */
 #define RING 4096u

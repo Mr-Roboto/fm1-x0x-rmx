@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #include "../../firmware/src/dsp/alpha_juno.h"
+#include "../../firmware/src/dsp/alpha_juno_wave.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -25,6 +26,21 @@ static void plain(void)
 
 int main(void)
 {
+    /* Gate placement and DC: cover whole cycles, including all four sub cycles. */
+    for (int mode=0;mode<=5;mode++) {
+        double saw_mean=0,sub_mean=0;
+        for(int i=0;i<65536;i++) {
+            float phase=((float)i+0.5f)/65536.0f;
+            saw_mean+=juno_saw_wave(phase,0.5f,mode);
+            sub_mean+=juno_sub_wave(phase,juno_wave_frac(phase*4.0f),mode);
+        }
+        assert(fabs(saw_mean/65536.0)<0.00001);
+        assert(fabs(sub_mean/65536.0)<0.00001);
+    }
+    assert(fabsf(juno_saw_wave(.34f,.5f,5)-(2*.34f-.328125f))<1e-6f);
+    assert(juno_saw_wave(.28f,.5f,5)==-.328125f); /* old XOR selected this wrong gate */
+    assert(juno_saw_wave(.16f,.5f,2)==-.3125f);  /* gated off, never polarity-flipped */
+    puts("Raw DCO: exact gate windows, relative polarity and zero DC over full cycles passed");
     for (int preset = 0; preset < JUNO_PRESET_COUNT; preset++) {
         alpha_juno_init(&synth);
         alpha_juno_preset(&synth, preset);

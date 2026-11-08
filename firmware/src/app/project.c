@@ -546,6 +546,10 @@ int project_load(void)
 #endif
     proj.set.snd_rev = PROJ_SND_REV;
     engine_sound_validate_bass(&proj.sound);
+#ifdef X0X_JUNO
+    engine_sound_validate_juno(&proj.sound);
+    for (int i = 0; i < NPAT; i++) pattern_juno_prepare(&proj.pat[i].brk);
+#endif
     return bad ? -1 : 0;
 }
 

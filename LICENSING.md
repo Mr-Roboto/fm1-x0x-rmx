@@ -1,9 +1,10 @@
-# X0X-RMX licensing and component credits
+# X0X-HARDER licensing and component credits
 
-X0X-RMX is an independent fork of [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
-It retains the upstream platform, instrument ports and attribution notices.
+X0X-HARDER builds on [Mr-Roboto's X0X-RMX](https://github.com/Mr-Roboto/fm1-x0x-rmx)
+and [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
+It retains their platform, instrument ports and attribution notices.
 
-X0X-RMX is free software under the GNU General Public License, version 3 only
+X0X-HARDER is free software under the GNU General Public License, version 3 only
 (`GPL-3.0-only`, full text in `LICENSE`). It is a fork of Felucca and keeps Felucca's
 licence. If you distribute X0X, or firmware derived from it, you must give your
 recipients its complete corresponding source under the same licence. Component-specific notices below
@@ -19,6 +20,7 @@ remain applicable; the project licence does not replace third-party attribution.
 | 909 hi-hat, ride and crash samples (`assets/909/`) | ER-99 via 9W9 | GPL-3.0 |
 | 808 (`dsp/drum808*`) | ported from [8W8](https://github.com/athousanddetails/schwung-8W8) (athousanddetails); circuit models after the TR-808 service notes and Werner / Abel / Smith; rim shot after sc808 (Yoshinosuke Horiuchi / Sam Aaron) | GPL-3.0 |
 | 303 (`dsp/bass303*`) | ported from [schwung-303](https://github.com/charlesvestal/schwung-303) by Charles Vestal: [Open303](https://github.com/RobinSchmidt/Open303) by Robin Schmidt (MIT), Devilfish extensions after [jc303](https://github.com/midilab/jc303) (midilab), RAT drive after [dm-Rat](https://github.com/davemollen/dm-Rat) (Dave Mollen); TeeBee-filter coefficients credit mystran & kunn | GPL-3.0 (Open303 parts MIT) |
+| Juno (`dsp/alpha_juno*`, `dsp/juno_part*`) | C implementation informed by [June-21](https://github.com/mikerodd/june-21) by mikerodd (Csound/Cabbage Alpha Juno 2 emulator); raw oscillator gate relationships adapted from its `June21` opcode. See [waveform provenance](docs/JUNO_SAW.md). The 64 starting presets are original recipes, not imported factory banks. | GPL-3.0-only here; June-21 is GPL-3.0 |
 | TB-3PO (`seq/tb3po*`) | ported from [schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po), by Charles Vestal, itself a port of the Phazerville Hemisphere Suite `TB_3PO` applet (djphazer and contributors) | GPL-3.0 |
 | Offline drum generator MAP (`seq/drum_gen.c`, generated MAP data, `assets/grids/resources.cc`) | Mutable Instruments Grids by Emilie Gillet; C arithmetic cross-checked against DEADACTIVE's Hortator port; pinned source and adaptation details in `assets/grids/README.md` | GPL-3.0-or-later, combined here under GPLv3 |
 | Break generator (`dsp/breaks*`) | ported from [schwung-breakbeat](https://github.com/mestela/schwung-breakbeat) (BB Gen) by mestela, **used with the author's permission** (that repository carries no licence file) | GPL-3.0-only here, by permission |
@@ -26,14 +28,16 @@ remain applicable; the project licence does not replace third-party attribution.
 | Speed-ups of the 303's render (passes over sub-blocks, the shared coefficients), the 909's sample voices and the 808's metal bank (`dsp/bass303*`, `dsp/drum909.c`, `dsp/drum808*`), the same samples bit for bit | after [Optimist](https://github.com/w0ts/optimist) (henri / hdavid), a fork of X0X | GPL-3.0-only |
 | The idea of a browser emulator for FM-1 firmware (`web/emu/`) | [Groove OS](https://www.groove-os.com/) by Peter Gombos, whose site runs its firmware in the browser; no code from it | credit only |
 | Remix lookup data (`assets/remix/remixes.txt`, generated nibble table) | Table transcribed, analyzed and manually compiled by project owner Mr-Roboto from MIDI recordings of all 256 physical Future Retro Orb patterns; historical Kontakt/Luminary source; import details and digest in [assets/remix/README.md](assets/remix/README.md) | Existing local source notice: GPL-3.0-only; provenance clarified by owner, without resolving underlying rights (below) |
-| Everything else in `firmware/src/{app,dsp,seq}`, `host/`, `tests/` | Charles Vestal's X0X and X0X-RMX modifications, retaining existing notices | GPL-3.0-only |
+| Everything else in `firmware/src/{app,dsp,seq}`, `host/`, `tests/` | Charles Vestal's X0X, X0X-RMX and X0X-HARDER modifications, retaining existing notices | GPL-3.0-only |
 | The flash parts the storage may use: `firmware/hal/fm1_flash_ok.h`, `tests/host/flash_ok_test.c` | [fm1-base](https://github.com/charlesvestal/fm1-base) (`device/fm1_flash_ok.h`, `tests/flash_ok_test.c`, fm1-base#35), Copyright (C) 2026 Laurens (@profikid) | MPL-2.0 (compatible with the GPL: MPL-2.0 section 3.3) |
 | The update handshake's tests: `tests/ota_hs_test.c`, `tests/host/installer_hs_test.mjs` | [felucca-bsp](https://github.com/hugelton/felucca-bsp)'s `tests/ota_test.c` and [fm1-base](https://github.com/charlesvestal/fm1-base)'s `tests/installer_hs_test.mjs`, Copyright (C) 2026 Charles Vestal | MPL-2.0 (compatible with the GPL: MPL-2.0 section 3.3) |
 
-No recorded breaks are in this tree or in the default firmware: the built-in break loops are
-generated at build time by X0X's own 909 code. `tools/import_breaks.py`,
-`tools/gen_break_bank.py` (`X0X_BREAK_BANK`) and `tools/upload_breaks.py` can put recordings
-of your choosing into a build or onto a device; those recordings keep their own copyright.
+The retained BREAK tooling uses generated loops rather than bundled recorded breaks.
+The standard native host profile can generate loops with X0X's own 909 code;
+`tools/import_breaks.py`, `tools/gen_break_bank.py` (`X0X_BREAK_BANK`) and
+`tools/upload_breaks.py` remain for compatible BREAK builds. Current X0X-HARDER
+hardware and web builds replace BREAK with JUNO and omit the loop player/bank.
+Recordings supplied by a user keep their own copyright.
 
 ## Felucca Assets
 

@@ -1,195 +1,163 @@
 # X0X-HARDER
 
-**Development integration:** this branch combines the v1.1.0 RMX features with
-selected upstream performance improvements and bug fixes. Development builds are
-being tested on an FM-1. See the [integration report](docs/UPSTREAM_FIXES_INTEGRATION.md)
-for scope, resolved collisions, tests and remaining hardware/build checks.
+![X0X-HARDER: 909, 808, dual 303 and six-voice Juno, with live control and step slides](docs/img/x0x-harder-banner.png)
 
-X0X-HARDER builds on [Mr-Roboto's X0X-RMX v1.1.0](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0)
-with selected performance improvements and fixes from [Charles Vestal's X0X](https://github.com/charlesvestal/fm1-x0x).
-It is a stereo groovebox with a **909**, an **808**, two **303s**, a **breakbeat player**, song mode,
-knob motion, reverb, tape delay and master compression.
+**909 drums. 808 drums. Two acid engines. A six-voice hoover machine.**
 
-![X0X-RMX browser emulator in Cream & Lilac, with a 909 pattern and Device color selector](docs/img/p82/01-overview-cream.png)
+X0X-HARDER is custom groovebox firmware for the **M-VAVE FM-1**, with a matching
+browser emulator. It brings together drums, dual 303s and an Alpha Juno-inspired
+synth for hands-on sequencing, hard slides and live performance. The current
+build has been tested on a real FM-1 with all five engines and six Juno voices.
 
-*The default Cream & Lilac exterior, shown with the WHITE LILAC LCD scheme.*
+## Built on these projects
 
-This build includes:
+This project builds directly on two FM-1 firmware projects:
 
-- **Hat velocity:** knob 3 on the 909/808 CH and OH sound pages sets hit strength
-  from 0–127. Hold a sequencer step on EDIT and turn it to add a velocity p-lock.
-- **909 open-hat hold:** knob 4 holds the hit's initial envelope level for
-  0–500 ms before decay, with p-locks and normal closed-hat choking. Zero keeps
-  the original envelope.
-- **Orb-inspired Remix:** independent Bank A–P / Pattern 1–16 selections for 909, 808,
-  303A and 303B; A1 is sequential and BREAK is unaffected.
-- **Grids MAP/EUCLID drum generation:** write or mutate kick, snare and closed-hat rhythms
-  for 909/808, with FILL, OFFSET, CHAOS and Undo.
-- **Extended TB-3PO:** 22 scales and additional phrasing and mutation controls.
-- **303 Morph waveform:** Sharkfin through Trapezoid to Notch-Trapezoid, with independent
-  Morph values; only one 303 can use Morph at a time. Both voices have **TONE, VOICE and
-  EXTRA** EDIT pages for their sound controls.
-- **Six LCD color schemes**, plus **Cream & Lilac**, **Classic Dark**, **Sunset Orange** and **Pink Lilac** device finishes
-  in the browser emulator.
+- **[Mr-Roboto / X0X-RMX](https://github.com/Mr-Roboto/fm1-x0x-rmx)**: the RMX
+  foundation, including Orb-inspired Remix, Grids drum generation, expanded
+  TB-3PO scales, Morph waveforms and the existing interface and tools.
+- **[Charles Vestal / X0X](https://github.com/charlesvestal/fm1-x0x)**: the original
+  X0X groovebox, instrument ports and platform work, plus selected upstream
+  performance improvements and bug fixes integrated into this branch.
 
-**X0X-RMX v1.1.0 Stable** is approved and physically validated by the maintainer.
-It adds exactly four features: G.711 µ-law 909 cymbal compression,
-BREAK FILTER (LP/OFF/HP), ENV + KNOB parameter reset and USB project
-backup/restore through Chrome/Edge Web MIDI and the Python CLI. Existing
-Remix, MREV, Morph, TB3PO, Grids and engines remain available.
-See the [release notes](docs/RELEASE_1.1.0.md) and
-[physical RC2 validation record](docs/FM1_TEST_1.1.0_RC2.md).
+The Juno engine takes its design and raw waveform reference from
+**[mikerodd / June-21](https://github.com/mikerodd/june-21)**, a Csound/Cabbage
+Alpha Juno 2 emulator. X0X-HARDER implements the synth in C for the FM-1;
+June-21's oscillator gate relationships informed the saw, pulse and sub modes.
+It favours a raw, immediate sound over circuit-accurate emulation or oversampling.
+See the [waveform notes and reference checks](docs/JUNO_SAW.md).
 
-**Saved-direction compatibility for v1.0.0 upgrades:** old PING becomes MREV; old RND becomes PING.
-Reselect the desired direction and save affected patterns. The storage layout is unchanged.
+## New in X0X-HARDER
 
-The hosted emulators, installers and releases below belong to the base projects;
-they do not contain the X0X-HARDER development changes. Run this branch's local
-browser simulator at [localhost](http://127.0.0.1:8765/).
+- **Six-voice JUNO replaces BREAK** in the hardware and browser builds. Saw,
+  pulse, sub and noise sources, resonant filter, four-stage envelope, LFO,
+  chorus and 44 sound controls spread across EDIT pages.
+- **64 playable Juno presets**: original starting recipes for classic synth
+  textures, hoovers and rougher sounds. PRESETS selects sounds on JUNO EDIT;
+  an asterisk marks edits, and SAVE retains them. These are not imported Roland
+  factory patches. [Browse the bank](docs/JUNO_PRESETS.md).
+- **Juno voice and performance controls**: POLY, MONO and LEGATO, keyboard glide,
+  an editable 16-step trance gate, and an arpeggiator with UP, DOWN, UP/DOWN,
+  DOWN/UP, AS PLAYED and RANDOM orders, octave range, rates and latch.
+- **A Juno x0x sequencer**: 16 steps, the 303 generator's 22 scales, white-key
+  step selection and black-key note entry. ROOT, SCALE, OCTAVE and NOTE LEN
+  are on the stopped SEQ page; playback exposes the normal sound pages with
+  parameter locks and recorded knob motion.
+- **Hoover slides, ties and note octaves**: ENV cycles normal, tie, slide and
+  tie + slide. Slides span intervening ties and arrive on the next pitched
+  step, following tempo and swing. OCT +/- toggles per-step octave flags;
+  arrows and slide marks show them on screen.
+- **Juno DJ filter and stronger output**: its MIX page adds a centred LP/OFF/HP
+  filter alongside level, reverb and delay sends. Juno has a +15 dB boost before
+  the mixer and sends, including the latest additional +12 dB increase.
+- **Dual 303 upgrades**: an HPF on each engine, plus a fourth EDIT page for
+  HPF, pan, reverb and delay, all parameter-lockable. 303B can mirror 303A's
+  pattern with an independent transpose offset.
+- **Live mode**: press HOME three times from EDIT for ACID1, ACID2, FEEDBACK and
+  a DRUMS DJ filter. White keys transpose both 303s in semitones, with key 8 at
+  zero; changes can be immediate or queued to the next bar, with flashing LEDs.
+  Black keys provide part mutes and momentary rolls/percussion fills. ENV resets
+  FEEDBACK and DRUMS while keeping the acid controls where they are.
+- **Better hi-hat control**: 909/808 open- and closed-hat velocity, including
+  per-step locks, plus a 0-500 ms hold before the 909 open hat's decay.
+- **Timing and compatibility fixes**: continuous Juno pitch/filter update timing
+  across sequencer boundaries, fixed hat velocity/default behaviour, and
+  migration that reuses existing project storage for the new Juno controls.
 
-- **Base project website:** [X0X-RMX](https://mr-roboto.github.io/fm1-x0x-rmx/)
-- **Base release emulator:** [X0X-RMX emulator](https://mr-roboto.github.io/fm1-x0x-rmx/emu/), with sound, Remix, Grids and both 303 EXTRA pages.
-- **Read online:** [manual](https://mr-roboto.github.io/fm1-x0x-rmx/manual/) and [version history](https://mr-roboto.github.io/fm1-x0x-rmx/new/).
+The inherited foundations remain: independent drum/303 lengths and rates,
+Orb-inspired Remix, Grids MAP/EUCLID, TB-3PO generation and mutation, song mode,
+parameter locks and motion, stereo mixing, reverb, tape delay and master compression.
 
-[Install v1.1.0](https://mr-roboto.github.io/fm1-x0x-rmx/install/) with Chrome or Edge,
-[download the firmware](https://mr-roboto.github.io/fm1-x0x-rmx/firmware/x0x-1.1.0.fwsc), or
-read the [GitHub release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.1.0).
-The [historical v1.0.1 release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.1) and
-[historical v1.0.0 release](https://github.com/Mr-Roboto/fm1-x0x-rmx/releases/tag/v1.0.0) remains available.
-[USB project backup](https://mr-roboto.github.io/fm1-x0x-rmx/backup/) accepts only RMX files.
-Back up user loops separately; calibration, Undo and session-only Grids controls
-are excluded. Restore requires confirmation on the FM-1.
-You can also [build and preview the website locally](docs/PAGES.md).
+## Juno sequencer: a quick example
 
-- [Source at v1.1.0](https://github.com/Mr-Roboto/fm1-x0x-rmx/tree/v1.1.0)
-- [User manual](docs/MANUAL.md) and [version history](docs/NEW.md)
-- [Remix specification](docs/REMIX_DESIGN.md)
-- [Drum generator documentation](docs/DRUM_GENERATOR_CORE.md)
-- [TB-3PO scale reference (German)](docs/TB3PO_SCALES.md)
-- [TB-303 waveform specification (English summary; German technical record, experimental)](docs/TB303_WAVEFORMS_DESIGN.md)
+On JUNO, press **SEQ**. Select a white step, then use the black keys for its note.
+The selection stays on that step after releasing the white key.
 
-## Watch X0X-RMX
+| Control | In Juno SEQ |
+| --- | --- |
+| Knobs while stopped | ROOT / SCALE / OCTAVE / NOTE LEN |
+| ENV | NORMAL -> TIE -> SLIDE -> TIE + SLIDE |
+| OCT+ / OCT- | Toggle the selected step one octave up/down |
+| SELECT or SEQ while playing | Browse the sound pages |
+| Hold a white step + turn a knob while playing | Set that step's parameter lock |
 
-<a href="https://mr-roboto.github.io/fm1-x0x-rmx/#demo"><img src="docs/media/video/x0x-rmx-demo-poster.png" width="480" alt="Watch the X0X-RMX musical browser-emulator demonstration, featuring the Cream &amp; Lilac device"></a>
+**C3 + SLIDE -> TIE -> TIE -> C4** sweeps an octave over three sixteenth-note
+intervals, reaching C4 at step 4 without restarting the envelope. A rest breaks
+the connection. Keyboard GLIDE in SEL -> EXTRA remains independent of sequencer
+slide timing. See the [full Juno controls](docs/JUNO_PERFORMANCE.md).
 
-[Watch the 84-second musical demonstration](https://mr-roboto.github.io/fm1-x0x-rmx/#demo):
-Remix, Grids, TB-3PO and Morph, with real stereo emulator audio.
-This is an earlier browser-emulator recording, not physical FM-1 footage. Its outro was
-updated for v1.0.0 to state successful real-device validation; the recording and audio remain
-an emulator demonstration.
+## Build, play and install
 
-## A closer look
+This is a development firmware branch. The upstream projects' hosted emulators,
+installers and release downloads contain their own firmware, not X0X-HARDER.
 
-| Remix | Grids |
-|---|---|
-| <img src="docs/img/p82/06-remix-909-on-b3.png" width="300" alt="909 Remix with Bank B, Pattern 3, Remix ON and APPLY BAR"> | <img src="docs/img/p82/08-grids-map-909.png" width="300" alt="909 Grids MAP page with X, Y, CHAOS and MODE controls"> |
-| Reorder playback while keeping the stored steps. | Generate kick, snare and closed-hat rhythms. |
-| **TB-3PO** | **303 Morph** |
-| <img src="docs/img/p82/15-tb3po-generate-303a.png" width="300" alt="303A TB-3PO GENERATE page with density, accent, slide and octave controls"> | <img src="docs/img/p82/22-303a-extra-morph64.png" width="300" alt="303A EXTRA page with MORPH 64, ACCDEC, DRVTYPE and TUNE"> |
-| Generate and mutate bass lines. | Shape the experimental waveform on the EXTRA page. |
+- [Build instructions and prerequisites](BUILDING.md)
+- [Juno performance and sequencer guide](docs/JUNO_PERFORMANCE.md)
+- [64 Juno presets](docs/JUNO_PRESETS.md)
+- [Inherited manual](docs/MANUAL.md) - use the Juno guide for the replaced BREAK part
+- [Upstream integration notes](docs/UPSTREAM_FIXES_INTEGRATION.md)
 
-### Four emulator device colors
+Build the FM-1 firmware from the repository root:
 
-Choose **Cream & Lilac** (default), **Classic Dark**, **Sunset Orange** or **Pink Lilac**
-with the emulator's Device color selector. It changes the exterior immediately and remembers
-that browser preference separately from your project. The firmware's **GLO → SCHEME** setting
-controls LCD colors independently. New projects and factory reset select **WHITE LILAC**;
-existing saved projects keep their selected LCD scheme.
-
-![The same 909 pattern with matching device and LCD colors: Cream & Lilac / WHITE LILAC, Classic Dark / DEFAULT, Sunset Orange / SUNSET ORANGE and Pink Lilac / PINK LILAC](docs/img/p82/01-device-comparison.png)
-
-*Four browser device finishes with coordinated LCD schemes, selected separately in GLO → SCHEME. These are visual interpretations, not color-matched hardware photographs.*
-
-## What's inside
-
-| Part | What it is | Based on |
-|---|---|---|
-| 909 | 11 voices: modelled kick, snare, toms, rim and clap, with sampled hats and cymbals | [9W9](https://github.com/athousanddetails/schwung-9W9) (samples from ER-99) |
-| 808 | 11 tracks, including the 808's tom/conga, rim/claves and clap/maracas switches | [8W8](https://github.com/athousanddetails/schwung-8W8) |
-| 303A | Open303-derived bass synth with Devilfish-style ranges and a TB-3PO line generator | [schwung-303](https://github.com/charlesvestal/schwung-303), [schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po) |
-| 303B | A second independent 303 sound and line, with the same controls | Same 303 and TB-3PO sources |
-| BREAK | A loop cut into eight slices and rearranged as it plays | [BB Gen](https://github.com/mestela/schwung-breakbeat) |
-
-909, 808, 303A and 303B each have their own length (1–64 steps) and rate, so parts
-can drift against each other. BREAK uses a fixed 16-step sequence at 1/16 rate. Pattern changes wait for the end of the bar, and patterns can be chained.
-
-### Experimental Wave 3 in this fork
-
-Each 303's WAVE offers **Saw, Square and Morph**. On EDIT's **EXTRA** page,
-**KNOB 1 (MORPH)** blends continuously from **0 = Sharkfin**, through **64 = Trapezoid**, to
-**127 = Notch-Trapezoid**. Each voice keeps its own Morph value; new sounds default to 64.
-
-Only **303A or 303B** may use Morph at a time. A conflicting selection is rejected and keeps
-the previous accepted Wave; it does not change the other voice or wait to acquire Morph later.
-Select Saw or Square on the current Morph voice before transferring Morph to the other voice.
-
-Morph remains experimental. Dedicated Morph worst-case timing and listening tests were not
-separately reported; the successful release hardware run is not a universal benchmark.
-See the [manual](docs/MANUAL.md#6-303a-and-303b) for the four EDIT pages, parameter behavior
-and ownership rules; the [waveform specification](docs/TB303_WAVEFORMS_DESIGN.md) retains
-the DSP mathematics and known quality limits.
-
-Original X0X is a fork of [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton
-Instruments). It keeps Felucca's foundations (the hardware layer, USB, the update loader, the web
-installer and the storage) and replaces the instrument on top.
-
-## Your own breaks
-
-X0X-RMX ships with no recorded breaks, two loops rendered by its own engines: 909 GR and 808 GR. In the
-browser, load your files in **Your breaks** below the device; they stay in that browser.
-The retained hardware tooling can load your loops into the FM-1's three sample slots, which hold about nine one-bar loops in total.
-The [break loops page](https://mr-roboto.github.io/fm1-x0x-rmx/breaks/) preserves the Chrome/Edge uploader for a compatible
-FM-1. Retention of existing user breaks across a regular update was confirmed on hardware.
-The command-line tool is also retained for developers:
-
-```
-tools/upload_breaks.py --bars amen.wav think.wav ...   # take one bar of each and upload them
-tools/upload_breaks.py --dry-run OUTDIR ...            # see what fits, without the FM-1
+```sh
+./build.sh
+# Output: build/x0x.fwsc
 ```
 
-Recorded breaks belong to whoever made them and aren't covered by this project's licence.
+Save and back up your project before flashing. With the build prerequisites and
+Python MIDI dependencies installed, the updater can install the local package:
 
-## Building and testing
-
-[BUILDING.md](BUILDING.md) explains development builds and test prerequisites.
-An arbitrary local development build is not automatically the tested v1.1.0 release.
-Use the checksum-verified official package for installation; the commands below are for development:
-
-```
-tests/run_tests.sh      # the maths, the sequencer, every engine against its original, the app in a simulator
-./build.sh              # build/x0x.fwsc
+```sh
+python tools/fm1_install.py build/x0x.fwsc --port FM-1
 ```
 
-`build/host/x0x_host` runs the whole app on a computer from a script (`tests/scenarios/*.x0x`). Button
-presses, keys, knob turns and MIDI go in; audio and screenshots come out. That's how most of
-X0X is tested before it reaches the FM-1.
+For the browser emulator, install Emscripten, then run:
 
-## Original X0X – upstream demonstration
+```sh
+sh web/emu/build.sh
+python -m http.server 8765 --directory build/emu
+```
 
-[Charles Vestal’s original X0X video (YouTube)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
-shows the upstream project on an FM-1. It is a reference for the inherited foundations;
-the X0X-RMX features shown above are demonstrated by our browser emulator.
+Open http://localhost:8765 and start the audio. The emulator uses the same Juno
+engine and sequencing code as the hardware. The standard native host retains
+BREAK for historical reference tests; the Juno-specific tests select the current
+hardware profile explicitly.
 
-## Licence and credits
+## Validation
 
-X0X-RMX project code is GPL-3.0-only; component notices retain their own terms. Open303
-(by Robin Schmidt) is
-MIT. BB Gen is ported from mestela's schwung-breakbeat with the author's permission. The 909's
-hi-hat, ride and crash samples come from ER-99 (Matthew Cieplak, GPL-3.0). The firmware fonts are Barlow
-Semi Condensed and Terminus (SIL OFL 1.1); web pages also use Barlow. The retained
-Fukiai web icon font is MIT-licensed.
+The current hardware build retains **six Juno voices** alongside the other four
+engines. Image: **391,484 B**; static RAM: **96,928 / 98,304 B**; pool:
+**333,768 / 344,064 B**. The latest gain build was flashed and its saved project
+read back unchanged.
 
-Grids MAP data and arithmetic are by Emilie Gillet / Mutable Instruments (GPL-3.0-or-later),
-cross-checked against DEADACTIVE's Hortator port. See [LICENSING.md](LICENSING.md) and
-[Grids source attribution](assets/grids/README.md) for component provenance, notices and records still to confirm.
+Focused native and WebAssembly checks cover presets, voice modes, arp, gate,
+step entry, locks, ties/slides, internal/external clock, swing and save/reload.
+A BRIGHT HOOVER regression compares plain ties with a held note through the full
+mixer/effects/master path, sample for sample.
 
-The 303's render in passes, the 909's sample voices past their end and the 808's metal bank by
-blocks are after [Optimist](https://github.com/w0ts/optimist) (henri), a fork of X0X: the same
-sound, bit for bit, for less of the CPU.
+```sh
+sh tests/host/run_juno_performance.sh
+sh tests/host/run_juno_hardware.sh
+# After building the emulator:
+node tests/host/juno_slides_emu_test.mjs build/emu/x0x.wasm
+```
 
-Felucca's own assets that aren't under its GPL (the icon set, the panel photo and the Hügelton
-drum pack) aren't part of this fork.
+See [tests/run_tests.sh](tests/run_tests.sh) for the wider suite and optional
+external-reference checks.
 
-M-VAVE and FM-1 are trademarks of their owners. TR-808, TR-909 and TB-303 are Roland trademarks,
-used here only to describe what the parts are modelled on. X0X-RMX is an independent fork, without implied endorsement by Charles Vestal. It isn't affiliated with or endorsed
-by M-VAVE, Roland or Hügelton Instruments.
+## Credits and licence
+
+X0X-HARDER retains the upstream **GPL-3.0-only** project licence and component
+notices. Full terms and credits are in [LICENSE](LICENSE) and
+[LICENSING.md](LICENSING.md).
+
+Alongside **Mr-Roboto**, **Charles Vestal** and **mikerodd / June-21**, credit goes
+to [Felucca](https://github.com/hugelton/Felucca) for the platform foundations;
+9W9 / ER-99 and 8W8 for the drum sources; Open303, schwung-303 and schwung-tb3po
+for the acid engines and generator; Mutable Instruments Grids for the drum map;
+and the other contributors named in the component credits. Historical BREAK
+sources and their attribution remain in the tree.
+
+M-VAVE, FM-1, Roland, TR-808, TR-909, TB-303 and Alpha Juno are names/trademarks
+of their respective owners. This is an independent project without implied
+endorsement by the hardware manufacturers or upstream authors.

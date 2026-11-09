@@ -421,7 +421,8 @@ static void fm1_main(void)
     uint8_t last_pat = 0xFF;
     {
         uint32_t f = irq_save();
-        flash_ok = FL_FAR(fl_jedec_ram)() == 0x856014u;   /* the expected 1 MiB part, else RAM only */
+        uint32_t flash_id = FL_FAR(fl_jedec_ram)();
+        flash_ok = flash_id == 0x856014u || flash_id == 0xB36014u; /* P25Q80 / UC25HQ80, else RAM only */
         irq_restore(f);
         if (flash_ok) {
             if (rs_boot() < 0) {

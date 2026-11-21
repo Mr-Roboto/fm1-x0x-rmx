@@ -228,7 +228,7 @@ function knob(x, y, r, label, role) {
   const g = el("g", { class: "ctl knob", tabindex: 0, role: "slider", "aria-label": label });
   el("circle", { cx: x, cy: y, r: r + 5, fill: TRAY }, g);
   el("circle", { cx: x, cy: y, r, fill: KNOB, stroke: "var(--device-knob-stroke)", "stroke-width": 2 }, g);
-  const ind = el("line", { x1: x, y1: y - r + 5, x2: x, y2: y - r + 15, stroke: "var(--device-indicator)", "stroke-width": 3, "stroke-linecap": "round" }, g);
+  const ind = role === "master" ? el("line", { x1: x, y1: y - r + 5, x2: x, y2: y - r + 15, stroke: "var(--device-indicator)", "stroke-width": 3, "stroke-linecap": "round" }, g) : null;
   text(g, x, y - r - 12, label, 17);
   el("circle", { cx: x, cy: y, r: r + 14, fill: "transparent" }, g);
   knobs[label] = { g, ind, x, y, angle: 0, role };
@@ -345,7 +345,7 @@ device.addEventListener("pointercancel", pointerUp);
 device.addEventListener("lostpointercapture", pointerUp);
 
 function drawKnob(k) {
-  k.ind.setAttribute("transform", `rotate(${k.angle} ${k.x} ${k.y})`);
+  if (k.ind) k.ind.setAttribute("transform", `rotate(${k.angle} ${k.x} ${k.y})`);
 }
 function turn(k, n) {
   if (!n) return;
